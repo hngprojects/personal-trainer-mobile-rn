@@ -1,31 +1,71 @@
+import { ImageSourcePropType, ViewStyle } from 'react-native';
+
+export type OnboardingCalloutVariant = 'icon' | 'person';
+
+export interface OnboardingCalloutData {
+  variant: OnboardingCalloutVariant;
+  iconEmoji?: string;
+  iconBg?: string;
+  initials?: string;
+  avatarBg?: string;
+  title: string;
+  subtitle?: string;
+  rating?: number;
+  position: ViewStyle;
+}
+
 export interface OnboardingSlideData {
   id: string;
   title: string;
   subtitle: string;
-  emoji: string;
-  accentColor: string;
+  image: ImageSourcePropType;
+  callout: OnboardingCalloutData;
 }
 
 export const SLIDES: OnboardingSlideData[] = [
   {
-    id: 'welcome',
-    title: 'Welcome to the App',
-    subtitle: 'The fastest way to build something your team will love.',
-    emoji: '👋',
-    accentColor: '#6C63FF',
+    id: 'consistent',
+    title: 'Finally Stay Consistent With Your Workouts',
+    subtitle:
+      'A real trainer calls you at your scheduled time and guides you through every step. No more excuses.',
+    image: require('../../../../assets/images/phone1.png'),
+    callout: {
+      variant: 'icon',
+      iconEmoji: '📅',
+      iconBg: '#0F2E5C',
+      title: 'Session Booked',
+      subtitle: '7:00 AM',
+      position: { top: '46%', right: -10 },
+    },
   },
   {
-    id: 'collaborate',
-    title: 'Collaborate Seamlessly',
-    subtitle: 'Work together in real-time with your entire team.',
-    emoji: '🤝',
-    accentColor: '#0EA5E9',
+    id: 'curated',
+    title: 'Choose From Curated Expert Trainers',
+    subtitle:
+      'Certified Nigerian coaches across strength, mobility, fat loss and HIIT. Find the one who gets you.',
+    image: require('../../../../assets/images/phone2.png'),
+    callout: {
+      variant: 'person',
+      initials: 'CE',
+      avatarBg: '#7E7C78',
+      title: 'Charles Effiong',
+      rating: 5.0,
+      position: { top: '14%', right: -16 },
+    },
   },
   {
-    id: 'achieve',
-    title: 'Achieve More',
-    subtitle: 'Track goals, measure progress, and celebrate every win.',
-    emoji: '🚀',
-    accentColor: '#22C55E',
+    id: 'shows-up',
+    title: 'Your Trainer Shows Up For You',
+    subtitle:
+      'Real calls. Real coaching. Someone is counting on you to show up, every single session.',
+    image: require('../../../../assets/images/phone3.png'),
+    callout: {
+      variant: 'person',
+      initials: 'CE',
+      avatarBg: '#7E7C78',
+      title: 'Charles Effiong',
+      subtitle: 'Trainer guiding you',
+      position: { top: '22%', right: -16 },
+    },
   },
 ];

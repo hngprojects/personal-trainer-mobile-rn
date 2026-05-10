@@ -1,24 +1,24 @@
 {
   "expo": {
-    "name": "react-native-starter",
-    "slug": "react-native-starter",
+    "name": "FITCALL",
+    "slug": "fitcall",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "reactnativestarter",
+    "icon": "./assets/images/logo.png",
+    "scheme": "fitcall",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#FFFFFF",
+        "foregroundImage": "./assets/images/logo.png",
+        "monochromeImage": "./assets/images/logo.png"
       },
       "predictiveBackGestureEnabled": false,
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.hng.fitcall"
     },
     "web": {
       "output": "static",
@@ -36,7 +36,8 @@
             "imageWidth": 76
           }
         }
-      ]
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true,

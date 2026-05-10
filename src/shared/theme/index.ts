@@ -1,5 +1,7 @@
-export { darkColors, lightColors } from './colors';
+export { darkColors, lightColors, palette } from './colors';
 export type { Colors } from './colors';
+export { fonts, loadAppFonts } from './fonts';
+export type { FontFamily } from './fonts';
 export { spacing } from './spacing';
 export type { SpacingKey } from './spacing';
 export { ThemeProvider, useTheme } from './ThemeContext';
