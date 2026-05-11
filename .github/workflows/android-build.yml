@@ -88,16 +88,16 @@ jobs:
           restore-keys: |
             android-gradle-${{ runner.os }}-
 
-      - name: Build debug APK
+      - name: Build release APK
         working-directory: android
-        run: ./gradlew assembleDebug --no-daemon
+        run: ./gradlew assembleRelease --no-daemon
 
       - name: Upload APK artifact
         id: artifact
         uses: actions/upload-artifact@v7
         with:
-          name: android-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: android-release-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 7
 
       - name: Upload to Appetize
@@ -106,7 +106,7 @@ jobs:
         uses: appetizeio/github-action-appetize@v1.0.5
         with:
           apiToken: ${{ secrets.APPETIZE_API_TOKEN }}
-          appFile: android/app/build/outputs/apk/debug/app-debug.apk
+          appFile: android/app/build/outputs/apk/release/app-release.apk
           platform: android
         continue-on-error: true
 
