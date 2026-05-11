@@ -9,8 +9,8 @@
   },
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
@@ -28,6 +28,7 @@
     }
   },
   "dependencies": {
+    "@expo-google-fonts/inter": "^0.4.2",
     "@hookform/resolvers": "^5.2.2",
     "@react-native-async-storage/async-storage": "^2.1.2",
     "@react-navigation/bottom-tabs": "^7.15.5",
@@ -37,6 +38,8 @@
     "axios": "^1.9.0",
     "expo": "~55.0.19",
     "expo-constants": "~55.0.15",
+    "expo-font": "~55.0.7",
+    "expo-linear-gradient": "~55.0.13",
     "expo-linking": "~55.0.14",
     "expo-router": "~55.0.13",
     "expo-secure-store": "~55.0.13",
@@ -47,6 +50,7 @@
     "react-hook-form": "^7.57.0",
     "react-native": "0.83.6",
     "react-native-gesture-handler": "~2.30.0",
+    "react-native-keyboard-controller": "1.20.7",
     "react-native-reanimated": "4.2.1",
     "react-native-safe-area-context": "~5.6.2",
     "react-native-screens": "~4.23.0",

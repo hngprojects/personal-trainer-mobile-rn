@@ -1,8 +1,9 @@
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { useAuthSession } from '@/features/auth/hooks/useAuthSession';
+import { EntryScreen } from '@/features/entry';
 import { useOnboardingStore } from '@/features/onboarding/store/onboarding.store';
 import { AppProviders } from '@/providers/AppProviders';
 import { useAppReady } from '@/shared/hooks/useAppReady';
@@ -13,6 +14,7 @@ function RootLayoutNav() {
   const { isReady } = useAppReady();
   const { isLoggedIn } = useAuthSession();
   const hasCompleted = useOnboardingStore((s) => s.hasCompleted);
+  const [entryDone, setEntryDone] = useState(false);
 
   // Hide splash only AFTER React has painted the navigation tree.
   // useEffect fires post-render/paint, so the correct screen is visible
@@ -23,7 +25,13 @@ function RootLayoutNav() {
     }
   }, [isReady]);
 
+  const handleEntryComplete = useCallback(() => setEntryDone(true), []);
+
   if (!isReady) return null;
+
+  if (!entryDone) {
+    return <EntryScreen onComplete={handleEntryComplete} />;
+  }
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
