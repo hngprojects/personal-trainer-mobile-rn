@@ -9,11 +9,11 @@ import {
   ViewStyle,
 } from 'react-native';
 
-import { useTheme } from '@/shared/theme';
+import { palette, useTheme } from '@/shared/theme';
 
 import { Typography } from './Typography';
 
-type ButtonVariant = 'primary' | 'outline' | 'ghost';
+type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost';
 
 interface ButtonProps extends Omit<PressableProps, 'style'> {
   label: string;
@@ -42,6 +42,11 @@ export function Button({
       opacity: isDisabled ? 0.6 : 1,
     },
     variant === 'primary' && { backgroundColor: colors.primary },
+    variant === 'secondary' && {
+      backgroundColor: palette.neutral['0.5'],
+      borderWidth: 1,
+      borderColor: palette.neutral['2'],
+    },
     variant === 'outline' && {
       backgroundColor: 'transparent',
       borderWidth: 1.5,

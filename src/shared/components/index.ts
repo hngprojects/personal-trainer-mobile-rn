@@ -1,7 +1,10 @@
 export { Button } from './Button';
 export { ErrorBoundary } from './ErrorBoundary';
 export { FormField } from './FormField';
+export { GradientBackground } from './GradientBackground';
 export { LoadingOverlay } from './LoadingOverlay';
+export { OrDivider } from './OrDivider';
 export { Screen } from './Screen';
+export { SocialButton } from './SocialButton';
 export { TextInput } from './TextInput';
 export { Typography } from './Typography';

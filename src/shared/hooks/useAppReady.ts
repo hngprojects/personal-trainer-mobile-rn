@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { secureStorage } from '@/shared/storage/secureStorage';
+import { loadAppFonts } from '@/shared/theme';
 
 export function useAppReady() {
   const [isReady, setIsReady] = useState(false);
@@ -14,6 +15,7 @@ export function useAppReady() {
         const [tokens] = await Promise.all([
           secureStorage.getTokens(),
           useOnboardingStore.getState().loadFromStorage(),
+          loadAppFonts(),
         ]);
 
         if (tokens) {

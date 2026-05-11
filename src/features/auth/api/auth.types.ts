@@ -4,10 +4,22 @@ export interface LoginRequest {
 }
 
 export interface RegisterRequest {
+  name: string;
   email: string;
   password: string;
-  firstName: string;
-  lastName: string;
+}
+
+export interface RegisterResponse {
+  email: string;
+}
+
+export interface VerifyOtpRequest {
+  email: string;
+  otp: string;
+}
+
+export interface ResendOtpRequest {
+  email: string;
 }
 
 export interface AuthTokens {
