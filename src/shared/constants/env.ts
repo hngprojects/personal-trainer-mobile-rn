@@ -1,7 +1,8 @@
-import Constants from 'expo-constants';
-
-const extra = Constants.expoConfig?.extra as { apiBaseUrl?: string } | undefined;
+export const apiUrls = {
+  staging: 'https://api.staging.fitcall.me/api/v1',
+  production: 'https://api.fitcall.me/api/v1',
+} as const;
 
 export const env = {
-  API_BASE_URL: extra?.apiBaseUrl ?? 'https://api.example.com',
+  API_BASE_URL: process.env.EXPO_PUBLIC_API_BASE_URL ?? apiUrls.staging,
 } as const;
