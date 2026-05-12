@@ -35,10 +35,7 @@ export function OtpInput({ length = 6, value, onChange, error }: OtpInputProps) 
     }
   };
 
-  const handleKeyPress = (
-    index: number,
-    e: NativeSyntheticEvent<TextInputKeyPressEventData>,
-  ) => {
+  const handleKeyPress = (index: number, e: NativeSyntheticEvent<TextInputKeyPressEventData>) => {
     if (e.nativeEvent.key === 'Backspace' && !digits[index] && index > 0) {
       refs.current[index - 1]?.focus();
     }

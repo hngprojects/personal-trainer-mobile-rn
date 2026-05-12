@@ -41,10 +41,9 @@ export function ThemeProvider({ children, initialMode = 'system' }: ThemeProvide
     await asyncStorage.setItem(STORAGE_KEYS.THEME_MODE, newMode);
   }, []);
 
-  // TEMP: dark mode disabled — force light theme until dark mode is finalised.
-  // To re-enable, revert these two lines to use `mode`/`systemScheme`.
-  const isDark = false;
-  const colors = lightColors;
+  // TEMP: dark mode disabled. To re-enable, remove the two `false && ` short-circuits below.
+  const isDark = false && (mode === 'dark' || (mode === 'system' && systemScheme === 'dark'));
+  const colors = isDark ? darkColors : lightColors;
 
   const value = useMemo(
     () => ({ mode, setMode, colors, typography, spacing, isDark }),
