@@ -18,7 +18,8 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "prepare": "husky"
   },
   "jest": {
     "preset": "jest-expo",
@@ -26,6 +27,10 @@
       "@react-native-async-storage/async-storage": "@react-native-async-storage/async-storage/jest/async-storage-mock",
       "^@/(.*)$": "<rootDir>/src/$1"
     }
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": "eslint --max-warnings 0 --fix",
+    "*.{json,md,yml,yaml}": "prettier --write"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
@@ -70,7 +75,9 @@
     "eslint-config-expo": "^55.0.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
+    "husky": "^9.1.7",
     "jest-expo": "^55.0.16",
+    "lint-staged": "^17.0.4",
     "prettier": "^3.8.3",
     "typescript": "~5.9.2"
   },

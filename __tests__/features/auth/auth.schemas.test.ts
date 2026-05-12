@@ -2,15 +2,21 @@ import { loginSchema, otpSchema, registerSchema } from '@/features/auth/schemas/
 
 describe('loginSchema', () => {
   it('passes valid credentials', () => {
-    expect(loginSchema.safeParse({ email: 'test@example.com', password: 'Password1' }).success).toBe(true);
+    expect(
+      loginSchema.safeParse({ email: 'test@example.com', password: 'Password1' }).success,
+    ).toBe(true);
   });
 
   it('rejects invalid email', () => {
-    expect(loginSchema.safeParse({ email: 'not-an-email', password: 'Password1' }).success).toBe(false);
+    expect(loginSchema.safeParse({ email: 'not-an-email', password: 'Password1' }).success).toBe(
+      false,
+    );
   });
 
   it('rejects password under 8 chars', () => {
-    expect(loginSchema.safeParse({ email: 'test@example.com', password: 'abc' }).success).toBe(false);
+    expect(loginSchema.safeParse({ email: 'test@example.com', password: 'abc' }).success).toBe(
+      false,
+    );
   });
 });
 

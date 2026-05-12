@@ -68,11 +68,7 @@ export function RegisterForm() {
         placeholder="Enter your password"
       />
 
-      {error && (
-        <Typography style={styles.apiError}>
-          {error.message}
-        </Typography>
-      )}
+      {error && <Typography style={styles.apiError}>{error.message}</Typography>}
 
       <Button
         label="Sign up"

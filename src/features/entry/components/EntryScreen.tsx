@@ -43,6 +43,11 @@ export function EntryScreen({ onComplete }: EntryScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF' },
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
   logo: { width: 200, height: 200 },
 });
