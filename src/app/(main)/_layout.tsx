@@ -1,60 +1,29 @@
-import { Tabs } from 'expo-router';
+import { Redirect, Tabs } from 'expo-router';
 
+import { useAuthSession } from '@/features/auth/hooks/useAuthSession';
 import { useTheme } from '@/shared/theme';
 
 export default function MainLayout() {
   const { colors } = useTheme();
+  const { isLoggedIn } = useAuthSession();
+
+  if (!isLoggedIn) return <Redirect href="/(auth)/login" />;
 
   return (
     <Tabs
       screenOptions={{
-        tabBarStyle: {
-          backgroundColor: colors.tabBar,
-          borderTopColor: colors.border,
-        },
-        tabBarActiveTintColor:
-          colors.tabBarActive,
-        tabBarInactiveTintColor:
-          colors.tabBarInactive,
-        headerStyle: {
-          backgroundColor:
-            colors.surface,
-        },
+        tabBarStyle: { backgroundColor: colors.tabBar, borderTopColor: colors.border },
+        tabBarActiveTintColor: colors.tabBarActive,
+        tabBarInactiveTintColor: colors.tabBarInactive,
+        headerStyle: { backgroundColor: colors.surface },
         headerTintColor: colors.text,
         headerShadowVisible: false,
-      }}>
-      {/* HOME */}
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
-          headerShown: false,
-        }}
-      />
-
-      {/* TRAINERS */}
-      <Tabs.Screen
-        name="trainers"
-        options={{
-          title: 'Trainers',
-          headerShown: false,
-        }}
-      />
-
-      {/* PROFILE SCREEN */}
-      <Tabs.Screen
-        name="trainer-profile"
-        options={{
-          href: null,
-          headerShown: false,
-        }}
-      />
-
-      {/* VIDEO SCREEN */}
-      <Tabs.Screen
-        name="trainer-video"
-        options={{
-          href: null,
           headerShown: false,
         }}
       />
