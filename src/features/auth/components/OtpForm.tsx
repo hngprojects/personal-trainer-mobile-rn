@@ -37,10 +37,7 @@ export function OtpForm({ email, onVerified }: OtpFormProps) {
   });
 
   const onSubmit = (data: OtpFormData) => {
-    verify.mutate(
-      { email, otp: data.otp },
-      { onSuccess: (response) => onVerified(response) },
-    );
+    verify.mutate({ email, otp: data.otp }, { onSuccess: (response) => onVerified(response) });
   };
 
   const handleResend = () => {
@@ -70,9 +67,7 @@ export function OtpForm({ email, onVerified }: OtpFormProps) {
         )}
       </View>
 
-      {verify.error && (
-        <Typography style={styles.apiError}>{verify.error.message}</Typography>
-      )}
+      {verify.error && <Typography style={styles.apiError}>{verify.error.message}</Typography>}
 
       <Button label="Verify" onPress={handleSubmit(onSubmit)} isLoading={verify.isPending} />
     </View>

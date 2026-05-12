@@ -25,10 +25,7 @@ export default function VerifyOtpScreen() {
     return (
       <Screen scrollable padding edges={['top', 'bottom']}>
         <Stack.Screen options={{ headerShown: false }} />
-        <SuccessState
-          title="Success"
-          message="Your account has been created successfully"
-        />
+        <SuccessState title="Success" message="Your account has been created successfully" />
       </Screen>
     );
   }
