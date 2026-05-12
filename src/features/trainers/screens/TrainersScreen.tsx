@@ -1,30 +1,17 @@
 import { router } from 'expo-router';
-import {
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { trainers } from '../data/trainers.data';
 
 export function TrainersScreen() {
   return (
-    <ScrollView
-      style={styles.container}
-      showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* HEADER */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.greeting}>
-            Hi, Good Morning!
-          </Text>
+          <Text style={styles.greeting}>Hi, Good Morning!</Text>
 
-          <Text style={styles.userName}>
-            Mark Anthony
-          </Text>
+          <Text style={styles.userName}>Mark Anthony</Text>
         </View>
 
         <Image
@@ -38,19 +25,12 @@ export function TrainersScreen() {
       {/* HERO */}
       <View style={styles.heroCard}>
         <View style={styles.heroLeft}>
-          <Text style={styles.heroTitle}>
-            Train with Purpose
-          </Text>
+          <Text style={styles.heroTitle}>Train with Purpose</Text>
 
-          <Text style={styles.heroText}>
-            Achieve your dream body with
-            expert trainers.
-          </Text>
+          <Text style={styles.heroText}>Achieve your dream body with expert trainers.</Text>
 
           <Pressable style={styles.heroBtn}>
-            <Text style={styles.heroBtnText}>
-              Train Quick →
-            </Text>
+            <Text style={styles.heroBtnText}>Train Quick →</Text>
           </Pressable>
         </View>
 
@@ -63,98 +43,48 @@ export function TrainersScreen() {
       </View>
 
       {/* CATEGORIES */}
-      <Text style={styles.sectionTitle}>
-        Categories
-      </Text>
+      <Text style={styles.sectionTitle}>Categories</Text>
 
       <View style={styles.categories}>
-        {[
-          'Gym',
-          'Yoga',
-          'Boxing',
-          'Cardio',
-          'Crossfit',
-        ].map((item) => (
-          <View
-            key={item}
-            style={styles.categoryItem}>
-            <View
-              style={styles.circle}
-            />
+        {['Gym', 'Yoga', 'Boxing', 'Cardio', 'Crossfit'].map((item) => (
+          <View key={item} style={styles.categoryItem}>
+            <View style={styles.circle} />
 
-            <Text
-              style={
-                styles.categoryText
-              }>
-              {item}
-            </Text>
+            <Text style={styles.categoryText}>{item}</Text>
           </View>
         ))}
       </View>
 
       {/* TRAINERS */}
-      <Text style={styles.sectionTitle}>
-        Trainers
-      </Text>
+      <Text style={styles.sectionTitle}>Trainers</Text>
 
       <View style={styles.trainersGrid}>
-        {trainers
-          .slice(0, 4)
-          .map((trainer) => (
-            <Pressable
-              key={trainer.id}
-              style={styles.card}
-              onPress={() =>
-                router.push(
-                  '/trainer-profile',
-                )
-              }>
-              <Image
-                source={{
-                  uri: trainer.image,
-                }}
-                style={
-                  styles.cardImage
-                }
-              />
+        {trainers.slice(0, 4).map((trainer) => (
+          <Pressable
+            key={trainer.id}
+            style={styles.card}
+            onPress={() => router.push('/trainer-profile')}
+          >
+            <Image
+              source={{
+                uri: trainer.image,
+              }}
+              style={styles.cardImage}
+            />
 
-              <View
-                style={styles.cardBody}>
-                <Text
-                  style={
-                    styles.cardName
-                  }>
-                  {trainer.name}
-                </Text>
+            <View style={styles.cardBody}>
+              <Text style={styles.cardName}>{trainer.name}</Text>
 
-                <Text
-                  style={
-                    styles.cardRole
-                  }>
-                  Strength Coach
-                </Text>
+              <Text style={styles.cardRole}>Strength Coach</Text>
 
-                <View
-                  style={
-                    styles.bottomRow
-                  }>
-                  <Text
-                    style={
-                      styles.rating
-                    }>
-                    ⭐ 4.8
-                  </Text>
+              <View style={styles.bottomRow}>
+                <Text style={styles.rating}>⭐ 4.8</Text>
 
-                  <Text
-                    style={
-                      styles.price
-                    }>
-                    ₦10k
-                  </Text>
-                </View>
+                <Text style={styles.price}>₦10k</Text>
               </View>
-            </Pressable>
-          ))}
+            </View>
+          </Pressable>
+        ))}
       </View>
     </ScrollView>
   );
@@ -170,8 +100,7 @@ const styles = StyleSheet.create({
   header: {
     marginTop: 18,
     flexDirection: 'row',
-    justifyContent:
-      'space-between',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
 
@@ -251,8 +180,7 @@ const styles = StyleSheet.create({
 
   categories: {
     flexDirection: 'row',
-    justifyContent:
-      'space-between',
+    justifyContent: 'space-between',
   },
 
   categoryItem: {
@@ -275,8 +203,7 @@ const styles = StyleSheet.create({
   trainersGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent:
-      'space-between',
+    justifyContent: 'space-between',
     paddingBottom: 40,
   },
 
@@ -314,8 +241,7 @@ const styles = StyleSheet.create({
   bottomRow: {
     marginTop: 10,
     flexDirection: 'row',
-    justifyContent:
-      'space-between',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
 

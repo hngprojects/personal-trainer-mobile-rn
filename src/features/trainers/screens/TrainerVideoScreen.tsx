@@ -1,24 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { ResizeMode, Video } from 'expo-av';
-import {
-  Pressable,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 export function TrainerVideoScreen() {
   return (
     <View style={styles.container}>
       {/* BACK BUTTON */}
-      <Pressable
-        style={styles.backButton}
-        onPress={() => router.back()}>
-        <Ionicons
-          name="arrow-back"
-          size={24}
-          color="#fff"
-        />
+      <Pressable style={styles.backButton} onPress={() => router.back()}>
+        <Ionicons name="arrow-back" size={24} color="#fff" />
       </Pressable>
 
       {/* VIDEO */}

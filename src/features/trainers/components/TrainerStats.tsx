@@ -6,11 +6,7 @@ interface Props {
   rating: number;
 }
 
-export function TrainerStats({
-  experience,
-  clients,
-  rating,
-}: Props) {
+export function TrainerStats({ experience, clients, rating }: Props) {
   return (
     <View style={styles.container}>
       <View style={styles.box}>

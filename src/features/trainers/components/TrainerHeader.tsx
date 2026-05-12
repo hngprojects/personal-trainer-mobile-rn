@@ -1,9 +1,4 @@
-import {
-  Image,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 
 interface Props {
   coverImage: string;
@@ -12,34 +7,19 @@ interface Props {
   specialty: string;
 }
 
-export function TrainerHeader({
-  coverImage,
-  image,
-  name,
-  specialty,
-}: Props) {
+export function TrainerHeader({ coverImage, image, name, specialty }: Props) {
   return (
     <View>
-      <Image
-        source={{ uri: coverImage }}
-        style={styles.cover}
-      />
+      <Image source={{ uri: coverImage }} style={styles.cover} />
 
       <View style={styles.overlay} />
 
       <View style={styles.profile}>
-        <Image
-          source={{ uri: image }}
-          style={styles.avatar}
-        />
+        <Image source={{ uri: image }} style={styles.avatar} />
 
-        <Text style={styles.name}>
-          {name}
-        </Text>
+        <Text style={styles.name}>{name}</Text>
 
-        <Text style={styles.specialty}>
-          {specialty}
-        </Text>
+        <Text style={styles.specialty}>{specialty}</Text>
       </View>
     </View>
   );

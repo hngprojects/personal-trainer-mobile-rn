@@ -5,11 +5,7 @@ export function TrainerReviewTab() {
   return (
     <View style={styles.card}>
       <View style={styles.row}>
-        <Ionicons
-          name="person-circle"
-          size={42}
-          color="#999"
-        />
+        <Ionicons name="person-circle" size={42} color="#999" />
 
         <View>
           <Text style={styles.name}>Sarah Adams</Text>
@@ -17,9 +13,7 @@ export function TrainerReviewTab() {
         </View>
       </View>
 
-      <Text style={styles.review}>
-        Charles transformed my body and confidence.
-      </Text>
+      <Text style={styles.review}>Charles transformed my body and confidence.</Text>
     </View>
   );
 }

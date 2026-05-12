@@ -1,14 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { ResizeMode, Video } from 'expo-av';
 import { useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 interface Props {
   videoUrl: string;
@@ -49,9 +42,7 @@ export function TrainerVideoPreview({ videoUrl }: Props) {
               }}
             />
 
-            <Pressable
-              style={styles.expandButton}
-              onPress={() => setFullscreen(true)}>
+            <Pressable style={styles.expandButton} onPress={() => setFullscreen(true)}>
               <Ionicons name="expand" size={20} color="#fff" />
             </Pressable>
           </>
@@ -60,9 +51,7 @@ export function TrainerVideoPreview({ videoUrl }: Props) {
 
       <Modal visible={fullscreen} animationType="slide">
         <View style={styles.fullscreenContainer}>
-          <Pressable
-            style={styles.closeButton}
-            onPress={() => setFullscreen(false)}>
+          <Pressable style={styles.closeButton} onPress={() => setFullscreen(false)}>
             <Ionicons name="close" size={28} color="#fff" />
           </Pressable>
 

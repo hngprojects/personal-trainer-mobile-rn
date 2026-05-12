@@ -5,10 +5,7 @@ interface Props {
   setActive: (tab: string) => void;
 }
 
-export function TrainerTabs({
-  active,
-  setActive,
-}: Props) {
+export function TrainerTabs({ active, setActive }: Props) {
   const tabs = ['About', 'Reviews', 'Packages'];
 
   return (
@@ -17,17 +14,9 @@ export function TrainerTabs({
         <Pressable
           key={tab}
           onPress={() => setActive(tab)}
-          style={[
-            styles.tab,
-            active === tab && styles.activeTab,
-          ]}>
-          <Text
-            style={[
-              styles.text,
-              active === tab && styles.activeText,
-            ]}>
-            {tab}
-          </Text>
+          style={[styles.tab, active === tab && styles.activeTab]}
+        >
+          <Text style={[styles.text, active === tab && styles.activeText]}>{tab}</Text>
         </Pressable>
       ))}
     </View>

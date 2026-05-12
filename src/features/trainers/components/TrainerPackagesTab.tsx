@@ -7,9 +7,7 @@ export function TrainerPackagesTab() {
 
       <Text style={styles.price}>₦50,000/month</Text>
 
-      <Text style={styles.desc}>
-        Personalized workouts and weekly support.
-      </Text>
+      <Text style={styles.desc}>Personalized workouts and weekly support.</Text>
     </View>
   );
 }

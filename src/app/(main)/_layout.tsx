@@ -1,78 +1,49 @@
-import { Redirect, Tabs } from 'expo-router';
+import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
-import { useAuthSession } from '@/features/auth/hooks/useAuthSession';
 import { useTheme } from '@/shared/theme';
 
 export default function MainLayout() {
   const { colors } = useTheme();
-  const { isLoggedIn } = useAuthSession();
-
-  // TEMPORARY ACCESS
-  // Remove this later when auth is ready
-  // if (!isLoggedIn) return <Redirect href="/(auth)/login" />;
 
   return (
     <Tabs
       screenOptions={{
         tabBarStyle: {
-          backgroundColor: '#fff',
-          borderTopColor: '#EAEAEA',
-          height: 65,
-          paddingBottom: 8,
-          paddingTop: 8,
+          backgroundColor: colors.tabBar,
+          borderTopColor: colors.border,
         },
-
-        tabBarActiveTintColor: '#005F86',
-        tabBarInactiveTintColor: '#999',
-
+        tabBarActiveTintColor: colors.tabBarActive,
+        tabBarInactiveTintColor: colors.tabBarInactive,
         headerStyle: {
           backgroundColor: colors.surface,
         },
-
         headerTintColor: colors.text,
         headerShadowVisible: false,
-
-        tabBarLabelStyle: {
-          fontSize: 11,
-          marginTop: 2,
-        },
-      }}>
-      {/* HOME */}
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
           headerShown: false,
-
           tabBarIcon: ({ color, size }) => (
-            <Ionicons
-              name="home-outline"
-              size={size}
-              color={color}
-            />
+            <Ionicons name="home-outline" size={size} color={color} />
           ),
         }}
       />
 
-      {/* TRAINERS */}
       <Tabs.Screen
         name="trainers"
         options={{
           title: 'Trainers',
           headerShown: false,
-
           tabBarIcon: ({ color, size }) => (
-            <Ionicons
-              name="people-outline"
-              size={size}
-              color={color}
-            />
+            <Ionicons name="people-outline" size={size} color={color} />
           ),
         }}
       />
 
-      {/* PROFILE SCREEN HIDDEN */}
       <Tabs.Screen
         name="trainer-profile"
         options={{
@@ -81,7 +52,6 @@ export default function MainLayout() {
         }}
       />
 
-      {/* VIDEO SCREEN HIDDEN */}
       <Tabs.Screen
         name="trainer-video"
         options={{

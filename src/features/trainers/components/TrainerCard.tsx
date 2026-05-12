@@ -1,11 +1,5 @@
 import { router } from 'expo-router';
-import {
-  Image,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Trainer } from '../types/trainer.types';
 
@@ -15,31 +9,18 @@ interface Props {
 
 export function TrainerCard({ trainer }: Props) {
   return (
-    <Pressable
-      style={styles.card}
-      onPress={() => router.push('/trainer-profile')}>
-      <Image
-        source={{ uri: trainer.image }}
-        style={styles.image}
-      />
+    <Pressable style={styles.card} onPress={() => router.push('/trainer-profile')}>
+      <Image source={{ uri: trainer.image }} style={styles.image} />
 
       <View style={styles.content}>
-        <Text style={styles.name}>
-          {trainer.name}
-        </Text>
+        <Text style={styles.name}>{trainer.name}</Text>
 
-        <Text style={styles.specialty}>
-          {trainer.specialty}
-        </Text>
+        <Text style={styles.specialty}>{trainer.specialty}</Text>
 
         <View style={styles.bottomRow}>
-          <Text style={styles.rating}>
-            ⭐ {trainer.rating}
-          </Text>
+          <Text style={styles.rating}>⭐ {trainer.rating}</Text>
 
-          <Text style={styles.price}>
-            ₦10k
-          </Text>
+          <Text style={styles.price}>₦10k</Text>
         </View>
       </View>
     </Pressable>
