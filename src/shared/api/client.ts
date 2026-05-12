@@ -14,8 +14,7 @@ export const client = create({
 type AuthStateAccessor = () => {
   accessToken: string | null;
   refreshToken: string | null;
-
-  setSession: (tokens: { accessToken: string; refreshToken: string }, user: any) => void;
+  setTokens: (tokens: { accessToken: string; refreshToken: string }) => void;
   clearSession: () => void;
 };
 
@@ -48,7 +47,7 @@ client.interceptors.response.use(
       try {
         const { authApi } = await import('@/features/auth/api/auth.api');
         const newTokens = await authApi.refreshTokens(refreshToken);
-        getAuthState().setSession(newTokens, getAuthState().accessToken);
+        getAuthState().setTokens(newTokens);
         original.headers.Authorization = `Bearer ${newTokens.accessToken}`;
         return client(original);
       } catch {

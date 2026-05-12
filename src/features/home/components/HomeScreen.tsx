@@ -18,7 +18,8 @@ export function HomeScreen() {
     setMode(next);
   };
 
-  const greeting = user ? `Welcome back, ${user.firstName}!` : 'Welcome!';
+  const firstName = user?.name?.split(/\s+/)[0];
+  const greeting = firstName ? `Welcome back, ${firstName}!` : 'Welcome!';
 
   return (
     <Screen>

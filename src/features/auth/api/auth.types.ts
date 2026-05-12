@@ -1,25 +1,7 @@
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
+export type SocialProvider = 'apple' | 'google';
 
-export interface RegisterRequest {
-  name: string;
-  email: string;
-  password: string;
-}
-
-export interface RegisterResponse {
-  email: string;
-}
-
-export interface VerifyOtpRequest {
-  email: string;
-  otp: string;
-}
-
-export interface ResendOtpRequest {
-  email: string;
+export interface GoogleAuthRequest {
+  id_token: string;
 }
 
 export interface AuthTokens {
@@ -30,11 +12,39 @@ export interface AuthTokens {
 export interface UserProfile {
   id: string;
   email: string;
-  firstName: string;
-  lastName: string;
+  name: string;
+  userType: string;
+  profileComplete: boolean;
 }
 
 export interface AuthResponse {
   user: UserProfile;
   tokens: AuthTokens;
+  isNewUser: boolean;
+  expiresIn: number;
+}
+
+// Raw envelope returned by the backend. All endpoints follow this shape; the
+// API layer unwraps `data` and converts snake_case → camelCase before exposing
+// `AuthResponse` to the rest of the app.
+export interface ApiEnvelope<T> {
+  status: string;
+  message: string;
+  code: string;
+  data: T;
+  meta?: string;
+}
+
+export interface RawAuthData {
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    user_type: string;
+    profile_complete: boolean;
+  };
+  access_token: string;
+  refresh_token: string;
+  is_new_user: boolean;
+  expires_in: number;
 }

@@ -7,4 +7,6 @@ export { OrDivider } from './OrDivider';
 export { Screen } from './Screen';
 export { SocialButton } from './SocialButton';
 export { TextInput } from './TextInput';
+export { toast } from './toast';
+export { ToastHost } from './ToastHost';
 export { Typography } from './Typography';
