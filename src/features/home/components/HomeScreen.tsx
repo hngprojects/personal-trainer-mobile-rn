@@ -1,5 +1,6 @@
+import { router } from 'expo-router';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Button, Screen, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
@@ -52,6 +53,23 @@ export function HomeScreen() {
           <Button label={`Switch theme (${mode})`} variant="outline" onPress={cycleTheme} />
         </View>
 
+        <Pressable
+          style={[
+            styles.trainerCard,
+            {
+              backgroundColor: colors.surface,
+              padding: spacing.md,
+              borderRadius: spacing.sm,
+            },
+          ]}
+          onPress={() => router.push('/trainer-profile')}
+        >
+          <Typography variant="h3">Trainer Details</Typography>
+          <Typography variant="body2" color={colors.textSecondary}>
+            View trainer profile, benefits, and ratings
+          </Typography>
+        </Pressable>
+
         <Button label="Sign Out" variant="outline" onPress={logout} />
       </View>
     </Screen>
@@ -62,4 +80,5 @@ const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center' },
   center: { alignItems: 'center', gap: 8 },
   card: { borderWidth: 1 },
+  trainerCard: { borderWidth: 1, gap: 4 },
 });
