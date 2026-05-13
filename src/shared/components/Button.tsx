@@ -22,6 +22,10 @@ interface ButtonProps extends Omit<PressableProps, 'style'> {
   style?: StyleProp<ViewStyle>;
 }
 
+const BRAND_NAVY_PRESSED = '#06203F';
+const DISABLED_BG = '#F5F5F5';
+const DISABLED_TEXT = '#00192F3D';
+
 export function Button({
   label,
   variant = 'primary',
@@ -30,46 +34,39 @@ export function Button({
   style,
   ...props
 }: ButtonProps) {
-  const { colors, spacing } = useTheme();
-  const isDisabled = disabled || isLoading;
+  const { colors } = useTheme();
+  const isDisabled = !!(disabled || isLoading);
 
-  const containerStyle = [
-    styles.base,
-    {
-      paddingVertical: spacing.sm + 4,
-      paddingHorizontal: spacing.lg,
-      borderRadius: spacing.sm,
-      opacity: isDisabled ? 0.6 : 1,
-    },
-    variant === 'primary' && { backgroundColor: colors.primary },
-    variant === 'secondary' && {
-      backgroundColor: palette.neutral['0.5'],
-      borderWidth: 1,
-      borderColor: palette.neutral['2'],
-    },
-    variant === 'outline' && {
-      backgroundColor: 'transparent',
-      borderWidth: 1.5,
-      borderColor: colors.primary,
-    },
-    variant === 'ghost' && { backgroundColor: 'transparent' },
-    style,
-  ];
-
-  const textColor = variant === 'primary' ? '#FFFFFF' : colors.primary;
+  const { background, text } = resolveColors(variant, isDisabled, colors.primary);
 
   return (
     <Pressable
-      style={containerStyle}
+      // Key tied to disabled state forces a clean remount when validity flips,
+      // bypassing the RN reconciler bailout that was caching the native bg.
+      key={isDisabled ? 'disabled' : 'active'}
+      style={[
+        styles.base,
+        { backgroundColor: background },
+        variant === 'outline' && {
+          borderWidth: 1.5,
+          borderColor: isDisabled ? palette.neutral['2'] : colors.primary,
+        },
+        variant === 'secondary' && {
+          borderWidth: 1,
+          borderColor: palette.neutral['2'],
+          opacity: isDisabled ? 0.55 : 1,
+        },
+        style,
+      ]}
       disabled={isDisabled}
-      android_ripple={{ color: colors.primaryPressed }}
+      android_ripple={isDisabled ? undefined : { color: BRAND_NAVY_PRESSED }}
       {...props}
     >
       <View style={styles.content}>
         {isLoading ? (
-          <ActivityIndicator color={textColor} size="small" />
+          <ActivityIndicator color={text} size="small" />
         ) : (
-          <Typography variant="body1" color={textColor} style={styles.label}>
+          <Typography variant="body1" color={text} style={styles.label}>
             {label}
           </Typography>
         )}
@@ -78,10 +75,33 @@ export function Button({
   );
 }
 
+function resolveColors(variant: ButtonVariant, isDisabled: boolean, primary: string) {
+  if (variant === 'primary') {
+    return {
+      background: isDisabled ? DISABLED_BG : primary,
+      text: isDisabled ? DISABLED_TEXT : '#FFFFFF',
+    };
+  }
+  if (variant === 'secondary') {
+    return {
+      background: palette.neutral['0.5'],
+      text: isDisabled ? DISABLED_TEXT : primary,
+    };
+  }
+  // outline + ghost
+  return {
+    background: 'transparent',
+    text: isDisabled ? DISABLED_TEXT : primary,
+  };
+}
+
 const styles = StyleSheet.create({
   base: {
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 10,
   },
   content: {
     flexDirection: 'row',

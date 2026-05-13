@@ -1,64 +1,25 @@
-import { Tabs } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Redirect, Stack } from 'expo-router';
 
-import { useTheme } from '@/shared/theme';
+import { useAuthSession } from '@/features/auth';
 
 export default function MainLayout() {
-  const { colors } = useTheme();
+  const { isLoggedIn } = useAuthSession();
+
+  // Guard: any internal route requires an active session.
+  if (!isLoggedIn) return <Redirect href="/(auth)/login" />;
 
   return (
-    <Tabs
+    <Stack
       screenOptions={{
-        tabBarStyle: {
-          backgroundColor: colors.tabBar,
-          borderTopColor: colors.border,
-        },
-        tabBarActiveTintColor: colors.tabBarActive,
-        tabBarInactiveTintColor: colors.tabBarInactive,
-        headerStyle: {
-          backgroundColor: colors.surface,
-        },
-        headerTintColor: colors.text,
-        headerShadowVisible: false,
+        headerShown: false,
+        animation: 'slide_from_right',
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          headerShown: false,
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="trainers"
-        options={{
-          title: 'Trainers',
-          headerShown: false,
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="people-outline" size={size} color={color} />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="trainer-profile"
-        options={{
-          href: null,
-          headerShown: false,
-        }}
-      />
-
-      <Tabs.Screen
-        name="trainer-video"
-        options={{
-          href: null,
-          headerShown: false,
-        }}
-      />
-    </Tabs>
+      {/* Per-screen overrides only — expo-router auto-detects the (tabs) group
+          and the trainer-profile route. Declaring (tabs) explicitly triggers a
+          "no route named (tabs) exists" warning because the bundler flattens
+          group folders into the parent's child list. */}
+      <Stack.Screen name="trainer-video" options={{ animation: 'fade' }} />
+    </Stack>
   );
 }

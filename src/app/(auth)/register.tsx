@@ -1,8 +1,9 @@
+import { StatusBar } from 'expo-status-bar';
 import { Stack } from 'expo-router';
 import React from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 
-import { RegisterForm } from '@/features/auth';
+import { AuthForm } from '@/features/auth';
 import { Screen, Typography } from '@/shared/components';
 import { fonts, palette, useTheme } from '@/shared/theme';
 
@@ -14,6 +15,7 @@ export default function RegisterScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
+      <StatusBar style="dark" />
       <Screen scrollable padding edges={['top', 'bottom']}>
         <View style={[styles.header, { gap: spacing.xs, marginBottom: spacing.xl }]}>
           <Image source={LOGO} style={styles.logo} resizeMode="contain" />
@@ -22,7 +24,7 @@ export default function RegisterScreen() {
             Let&apos;s get you started in a few minutes
           </Typography>
         </View>
-        <RegisterForm />
+        <AuthForm variant="signup" />
       </Screen>
     </>
   );

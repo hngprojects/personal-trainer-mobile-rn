@@ -10,6 +10,7 @@ interface ScreenProps extends ViewProps {
   scrollable?: boolean;
   edges?: Edge[];
   padding?: boolean;
+  backgroundColor?: string;
 }
 
 export function Screen({
@@ -17,10 +18,12 @@ export function Screen({
   scrollable = false,
   edges = ['top', 'bottom'],
   padding = true,
+  backgroundColor,
   style,
   ...props
 }: ScreenProps) {
   const { colors, spacing } = useTheme();
+  const bg = backgroundColor ?? colors.background;
 
   const inner = scrollable ? (
     <KeyboardAwareScrollView
@@ -39,7 +42,7 @@ export function Screen({
   );
 
   return (
-    <SafeAreaView style={[styles.fill, { backgroundColor: colors.background }]} edges={edges}>
+    <SafeAreaView style={[styles.fill, { backgroundColor: bg }]} edges={edges}>
       {inner}
     </SafeAreaView>
   );

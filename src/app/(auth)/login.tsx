@@ -1,8 +1,9 @@
+import { StatusBar } from 'expo-status-bar';
 import { Stack } from 'expo-router';
 import React from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 
-import { LoginForm } from '@/features/auth';
+import { AuthForm } from '@/features/auth';
 import { Screen, Typography } from '@/shared/components';
 import { fonts, palette, useTheme } from '@/shared/theme';
 
@@ -14,13 +15,14 @@ export default function LoginScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
+      <StatusBar style="dark" />
       <Screen scrollable padding edges={['top', 'bottom']}>
         <View style={[styles.header, { gap: spacing.xs, marginBottom: spacing.xl }]}>
           <Image source={LOGO} style={styles.logo} resizeMode="contain" />
           <Typography style={styles.title}>Welcome back</Typography>
-          <Typography style={styles.subtitle}>Log in to continue your journey</Typography>
+          <Typography style={styles.subtitle}>Sign in to continue your journey</Typography>
         </View>
-        <LoginForm />
+        <AuthForm variant="signin" />
       </Screen>
     </>
   );

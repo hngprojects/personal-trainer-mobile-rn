@@ -9,4 +9,6 @@ export interface Trainer {
   experience: string;
   bio: string;
   videoUrl: string;
+  tags: string[];
+  clientAvatars: string[];
 }
