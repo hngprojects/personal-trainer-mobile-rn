@@ -2,13 +2,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useVideoPlayer, VideoView } from 'expo-video';
+import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const VIDEO_SOURCE =
   'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_5MB.mp4';
 
-export function TrainerVideoScreen() {
+export function ProfileSetupVideoScreen() {
   const insets = useSafeAreaInsets();
   const player = useVideoPlayer(VIDEO_SOURCE, (instance) => {
     instance.loop = false;
@@ -19,8 +20,6 @@ export function TrainerVideoScreen() {
     <View style={styles.container}>
       <StatusBar style="light" />
 
-      {/* Back button positioned relative to the device's top inset so it never collides
-          with the notch / Dynamic Island / Android status bar. */}
       <Pressable
         style={[styles.backButton, { top: insets.top + 12, left: insets.left + 16 }]}
         onPress={() => router.back()}

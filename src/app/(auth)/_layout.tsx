@@ -12,7 +12,7 @@ export default function AuthLayout() {
   const showWelcome = useAuthStore((s) => s.showWelcome);
 
   if (!hasCompleted) return <Redirect href="/(onboarding)" />;
-  if (isLoggedIn) return <Redirect href={showWelcome ? '/welcome' : '/(main)'} />;
+  if (isLoggedIn) return <Redirect href={showWelcome ? '/welcome' : '/'} />;
 
   return (
     <Stack

@@ -38,4 +38,13 @@ async function refreshTokens(refreshToken: string): Promise<AuthTokens> {
   };
 }
 
-export const authApi = { googleAuth, refreshTokens };
+async function logout(refreshToken: string): Promise<void> {
+  // Skip the refresh-on-401 interceptor for this call. The server may invalidate
+  // the refresh token immediately, which would cause the auto-retry to fail with
+  // "invalid token". Logout is best-effort — let the caller handle a non-2xx.
+  await client.post('/auth/logout', { refresh_token: refreshToken }, {
+    _skipAuthRefresh: true,
+  } as Parameters<typeof client.post>[2]);
+}
+
+export const authApi = { googleAuth, refreshTokens, logout };

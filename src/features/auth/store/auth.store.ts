@@ -23,6 +23,7 @@ interface AuthActions {
   setSession: (tokens: AuthTokens, user: UserProfile, opts?: SetSessionOptions) => void;
   setTokens: (tokens: AuthTokens) => void;
   hydrate: (data: { tokens?: AuthTokens | null; user?: UserProfile | null }) => void;
+  updateUser: (patch: Partial<UserProfile>) => void;
   clearSession: () => void;
   dismissWelcome: () => void;
 }
@@ -63,6 +64,14 @@ export const useAuthStore = createStore<AuthState & AuthActions>((set) => ({
       ...(tokens ?? {}),
       ...(user !== undefined ? { user } : {}),
     });
+  },
+
+  updateUser: (patch) => {
+    const current = useAuthStore.getState().user;
+    if (!current) return;
+    const next = { ...current, ...patch };
+    set({ user: next });
+    persistUser(next);
   },
 
   clearSession: () => {

@@ -33,7 +33,16 @@ client.interceptors.request.use((config) => {
 client.interceptors.response.use(
   (res) => res,
   async (error) => {
-    const original = error.config as typeof error.config & { _retry?: boolean };
+    const original = error.config as typeof error.config & {
+      _retry?: boolean;
+      _skipAuthRefresh?: boolean;
+    };
+
+    // Some requests (logout, refresh itself) shouldn't trigger an auto-refresh
+    // even on 401 — they need to fail fast so the caller can react.
+    if (original?._skipAuthRefresh) {
+      return Promise.reject(toApiError(error));
+    }
 
     if (error.response?.status === 401 && !original._retry && getAuthState) {
       original._retry = true;

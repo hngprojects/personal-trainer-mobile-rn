@@ -42,6 +42,12 @@ function RootLayoutNav() {
         <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
       )}
       {isLoggedIn && showWelcome && <Stack.Screen name="welcome" options={{ animation: 'fade' }} />}
+      {isLoggedIn && !showWelcome && (
+        <Stack.Screen name="profile-setup" options={{ animation: 'fade' }} />
+      )}
+      {isLoggedIn && !showWelcome && (
+        <Stack.Screen name="profile-setup-video" options={{ animation: 'slide_from_bottom' }} />
+      )}
       {isLoggedIn && !showWelcome && <Stack.Screen name="(main)" options={{ animation: 'fade' }} />}
       <Stack.Screen name="+not-found" />
     </Stack>

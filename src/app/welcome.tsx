@@ -15,7 +15,7 @@ export default function WelcomeScreen() {
   useEffect(() => {
     const timer = setTimeout(() => {
       dismissWelcome();
-      router.replace('/(main)');
+      router.replace('/profile-setup');
     }, WELCOME_DURATION_MS);
     return () => clearTimeout(timer);
   }, [dismissWelcome]);
