@@ -13,6 +13,7 @@ module.exports = [
     plugins: { prettier: prettierPlugin },
     rules: {
       'prettier/prettier': 'warn',
+      'import/no-unresolved': ['error', { ignore: ['^@expo/vector-icons'] }],
     },
   },
   {
