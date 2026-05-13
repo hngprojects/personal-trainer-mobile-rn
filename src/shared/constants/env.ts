@@ -5,4 +5,6 @@ export const apiUrls = {
 
 export const env = {
   API_BASE_URL: process.env.EXPO_PUBLIC_API_BASE_URL ?? apiUrls.staging,
+  GOOGLE_WEB_CLIENT_ID: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '',
+  GOOGLE_IOS_CLIENT_ID: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? '',
 } as const;

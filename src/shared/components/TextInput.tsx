@@ -54,11 +54,7 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
             {...props}
           />
           {isPassword && (
-            <Pressable
-              onPress={() => setHidden((h) => !h)}
-              hitSlop={8}
-              style={styles.iconButton}
-            >
+            <Pressable onPress={() => setHidden((h) => !h)} hitSlop={8} style={styles.iconButton}>
               <Ionicons
                 name={hidden ? 'eye-outline' : 'eye-off-outline'}
                 size={20}
@@ -67,9 +63,7 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
             </Pressable>
           )}
         </View>
-        {error && (
-          <Typography style={[styles.error, { color: colors.error }]}>{error}</Typography>
-        )}
+        {error && <Typography style={[styles.error, { color: colors.error }]}>{error}</Typography>}
       </View>
     );
   },

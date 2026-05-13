@@ -1,32 +1,25 @@
-import { Redirect, Tabs } from 'expo-router';
+import { Redirect, Stack } from 'expo-router';
 
-import { useAuthSession } from '@/features/auth/hooks/useAuthSession';
-import { useTheme } from '@/shared/theme';
+import { useAuthSession } from '@/features/auth';
 
 export default function MainLayout() {
-  const { colors } = useTheme();
   const { isLoggedIn } = useAuthSession();
 
+  // Guard: any internal route requires an active session.
   if (!isLoggedIn) return <Redirect href="/(auth)/login" />;
 
   return (
-    <Tabs
+    <Stack
       screenOptions={{
-        tabBarStyle: { backgroundColor: colors.tabBar, borderTopColor: colors.border },
-        tabBarActiveTintColor: colors.tabBarActive,
-        tabBarInactiveTintColor: colors.tabBarInactive,
-        headerStyle: { backgroundColor: colors.surface },
-        headerTintColor: colors.text,
-        headerShadowVisible: false,
+        headerShown: false,
+        animation: 'slide_from_right',
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          headerShown: false,
-        }}
-      />
-    </Tabs>
+      {/* Per-screen overrides only — expo-router auto-detects the (tabs) group
+          and the trainer-profile route. Declaring (tabs) explicitly triggers a
+          "no route named (tabs) exists" warning because the bundler flattens
+          group folders into the parent's child list. */}
+      <Stack.Screen name="trainer-video" options={{ animation: 'fade' }} />
+    </Stack>
   );
 }
