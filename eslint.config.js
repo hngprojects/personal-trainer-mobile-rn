@@ -13,6 +13,10 @@ module.exports = [
     plugins: { prettier: prettierPlugin },
     rules: {
       'prettier/prettier': 'warn',
+      // @expo/vector-icons ships as a transitive expo dependency and is
+      // resolved by the Metro bundler at runtime — not visible to the
+      // Node-based ESLint resolver.
+      'import/no-unresolved': ['error', { ignore: ['^@expo/vector-icons'] }],
     },
   },
   {
