@@ -36,8 +36,27 @@ export function RescheduleSessionScreen() {
   const { spacing, colors } = useTheme();
   const [step, setStep] = useState(1);
   const [selectedReason, setSelectedReason] = useState('');
-  const [selectedDate, setSelectedDate] = useState(5); // Mock selected day
+
+  // Real Date-based state for calendar
+  const [viewDate, setViewDate] = useState(new Date(2026, 4, 1)); // Starting with May 2026 as per design
+  const [selectedDate, setSelectedDate] = useState<number | null>(null);
   const [selectedTime, setSelectedTime] = useState('');
+
+  const today = new Date();
+  const currentDay = today.getDate();
+  const isCurrentMonth =
+    today.getMonth() === viewDate.getMonth() && today.getFullYear() === viewDate.getFullYear();
+
+  const handlePrevMonth = () => {
+    setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
+  };
+
+  const handleNextMonth = () => {
+    setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1));
+  };
+
+  const timezoneOffset = -new Date().getTimezoneOffset() / 60;
+  const timezoneStr = `GMT${timezoneOffset >= 0 ? '+' : ''}${timezoneOffset}`;
 
   const handleContinue = () => {
     if (step < 2) {
@@ -82,6 +101,12 @@ export function RescheduleSessionScreen() {
             onSelectDate={setSelectedDate}
             selectedTime={selectedTime}
             onSelectTime={setSelectedTime}
+            viewDate={viewDate}
+            onPrevMonth={handlePrevMonth}
+            onNextMonth={handleNextMonth}
+            timezoneStr={timezoneStr}
+            isCurrentMonth={isCurrentMonth}
+            currentDay={currentDay}
           />
         )}
       </ScrollView>
@@ -161,11 +186,23 @@ function DateTimeStep({
   onSelectDate,
   selectedTime,
   onSelectTime,
+  viewDate,
+  onPrevMonth,
+  onNextMonth,
+  timezoneStr,
+  isCurrentMonth,
+  currentDay,
 }: {
-  selectedDate: number;
+  selectedDate: number | null;
   onSelectDate: (date: number) => void;
   selectedTime: string;
   onSelectTime: (time: string) => void;
+  viewDate: Date;
+  onPrevMonth: () => void;
+  onNextMonth: () => void;
+  timezoneStr: string;
+  isCurrentMonth: boolean;
+  currentDay: number;
 }) {
   const { colors } = useTheme();
 
@@ -180,11 +217,13 @@ function DateTimeStep({
 
       <View style={styles.calendarContainer}>
         <View style={styles.calendarHeader}>
-          <Pressable>
+          <Pressable onPress={onPrevMonth}>
             <Ionicons name="chevron-back" size={20} color={palette.neutral['9']} />
           </Pressable>
-          <Typography style={styles.calendarMonth}>May 2026</Typography>
-          <Pressable>
+          <Typography style={styles.calendarMonth}>
+            {viewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
+          </Typography>
+          <Pressable onPress={onNextMonth}>
             <Ionicons name="chevron-forward" size={20} color={palette.neutral['9']} />
           </Pressable>
         </View>
@@ -202,31 +241,34 @@ function DateTimeStep({
           {Array.from({ length: 4 }).map((_, i) => (
             <View key={`empty-${i}`} style={styles.dateCircle} />
           ))}
-          {Array.from({ length: 28 }, (_, i) => i + 1).map((date) => (
-            <Pressable
-              key={date}
-              onPress={() => onSelectDate(date)}
-              style={[
-                styles.dateCircle,
-                selectedDate === date && [
-                  styles.activeDateCircle,
-                  { backgroundColor: colors.primary },
-                ],
-                date < 5 && styles.unavailableDate,
-              ]}
-              disabled={date < 5}
-            >
-              <Typography
+          {Array.from({ length: 28 }, (_, i) => i + 1).map((date) => {
+            const isPast = isCurrentMonth && date < currentDay;
+            return (
+              <Pressable
+                key={date}
+                onPress={() => onSelectDate(date)}
                 style={[
-                  styles.dateText,
-                  selectedDate === date && styles.activeDateText,
-                  date < 5 && styles.unavailableText,
+                  styles.dateCircle,
+                  selectedDate === date && [
+                    styles.activeDateCircle,
+                    { backgroundColor: colors.primary },
+                  ],
+                  isPast && styles.unavailableDate,
                 ]}
+                disabled={isPast}
               >
-                {date}
-              </Typography>
-            </Pressable>
-          ))}
+                <Typography
+                  style={[
+                    styles.dateText,
+                    selectedDate === date && styles.activeDateText,
+                    isPast && styles.unavailableText,
+                  ]}
+                >
+                  {date}
+                </Typography>
+              </Pressable>
+            );
+          })}
         </View>
       </View>
 
@@ -237,7 +279,7 @@ function DateTimeStep({
       </View>
 
       <Typography variant="body2" style={[styles.label, { marginTop: 24 }]}>
-        <Ionicons name="time-outline" size={16} /> Available Times in your Timezone (GMT+1)
+        <Ionicons name="time-outline" size={16} /> Available Times in your Timezone ({timezoneStr})
       </Typography>
 
       <View style={styles.timesGrid}>

@@ -13,7 +13,38 @@ export function SessionDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { spacing, colors } = useTheme();
 
-  const session = mockSessions.find((s) => s.id === id) || mockSessions[0];
+  const session = mockSessions.find((s) => s.id === id);
+
+  if (!session) {
+    return (
+      <Screen padding={false} edges={['top']} backgroundColor="#FFFFFF">
+        <StatusBar style="dark" />
+        <View style={styles.header}>
+          <Pressable onPress={() => router.back()} style={styles.backBtn}>
+            <Ionicons name="arrow-back" size={24} color={palette.neutral['9']} />
+          </Pressable>
+          <Typography variant="h3" style={styles.headerTitle}>
+            Session Not Found
+          </Typography>
+        </View>
+        <View
+          style={[
+            styles.scrollContent,
+            { paddingHorizontal: spacing.md, alignItems: 'center', marginTop: 100 },
+          ]}
+        >
+          <Typography variant="body1" color={colors.textSecondary}>
+            The session you are looking for does not exist or has been removed.
+          </Typography>
+          <Button
+            label="Go Back"
+            onPress={() => router.back()}
+            style={{ marginTop: 24, width: '100%' }}
+          />
+        </View>
+      </Screen>
+    );
+  }
 
   const handleReschedule = () => {
     router.push({
