@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View, ViewStyle } from 'react-native';
 
 import { Button, Typography } from '@/shared/components';
@@ -118,6 +118,15 @@ export function DateTimeStep({ draft, onUpdate, onContinue }: DateTimeStepProps)
     d.setDate(weekStart.getDate() + i);
     return d;
   });
+
+  const timezoneLabel = useMemo(() => {
+    const offsetMinutes = -new Date().getTimezoneOffset();
+    const sign = offsetMinutes >= 0 ? '+' : '-';
+    const abs = Math.abs(offsetMinutes);
+    const hours = String(Math.floor(abs / 60)).padStart(2, '0');
+    const minutes = String(abs % 60).padStart(2, '0');
+    return `GMT${sign}${hours}:${minutes}`;
+  }, []);
 
   // Header label — show both months if the week straddles a boundary
   const lastDay = weekDays[6];
@@ -287,7 +296,7 @@ export function DateTimeStep({ draft, onUpdate, onContinue }: DateTimeStepProps)
             style={styles.globeIcon}
           />
           <Typography variant="body2" color={colors.textSecondary}>
-            Available Times in your timezone (GMT+1)
+            Available Times in your timezone ({timezoneLabel})
           </Typography>
         </View>
 

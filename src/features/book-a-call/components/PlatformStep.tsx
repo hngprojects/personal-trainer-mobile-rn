@@ -15,7 +15,7 @@ const AGENT_BULLETS = [
   "Guide you through getting started if you're ready",
 ];
 
-const PLATFORMS: { id: CallPlatform; name: string; logo: ReturnType<typeof require> }[] = [
+const PLATFORMS: { id: CallPlatform; name: string; logo: number }[] = [
   { id: 'zoom', name: 'Zoom', logo: ZOOM_LOGO },
   { id: 'google-meet', name: 'Google Meet', logo: GMEET_LOGO },
 ];
@@ -42,7 +42,7 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
           Got questions? Let&apos;s answer them.
         </Typography>
         <Typography variant="body2" color={colors.textSecondary} style={styles.subtitle}>
-          One of our agent will reach out to you on your chosen platform.
+          One of our agents will reach out to you on your chosen platform.
         </Typography>
 
         {/* Info card */}

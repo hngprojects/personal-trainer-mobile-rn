@@ -61,7 +61,7 @@ export function SummaryStep({ draft, onSubmit }: SummaryStepProps) {
   const endTime = addOneHour(time);
 
   const whatHappensNext = [
-    'One of our agent reviews your request',
+    'One of our agents reviews your request',
     `Agent calls you on ${platformLabel(platform)} at your preferred time`,
     'Agent answers questions and helps you get started',
   ];
