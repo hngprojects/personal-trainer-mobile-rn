@@ -44,7 +44,7 @@ interface AuthFormProps {
 }
 
 export function AuthForm({ variant }: AuthFormProps) {
-  const { spacing } = useTheme();
+  const { spacing, colors } = useTheme();
   const googleAuth = useGoogleAuth();
 
   const verb = variant === 'signup' ? 'Sign Up' : 'Sign In';
@@ -102,7 +102,9 @@ export function AuthForm({ variant }: AuthFormProps) {
       />
 
       <View style={[styles.footer, { marginTop: spacing.md }]}>
-        <Typography style={styles.footerText}>{footerText}</Typography>
+        <Typography style={[styles.footerText, { color: colors.textSecondary }]}>
+          {footerText}
+        </Typography>
         <Pressable onPress={() => router.replace(footerHref)}>
           <Typography style={styles.link}>{footerLinkLabel}</Typography>
         </Pressable>
@@ -122,7 +124,6 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 13,
     fontFamily: fonts.regular,
-    color: palette.neutral['7'],
   },
   link: {
     fontSize: 13,

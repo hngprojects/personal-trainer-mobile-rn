@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp, SharedValue } from 'react-native-reanimated';
 
 import { Typography } from '@/shared/components';
-import { fonts, palette } from '@/shared/theme';
+import { fonts, palette, useTheme } from '@/shared/theme';
 
 import { useProfileSetupStore } from '../../store/profile-setup.store';
 import type { FitnessLevel } from '../../types/profile-setup.types';
@@ -24,27 +24,26 @@ const LEVELS: {
     id: 'easy',
     label: 'Easy to start',
     description:
-      'Perfect for beginners. Light sessions, simple movements, and plenty of rest between exercises.',
+      "Great choice! We'll guide you step-by-step, so even if you're just starting out, you'll build confidence and get moving at a comfortable pace.",
   },
   {
     id: 'intermediate',
     label: 'Intermediate',
     description:
-      'Already moving regularly? Step up with sessions that push your stamina and refine technique.',
+      "Awesome! You have a solid foundation. We'll challenge you with more advanced moves and help you level up steadily.",
   },
   {
     id: 'challenging',
     label: 'A bit challenging',
     description:
-      'High intensity sessions for athletes. Expect demanding workouts, complex movements, and shorter rest.',
+      "You're ready to push your limits! We'll provide expert-level routines to help you surpass your goals.",
   },
 ];
 
 export function FitnessLevelStep({ index, scrollX, slideWidth }: FitnessLevelStepProps) {
+  const { colors } = useTheme();
   const level = useProfileSetupStore((s) => s.draft.fitnessLevel);
   const setLevel = useProfileSetupStore((s) => s.setFitnessLevel);
-
-  const selectedMeta = LEVELS.find((l) => l.id === level) ?? null;
 
   return (
     <StepShell index={index} scrollX={scrollX} slideWidth={slideWidth}>
@@ -55,38 +54,49 @@ export function FitnessLevelStep({ index, scrollX, slideWidth }: FitnessLevelSte
             <Animated.View key={l.id} entering={FadeInDown.delay(80 + i * 70).duration(360)}>
               <Pressable
                 onPress={() => setLevel(l.id)}
+                accessibilityRole="radio"
+                accessibilityState={{ selected }}
                 style={({ pressed }) => [
                   styles.row,
-                  selected && styles.rowSelected,
+                  {
+                    borderColor: selected ? palette.highlightBlue['5'] : colors.divider,
+                    backgroundColor: colors.background,
+                  },
                   pressed && { opacity: 0.85 },
                 ]}
               >
-                <View style={[styles.radio, selected && styles.radioSelected]}>
-                  {selected ? <View style={styles.radioDot} /> : null}
+                <View style={styles.rowHeader}>
+                  <View
+                    style={[
+                      styles.radio,
+                      {
+                        borderColor: selected ? palette.highlightBlue['5'] : colors.border,
+                        backgroundColor: colors.background,
+                      },
+                    ]}
+                  >
+                    {selected ? <View style={styles.radioDot} /> : null}
+                  </View>
+                  <Typography
+                    style={[
+                      styles.label,
+                      { color: selected ? palette.highlightBlue['7'] : colors.text },
+                    ]}
+                  >
+                    {l.label}
+                  </Typography>
                 </View>
-                <Typography
-                  style={[
-                    styles.label,
-                    { color: selected ? palette.highlightBlue['7'] : palette.neutral['8'] },
-                  ]}
-                >
-                  {l.label}
-                </Typography>
+
+                {selected ? (
+                  <Animated.View entering={FadeInUp.duration(220)} style={styles.descriptionWrap}>
+                    <Typography style={styles.description}>{l.description}</Typography>
+                  </Animated.View>
+                ) : null}
               </Pressable>
             </Animated.View>
           );
         })}
       </View>
-
-      {selectedMeta ? (
-        <Animated.View
-          key={selectedMeta.id}
-          entering={FadeInUp.duration(280)}
-          style={styles.infoBox}
-        >
-          <Typography style={styles.infoText}>{selectedMeta.description}</Typography>
-        </Animated.View>
-      ) : null}
     </StepShell>
   );
 }
@@ -94,32 +104,24 @@ export function FitnessLevelStep({ index, scrollX, slideWidth }: FitnessLevelSte
 const styles = StyleSheet.create({
   list: { gap: 12 },
   row: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    gap: 12,
+  },
+  rowHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: palette.neutral['1'],
-    backgroundColor: '#FFFFFF',
-  },
-  rowSelected: {
-    borderColor: palette.highlightBlue['5'],
-    backgroundColor: palette.highlightBlue['0.5'],
   },
   radio: {
     width: 22,
     height: 22,
     borderRadius: 11,
     borderWidth: 1.5,
-    borderColor: palette.neutral['3'],
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-  },
-  radioSelected: {
-    borderColor: palette.highlightBlue['5'],
   },
   radioDot: {
     width: 10,
@@ -131,18 +133,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: fonts.medium,
   },
-  infoBox: {
-    marginTop: 20,
+  descriptionWrap: {
     backgroundColor: palette.highlightBlue['0.5'],
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: palette.highlightBlue['1'],
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
-  infoText: {
-    fontSize: 13,
+  description: {
+    fontSize: 12,
     fontFamily: fonts.regular,
     color: palette.highlightBlue['7'],
-    lineHeight: 20,
+    lineHeight: 18,
   },
 });

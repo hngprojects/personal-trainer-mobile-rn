@@ -6,7 +6,8 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button, Typography } from '@/shared/components';
-import { fonts, palette } from '@/shared/theme';
+import { useStatusBarStyle } from '@/shared/hooks/useStatusBarStyle';
+import { fonts, useTheme } from '@/shared/theme';
 
 import { useProfileSetupSubmit } from '../hooks/useProfileSetupSubmit';
 import { TOTAL_STEPS, useProfileSetupStore } from '../store/profile-setup.store';
@@ -14,20 +15,37 @@ import { BackButton } from './BackButton';
 import { ProfileSetupPager } from './ProfileSetupPager';
 import { ProfileStepProgress } from './ProfileStepProgress';
 
-const STEP_TITLES = [
-  'Complete your profile',
-  'Select your gender',
-  'What are your fitness goals?',
-  'Choose your fitness level',
-  'Your Personalized Fitness Journey Starts Here.',
+interface StepCopy {
+  title: string;
+  subtitle: string;
+}
+
+const STEPS: StepCopy[] = [
+  {
+    title: 'Complete your profile',
+    subtitle: 'Just a few quick details so we can set up your training experience.',
+  },
+  {
+    title: 'What are your fitness goals?',
+    subtitle: 'Select at least 3 goals that inspire you.',
+  },
+  {
+    title: 'Choose your fitness level',
+    subtitle: 'Pick a level that matches your current abilities.',
+  },
+  {
+    title: 'Your Personalized Fitness Journey Starts Here.',
+    subtitle: 'Our expert trainers will guide you every step of the way',
+  },
 ];
 
-const MIN_GOALS = 1;
+const MIN_GOALS = 3;
 
 export function ProfileSetupScreen() {
+  const { colors } = useTheme();
+  const statusBarStyle = useStatusBarStyle();
   const step = useProfileSetupStore((s) => s.step);
   const name = useProfileSetupStore((s) => s.draft.name);
-  const email = useProfileSetupStore((s) => s.draft.email);
   const gender = useProfileSetupStore((s) => s.draft.gender);
   const goalsCount = useProfileSetupStore((s) => s.draft.goals.length);
   const fitnessLevel = useProfileSetupStore((s) => s.draft.fitnessLevel);
@@ -38,35 +56,45 @@ export function ProfileSetupScreen() {
   const valid = useMemo(() => {
     switch (step) {
       case 0:
-        return name.trim().length > 1 && email.length > 0;
+        return name.trim().length > 1 && gender !== null;
       case 1:
-        return gender !== null;
-      case 2:
         return goalsCount >= MIN_GOALS;
-      case 3:
+      case 2:
         return fitnessLevel !== null;
-      case 4:
+      case 3:
         return true;
       default:
         return false;
     }
-  }, [step, name, email, gender, goalsCount, fitnessLevel]);
+  }, [step, name, gender, goalsCount, fitnessLevel]);
 
   const isLast = step === TOTAL_STEPS - 1;
+  const isFirst = step === 0;
   const handleContinue = isLast ? submit : next;
   const buttonLabel = isLast ? 'Get Started' : 'Continue';
+  const copy = STEPS[step] ?? STEPS[0];
 
   return (
-    <SafeAreaView edges={['top', 'bottom']} style={styles.safe}>
-      <StatusBar style="dark" />
+    <SafeAreaView
+      edges={['top', 'bottom']}
+      style={[styles.safe, { backgroundColor: colors.background }]}
+    >
+      <StatusBar style={statusBarStyle} />
 
       <View style={styles.header}>
         <View style={styles.headerRow}>
-          <BackButton onPress={prev} disabled={step === 0 || isSubmitting} />
-          <Animated.View key={step} entering={FadeIn.duration(260)} style={styles.titleWrap}>
-            <Typography style={styles.title}>{STEP_TITLES[step]}</Typography>
-          </Animated.View>
+          {!isFirst && !isLast ? (
+            <BackButton onPress={prev} disabled={isSubmitting} />
+          ) : (
+            <View style={styles.backSpacer} />
+          )}
         </View>
+        <Animated.View key={step} entering={FadeIn.duration(260)} style={styles.copyBlock}>
+          <Typography style={[styles.title, { color: colors.text }]}>{copy.title}</Typography>
+          <Typography style={[styles.subtitle, { color: colors.textSecondary }]}>
+            {copy.subtitle}
+          </Typography>
+        </Animated.View>
         <ProfileStepProgress step={step} total={TOTAL_STEPS} />
       </View>
 
@@ -87,24 +115,32 @@ export function ProfileSetupScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
   header: {
     paddingHorizontal: 20,
     paddingTop: 8,
     paddingBottom: 16,
-    gap: 14,
+    gap: 10,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    minHeight: 40,
   },
-  titleWrap: { flex: 1 },
+  backSpacer: {
+    height: 40,
+  },
+  copyBlock: {
+    gap: 4,
+  },
   title: {
     fontSize: 22,
     fontFamily: fonts.bold,
-    color: palette.neutral['9'],
+  },
+  subtitle: {
+    fontSize: 13,
+    fontFamily: fonts.regular,
+    lineHeight: 18,
   },
   footer: {
     paddingHorizontal: 20,

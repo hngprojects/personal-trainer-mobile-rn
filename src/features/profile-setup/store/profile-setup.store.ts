@@ -2,7 +2,7 @@ import { createStore } from '@/shared/store/factory';
 
 import type { FitnessGoal, FitnessLevel, Gender, ProfileDraft } from '../types/profile-setup.types';
 
-export const TOTAL_STEPS = 5;
+export const TOTAL_STEPS = 4;
 
 interface ProfileSetupState {
   step: number;

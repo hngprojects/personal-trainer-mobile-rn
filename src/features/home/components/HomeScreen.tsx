@@ -22,10 +22,11 @@ import { TrainerCardSkeleton } from '@/features/trainers/components/TrainerCardS
 import { useTrainers } from '@/features/trainers/hooks/useTrainers';
 import type { Trainer } from '@/features/trainers/types/trainer.types';
 import { Typography } from '@/shared/components';
+import { useStatusBarStyle } from '@/shared/hooks/useStatusBarStyle';
 import { palette, useTheme } from '@/shared/theme';
 
 import { useHome } from '../hooks/useHome';
-import { HERO_GRADIENT, homeStyles as styles } from './HomeScreen.styles';
+import { HERO_GRADIENT, useHomeStyles } from './HomeScreen.styles';
 
 const CATEGORIES = ['Yoga', 'Mobility', 'Cardio', 'Endurance', 'Strength'];
 
@@ -34,7 +35,9 @@ const ENTRY_DURATION = 420;
 const HERO_IMAGE = require('../../../../assets/images/hero-trainers.png');
 
 export function HomeScreen() {
-  const { spacing } = useTheme();
+  const { spacing, colors } = useTheme();
+  const styles = useHomeStyles();
+  const statusBarStyle = useStatusBarStyle();
   const { user } = useHome();
   const displayName = user?.name ?? '';
   const { data: trainers = [], isLoading, isRefetching, refetch } = useTrainers();
@@ -71,8 +74,8 @@ export function HomeScreen() {
   }));
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
-      <StatusBar style="dark" />
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.background }}>
+      <StatusBar style={statusBarStyle} />
 
       <Animated.ScrollView
         onScroll={scrollHandler}
@@ -105,7 +108,7 @@ export function HomeScreen() {
               </View>
             </View>
             <Pressable hitSlop={8} style={styles.bellButton}>
-              <Ionicons name="notifications-outline" size={22} color={palette.neutral['9']} />
+              <Ionicons name="notifications-outline" size={22} color={colors.text} />
             </Pressable>
           </Animated.View>
         </Animated.View>

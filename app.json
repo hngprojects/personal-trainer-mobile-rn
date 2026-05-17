@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/logo-app.png",
     "scheme": "fitcall",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true
     },
@@ -37,7 +37,13 @@
       ],
       "expo-font",
       "@react-native-google-signin/google-signin",
-      "expo-video"
+      "expo-video",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow FITCALL to use your location to personalize your profile."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

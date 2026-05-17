@@ -9,7 +9,7 @@ import {
   ViewStyle,
 } from 'react-native';
 
-import { palette, useTheme } from '@/shared/theme';
+import { useTheme } from '@/shared/theme';
 
 import { Typography } from './Typography';
 
@@ -23,8 +23,6 @@ interface ButtonProps extends Omit<PressableProps, 'style'> {
 }
 
 const BRAND_NAVY_PRESSED = '#06203F';
-const DISABLED_BG = '#F5F5F5';
-const DISABLED_TEXT = '#00192F3D';
 
 export function Button({
   label,
@@ -37,7 +35,7 @@ export function Button({
   const { colors } = useTheme();
   const isDisabled = !!(disabled || isLoading);
 
-  const { background, text } = resolveColors(variant, isDisabled, colors.primary);
+  const { background, text } = resolveColors(variant, isDisabled, colors);
 
   return (
     <Pressable
@@ -49,11 +47,11 @@ export function Button({
         { backgroundColor: background },
         variant === 'outline' && {
           borderWidth: 1.5,
-          borderColor: isDisabled ? palette.neutral['2'] : colors.primary,
+          borderColor: isDisabled ? colors.border : colors.primary,
         },
         variant === 'secondary' && {
           borderWidth: 1,
-          borderColor: palette.neutral['2'],
+          borderColor: colors.border,
           opacity: isDisabled ? 0.55 : 1,
         },
         style,
@@ -75,23 +73,28 @@ export function Button({
   );
 }
 
-function resolveColors(variant: ButtonVariant, isDisabled: boolean, primary: string) {
+function resolveColors(
+  variant: ButtonVariant,
+  isDisabled: boolean,
+  colors: ReturnType<typeof useTheme>['colors'],
+) {
+  const disabledText = colors.textSecondary;
   if (variant === 'primary') {
     return {
-      background: isDisabled ? DISABLED_BG : primary,
-      text: isDisabled ? DISABLED_TEXT : '#FFFFFF',
+      background: isDisabled ? colors.surfaceMuted : colors.primary,
+      text: isDisabled ? disabledText : '#FFFFFF',
     };
   }
   if (variant === 'secondary') {
     return {
-      background: palette.neutral['0.5'],
-      text: isDisabled ? DISABLED_TEXT : primary,
+      background: colors.surface,
+      text: isDisabled ? disabledText : colors.primary,
     };
   }
   // outline + ghost
   return {
     background: 'transparent',
-    text: isDisabled ? DISABLED_TEXT : primary,
+    text: isDisabled ? disabledText : colors.primary,
   };
 }
 

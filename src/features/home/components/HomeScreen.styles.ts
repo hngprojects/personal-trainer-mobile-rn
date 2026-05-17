@@ -1,6 +1,7 @@
+import { useMemo } from 'react';
 import { StyleSheet } from 'react-native';
 
-import { fonts, palette } from '@/shared/theme';
+import { fonts, palette, useTheme } from '@/shared/theme';
 
 export const HERO_GRADIENT: readonly [string, string, string] = [
   '#1B3F75',
@@ -8,138 +9,146 @@ export const HERO_GRADIENT: readonly [string, string, string] = [
   '#081F40',
 ] as const;
 
-export const homeStyles = StyleSheet.create({
-  body: {
-    paddingBottom: 24,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-  },
-  greeting: {
-    fontSize: 16,
-    fontFamily: fonts.semibold,
-    color: palette.neutral['9'],
-  },
-  userName: {
-    fontSize: 13,
-    fontFamily: fonts.regular,
-    color: palette.neutral['5'],
-    marginTop: 2,
-  },
-  bellButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+export function useHomeStyles() {
+  const { colors } = useTheme();
 
-  // Hero
-  heroCard: {
-    borderRadius: 18,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    minHeight: 170,
-    overflow: 'hidden',
-  },
-  heroLeft: {
-    flex: 1,
-    paddingRight: 8,
-  },
-  heroTitle: {
-    fontSize: 19,
-    fontFamily: fonts.bold,
-    color: '#FFFFFF',
-    lineHeight: 26,
-  },
-  heroText: {
-    fontSize: 12,
-    fontFamily: fonts.regular,
-    color: 'rgba(255,255,255,0.78)',
-    lineHeight: 18,
-    marginTop: 8,
-  },
-  heroImage: {
-    width: 150,
-    height: 175,
-    marginRight: -12,
-    marginVertical: -10,
-    resizeMode: 'contain',
-  },
+  return useMemo(
+    () =>
+      StyleSheet.create({
+        body: {
+          paddingBottom: 24,
+        },
+        header: {
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        },
+        headerLeft: {
+          flexDirection: 'row',
+          alignItems: 'center',
+        },
+        avatar: {
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+        },
+        greeting: {
+          fontSize: 16,
+          fontFamily: fonts.semibold,
+          color: colors.text,
+        },
+        userName: {
+          fontSize: 13,
+          fontFamily: fonts.regular,
+          color: colors.textSecondary,
+          marginTop: 2,
+        },
+        bellButton: {
+          width: 40,
+          height: 40,
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
 
-  sectionTitle: {
-    fontSize: 16,
-    fontFamily: fonts.semibold,
-    color: palette.neutral['9'],
-    marginBottom: 12,
-  },
-  categories: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  categoryItem: {
-    alignItems: 'center',
-    gap: 6,
-  },
-  categoryCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: palette.neutral['1'],
-  },
-  categoryText: {
-    fontSize: 11,
-    fontFamily: fonts.regular,
-    color: palette.neutral['5'],
-  },
-  trainersGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: 12,
-    paddingBottom: 24,
-  },
-  trainerCard: {
-    width: '48%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: palette.neutral['1'],
-  },
-  trainerImage: {
-    width: '100%',
-    height: 130,
-  },
-  trainerBody: {
-    gap: 6,
-  },
-  trainerNameRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  trainerName: {
-    fontSize: 13,
-    fontFamily: fonts.semibold,
-    color: palette.neutral['9'],
-    flex: 1,
-  },
-  trainerRating: {
-    fontSize: 12,
-    fontFamily: fonts.semibold,
-    color: palette.gold['5'],
-    marginLeft: 6,
-  },
-});
+        // Hero — always dark gradient, white text in both themes
+        heroCard: {
+          borderRadius: 18,
+          padding: 16,
+          flexDirection: 'row',
+          alignItems: 'center',
+          minHeight: 170,
+          overflow: 'hidden',
+        },
+        heroLeft: {
+          flex: 1,
+          paddingRight: 8,
+        },
+        heroTitle: {
+          fontSize: 19,
+          fontFamily: fonts.bold,
+          color: '#FFFFFF',
+          lineHeight: 26,
+        },
+        heroText: {
+          fontSize: 12,
+          fontFamily: fonts.regular,
+          color: 'rgba(255,255,255,0.78)',
+          lineHeight: 18,
+          marginTop: 8,
+        },
+        heroImage: {
+          width: 150,
+          height: 175,
+          marginRight: -12,
+          marginVertical: -10,
+          resizeMode: 'contain',
+        },
+
+        sectionTitle: {
+          fontSize: 16,
+          fontFamily: fonts.semibold,
+          color: colors.text,
+          marginBottom: 12,
+        },
+        categories: {
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+        },
+        categoryItem: {
+          alignItems: 'center',
+          gap: 6,
+        },
+        categoryCircle: {
+          width: 56,
+          height: 56,
+          borderRadius: 28,
+          backgroundColor: colors.surfaceMuted,
+        },
+        categoryText: {
+          fontSize: 11,
+          fontFamily: fonts.regular,
+          color: colors.textSecondary,
+        },
+        trainersGrid: {
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          justifyContent: 'space-between',
+          gap: 12,
+          paddingBottom: 24,
+        },
+        trainerCard: {
+          width: '48%',
+          backgroundColor: colors.background,
+          borderRadius: 14,
+          overflow: 'hidden',
+          borderWidth: 1,
+          borderColor: colors.divider,
+        },
+        trainerImage: {
+          width: '100%',
+          height: 130,
+        },
+        trainerBody: {
+          gap: 6,
+        },
+        trainerNameRow: {
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        },
+        trainerName: {
+          fontSize: 13,
+          fontFamily: fonts.semibold,
+          color: colors.text,
+          flex: 1,
+        },
+        trainerRating: {
+          fontSize: 12,
+          fontFamily: fonts.semibold,
+          color: palette.gold['5'],
+          marginLeft: 6,
+        },
+      }),
+    [colors],
+  );
+}
