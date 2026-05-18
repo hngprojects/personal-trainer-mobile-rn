@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 
-import { palette } from '@/shared/theme';
+import { useTheme } from '@/shared/theme';
 
 interface BackButtonProps {
   onPress: () => void;
@@ -10,14 +10,22 @@ interface BackButtonProps {
 }
 
 export function BackButton({ onPress, disabled }: BackButtonProps) {
+  const { colors } = useTheme();
   return (
     <Pressable
       hitSlop={10}
       onPress={onPress}
       disabled={disabled}
-      style={({ pressed }) => [styles.button, { opacity: disabled ? 0.35 : pressed ? 0.6 : 1 }]}
+      style={({ pressed }) => [
+        styles.button,
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.divider,
+          opacity: disabled ? 0.35 : pressed ? 0.6 : 1,
+        },
+      ]}
     >
-      <Ionicons name="chevron-back" size={22} color={palette.neutral['9']} />
+      <Ionicons name="chevron-back" size={22} color={colors.text} />
     </Pressable>
   );
 }
@@ -27,10 +35,8 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: palette.neutral['0.5'],
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: palette.neutral['1'],
   },
 });

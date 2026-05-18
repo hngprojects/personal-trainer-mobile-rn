@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SharedValue } from 'react-native-reanimated';
 
 import { useAuthStore } from '@/features/auth';
 import { TextInput } from '@/shared/components';
-import { palette } from '@/shared/theme';
 
 import { useProfileSetupStore } from '../../store/profile-setup.store';
+import type { Gender } from '../../types/profile-setup.types';
+import { GenderDropdown } from '../GenderDropdown';
 import { StepShell } from '../StepShell';
 
 interface BasicInfoStepProps {
@@ -18,43 +19,40 @@ interface BasicInfoStepProps {
 export function BasicInfoStep({ index, scrollX, slideWidth }: BasicInfoStepProps) {
   const authUser = useAuthStore((s) => s.user);
   const draftName = useProfileSetupStore((s) => s.draft.name);
+  const draftGender = useProfileSetupStore((s) => s.draft.gender);
   const patchDraft = useProfileSetupStore((s) => s.patchDraft);
+  const setGender = useProfileSetupStore((s) => s.setGender);
 
-  const email = authUser?.email ?? '';
-  const [name, setName] = useState(draftName || authUser?.name || '');
-
-  // Seed the store with the locked email + initial name so the screen-level
-  // Continue button can validate against the draft.
+  // Seed the draft with the auth user's name on mount so the Continue button
+  // reflects validity immediately — without this the user has to retype the
+  // prefilled name for the screen-level validation to flip to true.
   useEffect(() => {
-    patchDraft({ email, name: name.trim() });
+    if (!draftName && authUser?.name) {
+      patchDraft({ name: authUser.name });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [email]);
+  }, []);
 
   const handleNameChange = (next: string) => {
-    setName(next);
-    patchDraft({ name: next.trim() });
+    patchDraft({ name: next });
+  };
+
+  const handleGenderChange = (next: Gender) => {
+    setGender(next);
   };
 
   return (
     <StepShell index={index} scrollX={scrollX} slideWidth={slideWidth} keyboardAware>
       <View style={styles.form}>
         <TextInput
-          label="Full Name"
-          required
-          placeholder="John Doe"
+          label="What name would you like us to call you?"
+          placeholder="Esiraku Dorathy"
           autoCapitalize="words"
-          value={name}
+          value={draftName}
           onChangeText={handleNameChange}
           returnKeyType="next"
         />
-        <TextInput
-          label="Email"
-          required
-          value={email}
-          editable={false}
-          selectTextOnFocus={false}
-          style={styles.lockedInput}
-        />
+        <GenderDropdown value={draftGender} onChange={handleGenderChange} />
       </View>
     </StepShell>
   );
@@ -62,5 +60,4 @@ export function BasicInfoStep({ index, scrollX, slideWidth }: BasicInfoStepProps
 
 const styles = StyleSheet.create({
   form: { gap: 16 },
-  lockedInput: { color: palette.neutral['5'] },
 });

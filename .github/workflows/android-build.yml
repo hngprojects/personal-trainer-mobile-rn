@@ -67,7 +67,8 @@ jobs:
       - name: Expo Prebuild
         run: npx expo prebuild --platform android --no-install
 
-      - name: Decode release keystore
+      - name: Decode release keystore (production only)
+        if: github.ref == 'refs/heads/main'
         run: |
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
 
@@ -79,7 +80,16 @@ jobs:
           restore-keys: |
             android-gradle-${{ runner.os }}-
 
-      - name: Build release APK
+      # Staging APK is signed with the auto-generated debug keystore baked into
+      # build.gradle. Functionally a release variant (minified, ProGuard'd) but
+      # safe to ship to internal testers without exposing the production cert.
+      - name: Build release APK (staging — debug signed)
+        if: github.ref != 'refs/heads/main'
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Build release APK (production — release signed)
+        if: github.ref == 'refs/heads/main'
         working-directory: android
         env:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -119,6 +129,7 @@ jobs:
           echo "| | |" >> $GITHUB_STEP_SUMMARY
           echo "|---|---|" >> $GITHUB_STEP_SUMMARY
           echo "| Environment | \`${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Signing | \`${{ github.ref == 'refs/heads/main' && 'release keystore' || 'debug keystore' }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| Branch | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| Commit | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| Artifact | [Download APK](${{ steps.artifact.outputs.artifact-url }}) |" >> $GITHUB_STEP_SUMMARY

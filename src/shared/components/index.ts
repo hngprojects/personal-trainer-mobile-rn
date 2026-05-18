@@ -1,8 +1,10 @@
+export { Avatar } from './Avatar';
 export { Button } from './Button';
 export { ErrorBoundary } from './ErrorBoundary';
 export { FormField } from './FormField';
 export { GradientBackground } from './GradientBackground';
 export { LoadingOverlay } from './LoadingOverlay';
+export { LogoRefreshScrollView } from './LogoRefreshScrollView';
 export { OrDivider } from './OrDivider';
 export { Screen } from './Screen';
 export { Skeleton } from './Skeleton';
@@ -11,3 +13,6 @@ export { TextInput } from './TextInput';
 export { toast } from './toast';
 export { ToastHost } from './ToastHost';
 export { Typography } from './Typography';
+export { AccordionItem } from './AccordionItem';
+export { SegmentedTabs } from './SegmentedTabs';
+export { TimelineIndicator } from './TimelineIndicator';

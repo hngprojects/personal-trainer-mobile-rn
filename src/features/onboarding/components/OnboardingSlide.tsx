@@ -11,7 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { Button, Typography } from '@/shared/components';
-import { palette, useTheme } from '@/shared/theme';
+import { useTheme } from '@/shared/theme';
 
 import { OnboardingSlideData } from '../data/slides';
 import { OnboardingCallout } from './OnboardingCallout';
@@ -41,7 +41,7 @@ export function OnboardingSlide({
   onLogin,
   onRegister,
 }: OnboardingSlideProps) {
-  const { spacing } = useTheme();
+  const { spacing, colors } = useTheme();
   const mounted = useSharedValue(0);
 
   useEffect(() => {
@@ -129,12 +129,12 @@ export function OnboardingSlide({
       >
         <View style={{ gap: spacing.sm }}>
           <Animated.View style={titleStyle}>
-            <Typography variant="h2" align="center" color={palette.neutral['9']}>
+            <Typography variant="h2" align="center" color={colors.text}>
               {slide.title}
             </Typography>
           </Animated.View>
           <Animated.View style={subtitleStyle}>
-            <Typography variant="body1" color={palette.neutral['5']} align="center">
+            <Typography variant="body1" color={colors.textSecondary} align="center">
               {slide.subtitle}
             </Typography>
           </Animated.View>

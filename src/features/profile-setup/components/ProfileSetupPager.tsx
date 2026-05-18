@@ -6,7 +6,6 @@ import { useProfileSetupStore } from '../store/profile-setup.store';
 import { AboutStep } from './steps/AboutStep';
 import { BasicInfoStep } from './steps/BasicInfoStep';
 import { FitnessLevelStep } from './steps/FitnessLevelStep';
-import { GenderStep } from './steps/GenderStep';
 import { GoalsStep } from './steps/GoalsStep';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -40,10 +39,9 @@ export function ProfileSetupPager() {
       style={styles.fill}
     >
       <BasicInfoStep index={0} {...sharedProps} />
-      <GenderStep index={1} {...sharedProps} />
-      <GoalsStep index={2} {...sharedProps} />
-      <FitnessLevelStep index={3} {...sharedProps} />
-      <AboutStep index={4} {...sharedProps} />
+      <GoalsStep index={1} {...sharedProps} />
+      <FitnessLevelStep index={2} {...sharedProps} />
+      <AboutStep index={3} {...sharedProps} />
     </Animated.ScrollView>
   );
 }

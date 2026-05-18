@@ -1,6 +1,8 @@
 import { router } from 'expo-router';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { palette, useTheme } from '@/shared/theme';
+
 import { Trainer } from '../types/trainer.types';
 
 interface Props {
@@ -8,19 +10,23 @@ interface Props {
 }
 
 export function TrainerCard({ trainer }: Props) {
+  const { colors } = useTheme();
   return (
-    <Pressable style={styles.card} onPress={() => router.push('/trainer-profile')}>
+    <Pressable
+      style={[styles.card, { backgroundColor: colors.background }]}
+      onPress={() => router.push('/trainer-profile')}
+    >
       <Image source={{ uri: trainer.image }} style={styles.image} />
 
       <View style={styles.content}>
-        <Text style={styles.name}>{trainer.name}</Text>
+        <Text style={[styles.name, { color: colors.text }]}>{trainer.name}</Text>
 
-        <Text style={styles.specialty}>{trainer.specialty}</Text>
+        <Text style={[styles.specialty, { color: colors.textSecondary }]}>{trainer.specialty}</Text>
 
         <View style={styles.bottomRow}>
-          <Text style={styles.rating}>⭐ {trainer.rating}</Text>
+          <Text style={[styles.rating, { color: colors.text }]}>⭐ {trainer.rating}</Text>
 
-          <Text style={styles.price}>₦10k</Text>
+          <Text style={[styles.price, { color: palette.highlightBlue['5'] }]}>₦10k</Text>
         </View>
       </View>
     </Pressable>
@@ -30,7 +36,6 @@ export function TrainerCard({ trainer }: Props) {
 const styles = StyleSheet.create({
   card: {
     width: '48%',
-    backgroundColor: '#fff',
     borderRadius: 18,
     overflow: 'hidden',
     marginBottom: 18,
@@ -51,7 +56,6 @@ const styles = StyleSheet.create({
   },
 
   specialty: {
-    color: '#777',
     fontSize: 11,
     marginTop: 2,
   },
@@ -69,7 +73,6 @@ const styles = StyleSheet.create({
   },
 
   price: {
-    color: '#0D6EFD',
     fontWeight: '700',
     fontSize: 13,
   },

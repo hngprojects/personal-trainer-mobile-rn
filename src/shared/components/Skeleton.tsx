@@ -8,7 +8,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { palette } from '@/shared/theme';
+import { useTheme } from '@/shared/theme';
 
 interface SkeletonProps {
   width?: number | `${number}%` | 'auto';
@@ -18,6 +18,7 @@ interface SkeletonProps {
 }
 
 export function Skeleton({ width = '100%', height = 16, borderRadius = 6, style }: SkeletonProps) {
+  const { colors } = useTheme();
   const opacity = useSharedValue(0.45);
 
   useEffect(() => {
@@ -39,7 +40,7 @@ export function Skeleton({ width = '100%', height = 16, borderRadius = 6, style 
           width,
           height,
           borderRadius,
-          backgroundColor: palette.neutral['1'],
+          backgroundColor: colors.surfaceMuted,
         },
         animatedStyle,
         style,

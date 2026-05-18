@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { fonts, palette } from '@/shared/theme';
+import { fonts, useTheme } from '@/shared/theme';
 
 import { Typography } from './Typography';
 
@@ -13,15 +13,20 @@ interface SocialButtonProps {
 }
 
 export function SocialButton({ icon, label, onPress, disabled }: SocialButtonProps) {
+  const { colors } = useTheme();
   return (
     <Pressable
-      style={({ pressed }) => [styles.button, pressed && styles.pressed]}
+      style={({ pressed }) => [
+        styles.button,
+        { backgroundColor: colors.surfaceMuted },
+        pressed && styles.pressed,
+      ]}
       onPress={onPress}
       disabled={disabled}
-      android_ripple={{ color: palette.neutral['2'] }}
+      android_ripple={{ color: colors.border }}
     >
       <View style={styles.icon}>{icon}</View>
-      <Typography style={styles.label}>{label}</Typography>
+      <Typography style={[styles.label, { color: colors.text }]}>{label}</Typography>
     </Pressable>
   );
 }
@@ -31,7 +36,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: palette.neutral['1'],
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderRadius: 8,
@@ -47,6 +51,5 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontFamily: fonts.semibold,
-    color: palette.neutral['9'],
   },
 });

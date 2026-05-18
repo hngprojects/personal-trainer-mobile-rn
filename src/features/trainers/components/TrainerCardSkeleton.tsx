@@ -2,11 +2,14 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Skeleton } from '@/shared/components';
-import { palette } from '@/shared/theme';
+import { useTheme } from '@/shared/theme';
 
 export function TrainerCardSkeleton() {
+  const { colors } = useTheme();
   return (
-    <View style={styles.card}>
+    <View
+      style={[styles.card, { backgroundColor: colors.background, borderColor: colors.divider }]}
+    >
       <Skeleton width="100%" height={130} borderRadius={0} />
 
       <View style={styles.body}>
@@ -43,11 +46,9 @@ export function TrainerCardSkeleton() {
 const styles = StyleSheet.create({
   card: {
     width: '48%',
-    backgroundColor: '#FFFFFF',
     borderRadius: 14,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: palette.neutral['1'],
   },
   body: {
     padding: 8,

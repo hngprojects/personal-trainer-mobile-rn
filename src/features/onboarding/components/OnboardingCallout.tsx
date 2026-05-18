@@ -8,7 +8,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { Typography } from '@/shared/components';
-import { fonts, palette } from '@/shared/theme';
+import { fonts, palette, useTheme } from '@/shared/theme';
 
 import { OnboardingCalloutData } from '../data/slides';
 
@@ -20,6 +20,7 @@ interface OnboardingCalloutProps {
 }
 
 export function OnboardingCallout({ data, scrollX, index, slideWidth }: OnboardingCalloutProps) {
+  const { colors } = useTheme();
   const animatedStyle = useAnimatedStyle(() => {
     const inputRange = [(index - 1) * slideWidth, index * slideWidth, (index + 1) * slideWidth];
     const opacity = interpolate(scrollX.value, inputRange, [0, 1, 0], Extrapolation.CLAMP);
@@ -29,7 +30,14 @@ export function OnboardingCallout({ data, scrollX, index, slideWidth }: Onboardi
   });
 
   return (
-    <Animated.View style={[styles.card, data.position as ViewStyle, animatedStyle]}>
+    <Animated.View
+      style={[
+        styles.card,
+        { backgroundColor: colors.background },
+        data.position as ViewStyle,
+        animatedStyle,
+      ]}
+    >
       {data.variant === 'icon' ? (
         <View
           style={[styles.iconBox, { backgroundColor: data.iconBg ?? palette.highlightBlue['7'] }]}
@@ -43,14 +51,18 @@ export function OnboardingCallout({ data, scrollX, index, slideWidth }: Onboardi
       )}
 
       <View style={styles.textBlock}>
-        <Typography style={styles.title}>{data.title}</Typography>
+        <Typography style={[styles.title, { color: colors.text }]}>{data.title}</Typography>
         {data.rating !== undefined ? (
           <View style={styles.ratingRow}>
             <Typography style={styles.star}>★</Typography>
-            <Typography style={styles.ratingValue}>{data.rating.toFixed(1)}</Typography>
+            <Typography style={[styles.ratingValue, { color: colors.text }]}>
+              {data.rating.toFixed(1)}
+            </Typography>
           </View>
         ) : data.subtitle ? (
-          <Typography style={styles.subtitle}>{data.subtitle}</Typography>
+          <Typography style={[styles.subtitle, { color: colors.textSecondary }]}>
+            {data.subtitle}
+          </Typography>
         ) : null}
       </View>
     </Animated.View>
@@ -62,7 +74,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     paddingVertical: 6,
     paddingHorizontal: 8,
@@ -103,13 +114,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 12,
     fontFamily: fonts.bold,
-    color: palette.neutral['9'],
     lineHeight: 15,
   },
   subtitle: {
     fontSize: 10,
     fontFamily: fonts.regular,
-    color: palette.neutral['5'],
     lineHeight: 13,
   },
   ratingRow: {
@@ -125,7 +134,6 @@ const styles = StyleSheet.create({
   ratingValue: {
     fontSize: 11,
     fontFamily: fonts.semibold,
-    color: palette.neutral['9'],
     lineHeight: 14,
   },
 });

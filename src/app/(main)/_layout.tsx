@@ -1,12 +1,62 @@
 import { Redirect, Stack } from 'expo-router';
+import React, { useEffect } from 'react';
+import { StyleSheet, View } from 'react-native';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { useAuthSession } from '@/features/auth';
+import { useProfile } from '@/features/profile';
+import { useTheme } from '@/shared/theme';
+
+const LOGO = require('../../../assets/images/logo.png');
+
+function MainLoadingScreen() {
+  const { colors } = useTheme();
+  const rotation = useSharedValue(0);
+
+  useEffect(() => {
+    rotation.value = withRepeat(
+      withTiming(360, {
+        duration: 1100,
+        easing: Easing.linear,
+      }),
+      -1,
+      false,
+    );
+  }, [rotation]);
+
+  const logoStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${rotation.value}deg` }],
+  }));
+
+  return (
+    <View style={[styles.loading, { backgroundColor: colors.background }]}>
+      <Animated.Image source={LOGO} style={[styles.logo, logoStyle]} />
+    </View>
+  );
+}
 
 export default function MainLayout() {
-  const { isLoggedIn } = useAuthSession();
+  const { isLoggedIn, user } = useAuthSession();
+  const profileQuery = useProfile();
 
   // Guard: any internal route requires an active session.
   if (!isLoggedIn) return <Redirect href="/(auth)/login" />;
+
+  if (profileQuery.isLoading) {
+    return <MainLoadingScreen />;
+  }
+
+  const profileComplete = profileQuery.data?.profileComplete ?? user?.profileComplete;
+
+  if (profileComplete === false) {
+    return <Redirect href="/profile-setup" />;
+  }
 
   return (
     <Stack
@@ -23,3 +73,16 @@ export default function MainLayout() {
     </Stack>
   );
 }
+
+const styles = StyleSheet.create({
+  loading: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logo: {
+    width: 72,
+    height: 72,
+    resizeMode: 'contain',
+  },
+});
