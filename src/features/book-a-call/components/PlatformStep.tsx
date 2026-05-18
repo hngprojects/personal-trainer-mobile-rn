@@ -1,13 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, ImageSourcePropType, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 import { Trainer } from '@/features/trainers/types/trainer.types';
 import { Button, Typography } from '@/shared/components';
 import { palette, useTheme } from '@/shared/theme';
-import { CallDraft, CallPlatform } from '../types/book-a-call.types';
 
-const ZOOM_LOGO = require('../../../../assets/images/book-a-call/zoom.png');
-const GMEET_LOGO = require('../../../../assets/images/book-a-call/google-meet.png');
+import { PLATFORM_LOGOS } from '../data/platform-logos';
+import { CallDraft, CallPlatform } from '../types/book-a-call.types';
 
 const AGENT_BULLETS = [
   'Answer any questions you have about FitCall',
@@ -15,9 +15,9 @@ const AGENT_BULLETS = [
   "Guide you through getting started if you're ready",
 ];
 
-const PLATFORMS: { id: CallPlatform; name: string; logo: number }[] = [
-  { id: 'zoom', name: 'Zoom', logo: ZOOM_LOGO },
-  { id: 'google-meet', name: 'Google Meet', logo: GMEET_LOGO },
+const PLATFORMS: { id: CallPlatform; name: string; logo: ImageSourcePropType }[] = [
+  { id: 'zoom', name: 'Zoom', logo: PLATFORM_LOGOS.zoom },
+  { id: 'google-meet', name: 'Google Meet', logo: PLATFORM_LOGOS['google-meet'] },
 ];
 
 interface PlatformStepProps {
@@ -38,15 +38,18 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
         showsVerticalScrollIndicator={false}
       >
         {/* Heading */}
-        <Typography variant="h2" style={styles.heading}>
-          Got questions? Let&apos;s answer them.
-        </Typography>
-        <Typography variant="body2" color={colors.textSecondary} style={styles.subtitle}>
-          One of our agents will reach out to you on your chosen platform.
-        </Typography>
+        <Animated.View entering={FadeInDown.duration(360)}>
+          <Typography variant="h2" style={styles.heading}>
+            Got questions? Let&apos;s answer them.
+          </Typography>
+          <Typography variant="body2" color={colors.textSecondary} style={styles.subtitle}>
+            One of our agents will reach out to you on your chosen platform.
+          </Typography>
+        </Animated.View>
 
         {/* Info card */}
-        <View
+        <Animated.View
+          entering={FadeInUp.delay(80).duration(360)}
           style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
         >
           <Typography variant="body2" style={styles.cardLabel}>
@@ -65,10 +68,11 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
               </Typography>
             </View>
           ))}
-        </View>
+        </Animated.View>
 
         {/* Trainer / enquiring-about card */}
-        <View
+        <Animated.View
+          entering={FadeInUp.delay(160).duration(360)}
           style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
         >
           <Typography variant="body2" color={colors.primary} style={styles.enquiringLabel}>
@@ -88,53 +92,61 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
               />
             </View>
           </View>
-        </View>
+        </Animated.View>
 
         {/* Platform selection */}
-        <Typography variant="body1" style={styles.sectionHeader}>
-          Choose your preferred platform
-        </Typography>
+        <Animated.View entering={FadeInUp.delay(220).duration(360)}>
+          <Typography variant="body1" style={styles.sectionHeader}>
+            Choose your preferred platform
+          </Typography>
+        </Animated.View>
 
-        {PLATFORMS.map((p) => {
+        {PLATFORMS.map((p, i) => {
           const selected = draft.platform === p.id;
           return (
-            <Pressable
-              key={p.id}
-              onPress={() => onUpdate({ platform: p.id })}
-              style={[
-                styles.platformCard,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: selected ? colors.primary : colors.border,
-                  borderWidth: selected ? 1.5 : 1,
-                },
-              ]}
-            >
-              <Image source={p.logo} style={styles.platformLogo} resizeMode="contain" />
-              <View style={styles.platformText}>
-                <Typography variant="body1" style={styles.platformName}>
-                  {p.name}
-                </Typography>
-                <Typography variant="body2" color={colors.textSecondary}>
-                  Video call platform
-                </Typography>
-              </View>
-              <View
+            <Animated.View key={p.id} entering={FadeInUp.delay(260 + i * 80).duration(360)}>
+              <Pressable
+                onPress={() => onUpdate({ platform: p.id })}
                 style={[
-                  styles.radioOuter,
-                  { borderColor: selected ? colors.primary : colors.border },
+                  styles.platformCard,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: selected ? colors.primary : colors.border,
+                    borderWidth: selected ? 1.5 : 1,
+                  },
                 ]}
               >
-                {selected && (
-                  <View style={[styles.radioInner, { backgroundColor: colors.primary }]} />
-                )}
-              </View>
-            </Pressable>
+                <View style={styles.platformLogoBox}>
+                  <Image source={p.logo} style={styles.platformLogo} />
+                </View>
+                <View style={styles.platformText}>
+                  <Typography variant="body1" style={styles.platformName}>
+                    {p.name}
+                  </Typography>
+                  <Typography variant="body2" color={colors.textSecondary}>
+                    Video call platform
+                  </Typography>
+                </View>
+                <View
+                  style={[
+                    styles.radioOuter,
+                    { borderColor: selected ? colors.primary : colors.border },
+                  ]}
+                >
+                  {selected && (
+                    <View style={[styles.radioInner, { backgroundColor: colors.primary }]} />
+                  )}
+                </View>
+              </Pressable>
+            </Animated.View>
           );
         })}
 
         {/* Info banner */}
-        <View style={[styles.infoBanner, { backgroundColor: colors.primarySubtle }]}>
+        <Animated.View
+          entering={FadeInUp.delay(440).duration(360)}
+          style={[styles.infoBanner, { backgroundColor: colors.primarySubtle }]}
+        >
           <Ionicons
             name="information-circle-outline"
             size={18}
@@ -144,7 +156,7 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
           <Typography variant="body2" color={colors.primary} style={styles.infoText}>
             Make sure you have the selected app installed before your call.
           </Typography>
-        </View>
+        </Animated.View>
 
         <View style={styles.footerSpacer} />
       </ScrollView>
@@ -168,7 +180,7 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scroll: { flex: 1 },
-  content: { paddingTop: 8, paddingBottom: 16 },
+  content: { paddingTop: 18, paddingBottom: 16 },
   heading: { fontWeight: '700', marginBottom: 6 },
   subtitle: { marginBottom: 20, lineHeight: 22 },
   card: {
@@ -195,7 +207,18 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 12,
   },
-  platformLogo: { width: 40, height: 40, borderRadius: 8, marginRight: 12 },
+  platformLogoBox: {
+    width: 40,
+    height: 40,
+    marginRight: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  platformLogo: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'contain',
+  },
   platformText: { flex: 1 },
   platformName: { fontWeight: '600', marginBottom: 2 },
   radioOuter: {

@@ -1,5 +1,10 @@
 {
   "permissions": {
-    "allow": ["Bash(pnpm typecheck *)", "Bash(pnpm lint *)", "Bash(npx expo *)"]
+    "allow": [
+      "Bash(pnpm typecheck *)",
+      "Bash(pnpm lint *)",
+      "Bash(npx expo *)",
+      "Bash(pnpm format *)"
+    ]
   }
 }

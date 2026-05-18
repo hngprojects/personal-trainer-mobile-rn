@@ -19,20 +19,26 @@ export default function LoginScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       <StatusBar style={statusBarStyle} />
       <Screen scrollable padding edges={['top', 'bottom']}>
-        <View style={[styles.header, { gap: spacing.xs, marginBottom: spacing.xl }]}>
-          <Image source={LOGO} style={styles.logo} resizeMode="contain" />
-          <Typography style={[styles.title, { color: colors.text }]}>Welcome back</Typography>
-          <Typography style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Sign in to continue your journey
-          </Typography>
+        <View style={styles.center}>
+          <View style={[styles.header, { gap: spacing.xs, marginBottom: spacing.xl }]}>
+            <Image source={LOGO} style={styles.logo} resizeMode="contain" />
+            <Typography style={[styles.title, { color: colors.text }]}>Welcome back</Typography>
+            <Typography style={[styles.subtitle, { color: colors.textSecondary }]}>
+              Sign in to continue your journey
+            </Typography>
+          </View>
+          <AuthForm variant="signin" />
         </View>
-        <AuthForm variant="signin" />
       </Screen>
     </>
   );
 }
 
 const styles = StyleSheet.create({
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+  },
   header: { alignItems: 'center' },
   logo: { width: 56, height: 56, marginBottom: 8 },
   title: {

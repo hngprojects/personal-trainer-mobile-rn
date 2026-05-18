@@ -1,29 +1,50 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAuthStore } from '@/features/auth';
-import { Typography } from '@/shared/components';
+import { Avatar, Typography } from '@/shared/components';
 import { useStatusBarStyle } from '@/shared/hooks/useStatusBarStyle';
 import { fonts, palette, useTheme } from '@/shared/theme';
 
 import { useDeviceLocation } from '../hooks/useDeviceLocation';
+import { usePickAndUploadAvatar } from '../hooks/usePickAndUploadAvatar';
+import { useProfile } from '../hooks/useProfile';
 import { CenterModal } from './CenterModal';
 import { InfoRow } from './InfoRow';
 import { ScreenHeader } from './ScreenHeader';
 
-const AVATAR_PLACEHOLDER = 'https://randomuser.me/api/portraits/women/68.jpg';
-
 type Newsletter = 'yes' | 'no';
+
+function titleCase(value: string) {
+  return value.replace(
+    /(^|[\s_])([a-z])/g,
+    (_, sep, ch) => `${sep === '_' ? ' ' : sep}${ch.toUpperCase()}`,
+  );
+}
+
+function formatGender(gender: string | null | undefined): string {
+  if (!gender) return '—';
+  return titleCase(gender);
+}
+
+function formatPrimaryGoal(goals: string[] | null | undefined): string {
+  if (!goals?.length) return '—';
+  return titleCase(goals[0].replace(/_/g, ' '));
+}
 
 export function PersonalInformationScreen() {
   const user = useAuthStore((s) => s.user);
   const { data: location, status: locationStatus, refresh: refreshLocation } = useDeviceLocation();
   const { colors } = useTheme();
   const statusBarStyle = useStatusBarStyle();
+  const { pick: pickAvatar, isUploading } = usePickAndUploadAvatar();
+
+  // Refresh profile data on mount; useProfile syncs back into the auth store.
+  useProfile();
 
   const [newsletter, setNewsletter] = useState<Newsletter>('yes');
   const [showNewsletter, setShowNewsletter] = useState(false);
@@ -40,11 +61,12 @@ export function PersonalInformationScreen() {
           : '—');
 
   const info = {
-    name: user?.name ?? 'Grace Luke',
-    gender: 'Female',
-    dateOfBirth: '21/01/1985',
-    phoneNumber: '+1 872 2391 3097',
-    goal: 'Keep Fit',
+    name: user?.name ?? '—',
+    gender: formatGender(user?.gender),
+    // Backend doesn't store DoB / phone yet — leaving placeholders.
+    dateOfBirth: '—',
+    phoneNumber: '—',
+    goal: formatPrimaryGoal(user?.fitnessGoals),
   };
 
   return (
@@ -57,12 +79,15 @@ export function PersonalInformationScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeIn.delay(80).duration(360)} style={styles.avatarBlock}>
-          <View style={styles.avatarWrap}>
-            <Image source={{ uri: AVATAR_PLACEHOLDER }} style={styles.avatar} />
-            <View style={[styles.avatarBadge, { borderColor: colors.background }]}>
-              <Ionicons name="camera" size={11} color="#FFFFFF" />
-            </View>
-          </View>
+          <Avatar
+            name={user?.name}
+            uri={user?.avatarUrl}
+            size={76}
+            loading={isUploading}
+            onPress={pickAvatar}
+            accessibilityLabel="Change profile picture"
+            badgeIcon={<Ionicons name="camera" size={11} color="#FFFFFF" />}
+          />
         </Animated.View>
 
         <Animated.View entering={FadeInUp.delay(140).duration(360)} style={styles.list}>
@@ -198,28 +223,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 4,
     paddingBottom: 10,
-  },
-  avatarWrap: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-  },
-  avatar: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-  },
-  avatarBadge: {
-    position: 'absolute',
-    right: -2,
-    bottom: -2,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: palette.highlightBlue['5'],
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
   },
   list: {
     paddingHorizontal: 20,

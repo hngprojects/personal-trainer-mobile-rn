@@ -13,7 +13,6 @@ import { ScreenHeader } from './ScreenHeader';
 import { SettingsRow } from './SettingsRow';
 
 const GOOGLE_ICON = require('../../../../assets/images/google.png');
-const APPLE_ICON = require('../../../../assets/images/apple.png');
 
 export function AccountSettingsScreen() {
   const [twoFactor, setTwoFactor] = useState(false);
@@ -40,17 +39,6 @@ export function AccountSettingsScreen() {
               <Typography style={[styles.statusConnected, { color: colors.success }]}>
                 Connected
               </Typography>
-            }
-          />
-          <SettingsRow
-            icon={<Image source={APPLE_ICON} style={styles.brandIcon} resizeMode="contain" />}
-            label="Apple"
-            rightSlot={
-              <Pressable hitSlop={8}>
-                <Typography style={[styles.statusConnect, { color: colors.warning }]}>
-                  Connect
-                </Typography>
-              </Pressable>
             }
           />
         </Animated.View>
@@ -112,10 +100,6 @@ const styles = StyleSheet.create({
     height: 20,
   },
   statusConnected: {
-    fontSize: 12,
-    fontFamily: fonts.semibold,
-  },
-  statusConnect: {
     fontSize: 12,
     fontFamily: fonts.semibold,
   },

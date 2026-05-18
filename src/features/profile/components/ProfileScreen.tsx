@@ -2,25 +2,30 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
-import { Image, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { StyleSheet, Switch } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAuthStore, useLogout } from '@/features/auth';
-import { Button, toast, Typography } from '@/shared/components';
+import { Avatar, Button, LogoRefreshScrollView, toast, Typography } from '@/shared/components';
 import { useStatusBarStyle } from '@/shared/hooks/useStatusBarStyle';
 import { fonts, palette, useTheme } from '@/shared/theme';
 
+import { usePickAndUploadAvatar } from '../hooks/usePickAndUploadAvatar';
+import { useProfile } from '../hooks/useProfile';
 import { ScreenHeader } from './ScreenHeader';
 import { SettingsRow } from './SettingsRow';
-
-const AVATAR_PLACEHOLDER = 'https://randomuser.me/api/portraits/women/68.jpg';
 
 export function ProfileScreen() {
   const user = useAuthStore((s) => s.user);
   const logoutMutation = useLogout();
   const { isDark, setMode, colors } = useTheme();
   const statusBarStyle = useStatusBarStyle();
+  const { pick: pickAvatar, isUploading } = usePickAndUploadAvatar();
+
+  // Pull fresh profile data on mount; the hook also syncs the auth store
+  // so the rest of the UI reads from useAuthStore as before.
+  const { refetch, isRefetching } = useProfile();
 
   const handleLogout = () => {
     logoutMutation.mutate(undefined, {
@@ -34,19 +39,27 @@ export function ProfileScreen() {
     <SafeAreaView edges={['top']} style={[styles.safe, { backgroundColor: colors.background }]}>
       <StatusBar style={statusBarStyle} />
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <LogoRefreshScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        refreshing={isRefetching}
+        onRefresh={refetch}
+      >
         <Animated.View entering={FadeInDown.duration(360)}>
           <ScreenHeader title="Profile Setting" />
         </Animated.View>
 
         <Animated.View entering={FadeIn.delay(80).duration(360)} style={styles.profileBlock}>
-          <View style={styles.avatarWrap}>
-            <Image source={{ uri: AVATAR_PLACEHOLDER }} style={styles.avatar} />
-            <View style={[styles.avatarBadge, { borderColor: colors.background }]}>
-              <Ionicons name="pencil" size={11} color="#FFFFFF" />
-            </View>
-          </View>
-          <Typography style={[styles.name, { color: colors.text }]}>
+          <Avatar
+            name={user?.name}
+            uri={user?.avatarUrl}
+            size={84}
+            loading={isUploading}
+            onPress={pickAvatar}
+            accessibilityLabel="Change profile picture"
+            badgeIcon={<Ionicons name="pencil" size={11} color="#FFFFFF" />}
+          />
+          <Typography style={[styles.name, { color: colors.text, marginTop: 10 }]}>
             {user?.name ?? 'Member'}
           </Typography>
           <Typography style={[styles.email, { color: colors.textSecondary }]}>
@@ -126,7 +139,7 @@ export function ProfileScreen() {
         <Animated.View entering={FadeInUp.delay(320).duration(360)} style={styles.logoutWrap}>
           <Button label="Log Out" isLoading={logoutMutation.isPending} onPress={handleLogout} />
         </Animated.View>
-      </ScrollView>
+      </LogoRefreshScrollView>
     </SafeAreaView>
   );
 }
@@ -143,29 +156,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 4,
     paddingBottom: 18,
-  },
-  avatarWrap: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-    marginBottom: 10,
-  },
-  avatar: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-  },
-  avatarBadge: {
-    position: 'absolute',
-    right: -2,
-    bottom: -2,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: palette.highlightBlue['5'],
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
   },
   name: {
     fontSize: 15,

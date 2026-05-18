@@ -19,22 +19,28 @@ export default function RegisterScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       <StatusBar style={statusBarStyle} />
       <Screen scrollable padding edges={['top', 'bottom']}>
-        <View style={[styles.header, { gap: spacing.xs, marginBottom: spacing.xl }]}>
-          <Image source={LOGO} style={styles.logo} resizeMode="contain" />
-          <Typography style={[styles.title, { color: colors.text }]}>
-            Create your account
-          </Typography>
-          <Typography style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Let&apos;s get you started in a few minutes
-          </Typography>
+        <View style={styles.center}>
+          <View style={[styles.header, { gap: spacing.xs, marginBottom: spacing.xl }]}>
+            <Image source={LOGO} style={styles.logo} resizeMode="contain" />
+            <Typography style={[styles.title, { color: colors.text }]}>
+              Create your account
+            </Typography>
+            <Typography style={[styles.subtitle, { color: colors.textSecondary }]}>
+              Let&apos;s get you started in a few minutes
+            </Typography>
+          </View>
+          <AuthForm variant="signup" />
         </View>
-        <AuthForm variant="signup" />
       </Screen>
     </>
   );
 }
 
 const styles = StyleSheet.create({
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+  },
   header: { alignItems: 'center' },
   logo: { width: 56, height: 56, marginBottom: 8 },
   title: {

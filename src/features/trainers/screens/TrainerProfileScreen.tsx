@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeIn, FadeInDown, FadeInUp, ZoomIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/shared/theme';
@@ -34,21 +35,33 @@ export function TrainerProfileScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* HERO — cover image extends edge-to-edge under the status bar */}
-        <View style={styles.hero}>
-          <Image source={{ uri: trainer.coverImage }} style={styles.cover} />
-          <Image
+        <Animated.View entering={FadeIn.duration(420)} style={styles.hero}>
+          <Animated.Image
+            entering={FadeIn.duration(520)}
+            source={{ uri: trainer.coverImage }}
+            style={styles.cover}
+          />
+          <Animated.Image
+            entering={ZoomIn.delay(180).duration(380)}
             source={{ uri: trainer.image }}
             style={[styles.avatar, { borderColor: colors.background }]}
           />
-        </View>
+        </Animated.View>
 
         {/* CONTENT */}
         <View style={styles.info}>
-          <Text style={[styles.name, { color: colors.text }]}>Charles Effiong</Text>
-          <Text style={[styles.role, { color: colors.textSecondary }]}>Coach · More · 7 yrs</Text>
+          <Animated.View entering={FadeInDown.delay(80).duration(380)}>
+            <Text style={[styles.name, { color: colors.text }]}>{trainer.name}</Text>
+            <Text style={[styles.role, { color: colors.textSecondary }]}>
+              {trainer.specialty} · {trainer.experience}
+            </Text>
+          </Animated.View>
 
           {/* STATS */}
-          <View style={[styles.stats, { borderBottomColor: colors.divider }]}>
+          <Animated.View
+            entering={FadeInUp.delay(140).duration(420)}
+            style={[styles.stats, { borderBottomColor: colors.divider }]}
+          >
             <View style={styles.statItem}>
               <Text style={[styles.statValue, { color: colors.textSecondary }]}>Exp</Text>
               <Text style={[styles.statNumber, { color: colors.text }]}>5+</Text>
@@ -61,10 +74,13 @@ export function TrainerProfileScreen() {
               <Text style={[styles.statValue, { color: colors.textSecondary }]}>Rating</Text>
               <Text style={[styles.statNumber, { color: colors.text }]}>4.8</Text>
             </View>
-          </View>
+          </Animated.View>
 
           {/* TABS */}
-          <View style={[styles.tabs, { backgroundColor: colors.surfaceMuted }]}>
+          <Animated.View
+            entering={FadeInUp.delay(220).duration(420)}
+            style={[styles.tabs, { backgroundColor: colors.surfaceMuted }]}
+          >
             {['Coach', 'Benefits', 'Ratings'].map((item) => (
               <Pressable
                 key={item}
@@ -82,11 +98,11 @@ export function TrainerProfileScreen() {
                 </Text>
               </Pressable>
             ))}
-          </View>
+          </Animated.View>
 
           {/* COACH TAB */}
           {tab === 'Coach' && (
-            <>
+            <Animated.View key="Coach" entering={FadeInUp.duration(360)}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>
                 About Charles Effiong
               </Text>
@@ -112,12 +128,12 @@ export function TrainerProfileScreen() {
                   <Ionicons name="play" size={22} color="#0F2E5C" />
                 </View>
               </Pressable>
-            </>
+            </Animated.View>
           )}
 
           {/* BENEFITS TAB */}
           {tab === 'Benefits' && (
-            <>
+            <Animated.View key="Benefits" entering={FadeInUp.duration(360)}>
               {[
                 {
                   title: 'Personalized Training Plans',
@@ -142,12 +158,12 @@ export function TrainerProfileScreen() {
                   </View>
                 </View>
               ))}
-            </>
+            </Animated.View>
           )}
 
           {/* RATINGS TAB */}
           {tab === 'Ratings' && (
-            <>
+            <Animated.View key="Ratings" entering={FadeInUp.duration(360)}>
               <View style={styles.ratingHeader}>
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>Trainer Ratings</Text>
                 <Text style={[styles.mostRecent, { color: colors.textSecondary }]}>
@@ -172,24 +188,26 @@ export function TrainerProfileScreen() {
                   </Text>
                 </View>
               ))}
-            </>
+            </Animated.View>
           )}
 
           {/* BUTTONS */}
-          <Pressable style={styles.primaryBtn}>
-            <Text style={styles.primaryText}>Work With Charles</Text>
-          </Pressable>
-          <Pressable
-            style={styles.secondaryBtn}
-            onPress={() =>
-              router.push({
-                pathname: '/book-a-call',
-                params: { trainerId: trainer.id },
-              } as never)
-            }
-          >
-            <Text style={styles.secondaryText}>Request a Call</Text>
-          </Pressable>
+          <Animated.View entering={FadeInUp.delay(300).duration(420)}>
+            <Pressable style={styles.primaryBtn}>
+              <Text style={styles.primaryText}>Work With {trainer.name.split(' ')[0]}</Text>
+            </Pressable>
+            <Pressable
+              style={styles.secondaryBtn}
+              onPress={() =>
+                router.push({
+                  pathname: '/book-a-call',
+                  params: { trainerId: trainer.id },
+                } as never)
+              }
+            >
+              <Text style={styles.secondaryText}>Request a Call</Text>
+            </Pressable>
+          </Animated.View>
         </View>
       </ScrollView>
     </View>

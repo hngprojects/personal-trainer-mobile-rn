@@ -130,9 +130,11 @@ export const darkColors: Colors = {
   background: palette.neutral['9'],
   surface: palette.neutral['8'],
   surfaceMuted: palette.neutral['7'],
-  primary: BRAND.base,
-  primaryPressed: BRAND.pressed,
-  primarySubtle: palette.neutral['7'],
+  // BRAND.base (#0F2E5C) blends into the dark background — swap to a brighter
+  // brand blue in dark mode so primary buttons and outline-text remain legible.
+  primary: palette.highlightBlue['4'],
+  primaryPressed: palette.highlightBlue['5'],
+  primarySubtle: palette.highlightBlue['8'],
   text: palette.neutral['0.5'],
   textSecondary: palette.neutral['4'],
   textMuted: palette.neutral['3'],

@@ -1,12 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image, ScrollView, StyleSheet, View } from 'react-native';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 import { Button, Typography } from '@/shared/components';
 import { palette, useTheme } from '@/shared/theme';
-import { CallDraft, CallPlatform } from '../types/book-a-call.types';
 
-const GMEET_LOGO = require('../../../../assets/images/book-a-call/google-meet.png');
-const ZOOM_LOGO = require('../../../../assets/images/book-a-call/zoom.png');
+import { PLATFORM_LOGOS } from '../data/platform-logos';
+import { CallDraft, CallPlatform } from '../types/book-a-call.types';
 
 const MONTH_NAMES = [
   'January',
@@ -29,7 +29,7 @@ function platformLabel(p: CallPlatform): string {
 }
 
 function platformLogo(p: CallPlatform) {
-  return p === 'google-meet' ? GMEET_LOGO : ZOOM_LOGO;
+  return PLATFORM_LOGOS[p];
 }
 
 function formatDate(d: Date): string {
@@ -73,15 +73,18 @@ export function SummaryStep({ draft, onSubmit }: SummaryStepProps) {
         contentContainerStyle={[styles.content, { paddingHorizontal: spacing.md }]}
         showsVerticalScrollIndicator={false}
       >
-        <Typography variant="h2" style={styles.heading}>
-          Review your call request
-        </Typography>
-        <Typography variant="body2" color={colors.textSecondary} style={styles.subtitle}>
-          Please review the details below and confirm.
-        </Typography>
+        <Animated.View entering={FadeInDown.duration(360)}>
+          <Typography variant="h2" style={styles.heading}>
+            Review your call request
+          </Typography>
+          <Typography variant="body2" color={colors.textSecondary} style={styles.subtitle}>
+            Please review the details below and confirm.
+          </Typography>
+        </Animated.View>
 
         {/* Details card */}
-        <View
+        <Animated.View
+          entering={FadeInUp.delay(80).duration(360)}
           style={[
             styles.detailsCard,
             { backgroundColor: colors.surface, borderColor: colors.border },
@@ -149,10 +152,11 @@ export function SummaryStep({ draft, onSubmit }: SummaryStepProps) {
               )}
             </View>
           ))}
-        </View>
+        </Animated.View>
 
         {/* What happens next */}
-        <View
+        <Animated.View
+          entering={FadeInUp.delay(180).duration(360)}
           style={[
             styles.nextCard,
             { backgroundColor: colors.background, borderColor: colors.border },
@@ -174,7 +178,7 @@ export function SummaryStep({ draft, onSubmit }: SummaryStepProps) {
               </Typography>
             </View>
           ))}
-        </View>
+        </Animated.View>
 
         <View style={styles.footerSpacer} />
       </ScrollView>

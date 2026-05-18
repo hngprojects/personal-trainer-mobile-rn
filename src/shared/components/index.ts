@@ -1,8 +1,10 @@
+export { Avatar } from './Avatar';
 export { Button } from './Button';
 export { ErrorBoundary } from './ErrorBoundary';
 export { FormField } from './FormField';
 export { GradientBackground } from './GradientBackground';
 export { LoadingOverlay } from './LoadingOverlay';
+export { LogoRefreshScrollView } from './LogoRefreshScrollView';
 export { OrDivider } from './OrDivider';
 export { Screen } from './Screen';
 export { Skeleton } from './Skeleton';

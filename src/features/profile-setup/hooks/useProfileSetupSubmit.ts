@@ -1,20 +1,37 @@
 import { router } from 'expo-router';
 
+import { toApiFitnessGoals, toApiFitnessLevel } from '@/features/profile/api/profile.types';
+import { useUpdateProfile } from '@/features/profile/hooks/useUpdateProfile';
+import { toast } from '@/shared/components';
+
 import { useProfileSetupStore } from '../store/profile-setup.store';
 
-// Local-only for now — no backend endpoint yet. Once the profile-update API
-// lands, swap this for a useApiMutation that PATCHes the draft, then call
-// useAuthStore.updateUser({ profileComplete: true }) on success.
 export function useProfileSetupSubmit() {
+  const draft = useProfileSetupStore((s) => s.draft);
   const reset = useProfileSetupStore((s) => s.reset);
+  const updateProfile = useUpdateProfile();
 
   const submit = () => {
-    reset();
-    router.replace('/');
+    const payload = {
+      name: draft.name.trim(),
+      ...(draft.gender ? { gender: draft.gender } : {}),
+      ...(draft.goals.length ? { fitness_goals: toApiFitnessGoals(draft.goals) } : {}),
+      ...(draft.fitnessLevel ? { fitness_level: toApiFitnessLevel(draft.fitnessLevel) } : {}),
+    };
+
+    updateProfile.mutate(payload, {
+      onSuccess: () => {
+        reset();
+        router.replace('/');
+      },
+      onError: () => {
+        toast.error("We couldn't save your profile. Please try again.");
+      },
+    });
   };
 
   return {
     submit,
-    isSubmitting: false,
+    isSubmitting: updateProfile.isPending,
   };
 }

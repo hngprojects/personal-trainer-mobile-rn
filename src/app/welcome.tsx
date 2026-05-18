@@ -15,7 +15,11 @@ export default function WelcomeScreen() {
   useEffect(() => {
     const timer = setTimeout(() => {
       dismissWelcome();
-      router.replace('/profile-setup');
+      // Returning users with a completed profile skip onboarding and land
+      // directly on the main app. Only new (or partially-onboarded) users
+      // are sent through profile-setup.
+      const profileComplete = useAuthStore.getState().user?.profileComplete;
+      router.replace(profileComplete ? '/' : '/profile-setup');
     }, WELCOME_DURATION_MS);
     return () => clearTimeout(timer);
   }, [dismissWelcome]);

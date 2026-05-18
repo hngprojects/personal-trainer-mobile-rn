@@ -1,9 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View, ViewStyle } from 'react-native';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 import { Button, Typography } from '@/shared/components';
 import { palette, useTheme } from '@/shared/theme';
+
 import { CallDraft } from '../types/book-a-call.types';
 
 const DAY_LABELS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
@@ -171,15 +173,18 @@ export function DateTimeStep({ draft, onUpdate, onContinue }: DateTimeStepProps)
         contentContainerStyle={[styles.content, { paddingHorizontal: spacing.md }]}
         showsVerticalScrollIndicator={false}
       >
-        <Typography variant="h2" style={styles.heading}>
-          Pick a date and time
-        </Typography>
-        <Typography variant="body2" color={colors.textSecondary} style={styles.subtitle}>
-          Only available slots are shown.
-        </Typography>
+        <Animated.View entering={FadeInDown.duration(360)}>
+          <Typography variant="h2" style={styles.heading}>
+            Pick a date and time
+          </Typography>
+          <Typography variant="body2" color={colors.textSecondary} style={styles.subtitle}>
+            Only available slots are shown.
+          </Typography>
+        </Animated.View>
 
         {/* Calendar card */}
-        <View
+        <Animated.View
+          entering={FadeInUp.delay(80).duration(360)}
           style={[
             styles.calendarCard,
             { backgroundColor: colors.surface, borderColor: colors.border },
@@ -262,10 +267,10 @@ export function DateTimeStep({ draft, onUpdate, onContinue }: DateTimeStepProps)
               );
             })}
           </View>
-        </View>
+        </Animated.View>
 
         {/* Legend */}
-        <View style={styles.legend}>
+        <Animated.View entering={FadeInUp.delay(160).duration(360)} style={styles.legend}>
           {[
             { color: palette.neutral['3'], fill: true, label: 'Unavailable' },
             { color: colors.border, fill: false, label: 'Available' },
@@ -285,10 +290,10 @@ export function DateTimeStep({ draft, onUpdate, onContinue }: DateTimeStepProps)
               </Typography>
             </View>
           ))}
-        </View>
+        </Animated.View>
 
         {/* Time slots header */}
-        <View style={styles.timezoneRow}>
+        <Animated.View entering={FadeInUp.delay(220).duration(360)} style={styles.timezoneRow}>
           <Ionicons
             name="globe-outline"
             size={15}
@@ -298,10 +303,10 @@ export function DateTimeStep({ draft, onUpdate, onContinue }: DateTimeStepProps)
           <Typography variant="body2" color={colors.textSecondary}>
             Available Times in your timezone ({timezoneLabel})
           </Typography>
-        </View>
+        </Animated.View>
 
         {/* Time grid */}
-        <View style={styles.timeGrid}>
+        <Animated.View entering={FadeInUp.delay(280).duration(360)} style={styles.timeGrid}>
           {TIME_SLOTS.map((slot) => {
             const unavail = UNAVAILABLE_TIMES.has(slot);
             const selected = draft.time === slot;
@@ -328,7 +333,7 @@ export function DateTimeStep({ draft, onUpdate, onContinue }: DateTimeStepProps)
               </Pressable>
             );
           })}
-        </View>
+        </Animated.View>
 
         <View style={styles.footerSpacer} />
       </ScrollView>

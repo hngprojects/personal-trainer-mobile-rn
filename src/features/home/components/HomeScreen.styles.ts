@@ -18,6 +18,34 @@ export function useHomeStyles() {
         body: {
           paddingBottom: 24,
         },
+        loadingContainer: {
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        loadingLogo: {
+          width: 72,
+          height: 72,
+          resizeMode: 'contain',
+        },
+        refreshVeil: {
+          ...StyleSheet.absoluteFillObject,
+          zIndex: 8,
+          backgroundColor: colors.background,
+        },
+        refreshLogoLayer: {
+          position: 'absolute',
+          top: 28,
+          left: 0,
+          right: 0,
+          zIndex: 10,
+          alignItems: 'center',
+        },
+        refreshLogo: {
+          width: 42,
+          height: 42,
+          resizeMode: 'contain',
+        },
         header: {
           flexDirection: 'row',
           justifyContent: 'space-between',
@@ -102,12 +130,30 @@ export function useHomeStyles() {
           width: 56,
           height: 56,
           borderRadius: 28,
+          padding: 3,
           backgroundColor: colors.surfaceMuted,
+          borderWidth: 1,
+          borderColor: 'transparent',
+          overflow: 'hidden',
+        },
+        categoryCircleSelected: {
+          borderColor: palette.highlightBlue['5'],
+          backgroundColor: palette.highlightBlue['1'],
+        },
+        categoryImage: {
+          width: '100%',
+          height: '100%',
+          borderRadius: 25,
+          resizeMode: 'cover',
         },
         categoryText: {
           fontSize: 11,
           fontFamily: fonts.regular,
           color: colors.textSecondary,
+        },
+        categoryTextSelected: {
+          fontFamily: fonts.semibold,
+          color: palette.highlightBlue['5'],
         },
         trainersGrid: {
           flexDirection: 'row',
@@ -115,6 +161,19 @@ export function useHomeStyles() {
           justifyContent: 'space-between',
           gap: 12,
           paddingBottom: 24,
+        },
+        emptyTrainers: {
+          width: '100%',
+          minHeight: 120,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: 24,
+        },
+        emptyTrainersText: {
+          fontSize: 13,
+          fontFamily: fonts.regular,
+          color: colors.textSecondary,
+          textAlign: 'center',
         },
         trainerCard: {
           width: '48%',

@@ -1,3 +1,5 @@
+export type { ApiEnvelope } from '@/shared/api/types';
+
 export type SocialProvider = 'apple' | 'google';
 
 export interface GoogleAuthRequest {
@@ -15,6 +17,12 @@ export interface UserProfile {
   name: string;
   userType: string;
   profileComplete: boolean;
+  // Onboarding fields — populated by GET /users/me/profile and the
+  // profile-setup PATCH. Optional because the auth response doesn't include them.
+  gender?: string | null;
+  fitnessGoals?: string[] | null;
+  fitnessLevel?: string | null;
+  avatarUrl?: string | null;
 }
 
 export interface AuthResponse {
@@ -24,17 +32,6 @@ export interface AuthResponse {
   expiresIn: number;
 }
 
-// Raw envelope returned by the backend. All endpoints follow this shape; the
-// API layer unwraps `data` and converts snake_case → camelCase before exposing
-// `AuthResponse` to the rest of the app.
-export interface ApiEnvelope<T> {
-  status: string;
-  message: string;
-  code: string;
-  data: T;
-  meta?: string;
-}
-
 export interface RawAuthData {
   user: {
     id: string;
@@ -42,6 +39,12 @@ export interface RawAuthData {
     name: string;
     user_type: string;
     profile_complete: boolean;
+    // Onboarding-saved fields the backend echoes on login. Optional because
+    // older responses or partially-onboarded users may omit them.
+    gender?: string | null;
+    fitness_goals?: string[] | null;
+    fitness_level?: string | null;
+    avatar_url?: string | null;
   };
   access_token: string;
   refresh_token: string;

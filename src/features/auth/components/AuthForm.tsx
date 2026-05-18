@@ -22,7 +22,6 @@ const MESSAGES = {
   apiUnavailable: 'Sign-in is temporarily unavailable. Please try again in a few minutes.',
   apiServerError: "Something went wrong on our end. We're on it — please try again shortly.",
   apiGeneric: "We couldn't sign you in. Please try again.",
-  appleStub: 'Apple sign-in is coming soon.',
 };
 
 function friendlyApiMessage(error: unknown): string {
@@ -34,7 +33,6 @@ function friendlyApiMessage(error: unknown): string {
   return MESSAGES.apiGeneric;
 }
 
-const APPLE_ICON = require('../../../../assets/images/apple.png');
 const GOOGLE_ICON = require('../../../../assets/images/google.png');
 
 type AuthFormVariant = 'signup' | 'signin';
@@ -82,18 +80,8 @@ export function AuthForm({ variant }: AuthFormProps) {
     }
   };
 
-  // TODO: replace with expo-apple-authentication once the Apple flow is ready.
-  const handleApple = () => {
-    toast.info(MESSAGES.appleStub);
-  };
-
   return (
     <View style={[styles.container, { gap: spacing.md }]}>
-      <SocialButton
-        icon={<Image source={APPLE_ICON} style={styles.icon} resizeMode="contain" />}
-        label={`${verb} with Apple`}
-        onPress={handleApple}
-      />
       <SocialButton
         icon={<Image source={GOOGLE_ICON} style={styles.icon} resizeMode="contain" />}
         label={`${verb} with Google`}
