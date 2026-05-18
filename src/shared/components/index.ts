@@ -11,3 +11,6 @@ export { TextInput } from './TextInput';
 export { toast } from './toast';
 export { ToastHost } from './ToastHost';
 export { Typography } from './Typography';
+export { AccordionItem } from './AccordionItem';
+export { SegmentedTabs } from './SegmentedTabs';
+export { TimelineIndicator } from './TimelineIndicator';
