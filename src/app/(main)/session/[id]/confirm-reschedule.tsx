@@ -2,10 +2,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useSessionStore } from '@/features/sessions/store/useSessionStore';
 import { Button, Screen, Typography } from '@/shared/components';
-import { fonts, palette, useTheme } from '@/shared/theme';
+import { fonts, useTheme } from '@/shared/theme';
 
 export default function ConfirmRescheduleScreen() {
   const { id, newDate, newTime } = useLocalSearchParams<{
@@ -16,6 +17,7 @@ export default function ConfirmRescheduleScreen() {
   const router = useRouter();
   const { sessions, rescheduleSession } = useSessionStore();
   const { colors, spacing } = useTheme();
+  const insets = useSafeAreaInsets();
 
   const session = sessions.find((s) => s.id === id);
 
@@ -53,7 +55,7 @@ export default function ConfirmRescheduleScreen() {
     });
 
   return (
-    <Screen padding={false} backgroundColor={colors.surface}>
+    <Screen padding={false} edges={['top']} backgroundColor={colors.surface}>
       <View style={[styles.header, { paddingHorizontal: spacing.md }]}>
         <Pressable onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
@@ -63,50 +65,59 @@ export default function ConfirmRescheduleScreen() {
         </Typography>
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: spacing.md, paddingBottom: 100 }}>
-        <Typography variant="label" color={palette.neutral['5']} style={{ marginBottom: 4 }}>
+      <ScrollView
+        contentContainerStyle={{
+          padding: spacing.md,
+          paddingBottom: 180 + insets.bottom,
+        }}
+      >
+        <Typography variant="label" color={colors.textSecondary} style={{ marginBottom: 4 }}>
           Step 2 of 2
         </Typography>
         <Typography variant="h3" style={{ marginBottom: spacing.xl }}>
           Confirm your new schedule
         </Typography>
 
-        <View style={[styles.comparisonCard, { borderColor: palette.neutral['2'] }]}>
+        <View style={[styles.comparisonCard, { borderColor: colors.border }]}>
           <View style={styles.comparisonColumn}>
-            <Typography variant="label" color={palette.neutral['5']}>
+            <Typography variant="label" color={colors.textSecondary}>
               CURRENT
             </Typography>
             <Typography
               variant="body2"
-              style={{ fontWeight: '600', color: palette.orange['5'], marginTop: 8 }}
+              color={colors.warning}
+              style={{ fontWeight: '600', marginTop: 8 }}
             >
               {formatDate(oldDateObj)}
             </Typography>
             <Typography
               variant="body2"
-              style={{ fontWeight: '500', color: palette.orange['5'], marginTop: 4 }}
+              color={colors.warning}
+              style={{ fontWeight: '500', marginTop: 4 }}
             >
               {session.startTime}
             </Typography>
           </View>
 
           <View style={styles.arrowContainer}>
-            <Ionicons name="arrow-forward" size={24} color={palette.neutral['4']} />
+            <Ionicons name="arrow-forward" size={24} color={colors.iconMuted} />
           </View>
 
           <View style={styles.comparisonColumn}>
-            <Typography variant="label" color={palette.neutral['5']}>
+            <Typography variant="label" color={colors.textSecondary}>
               NEW
             </Typography>
             <Typography
               variant="body2"
-              style={{ fontWeight: '600', color: colors.primary, marginTop: 8 }}
+              color={colors.primary}
+              style={{ fontWeight: '600', marginTop: 8 }}
             >
               {formatDate(newDateObj)}
             </Typography>
             <Typography
               variant="body2"
-              style={{ fontWeight: '500', color: colors.primary, marginTop: 4 }}
+              color={colors.primary}
+              style={{ fontWeight: '500', marginTop: 4 }}
             >
               {newTime}
             </Typography>
@@ -117,18 +128,21 @@ export default function ConfirmRescheduleScreen() {
           Trainer
         </Typography>
         <View style={styles.trainerInfo}>
-          <Image source={{ uri: session.trainerAvatar }} style={styles.avatarLarge} />
+          <Image
+            source={{ uri: session.trainerAvatar }}
+            style={[styles.avatarLarge, { backgroundColor: colors.surfaceMuted }]}
+          />
           <View>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Typography variant="h3">{session.trainerName}</Typography>
               <Ionicons
                 name="checkmark-circle"
                 size={16}
-                color={palette.success['5']}
+                color={colors.success}
                 style={{ marginLeft: 4 }}
               />
             </View>
-            <Typography variant="body2" color={palette.neutral['5']}>
+            <Typography variant="body2" color={colors.textSecondary}>
               Certified Fitness Trainer
             </Typography>
           </View>
@@ -136,7 +150,16 @@ export default function ConfirmRescheduleScreen() {
       </ScrollView>
 
       <View
-        style={[styles.bottomBar, { borderTopColor: palette.neutral['2'], padding: spacing.md }]}
+        style={[
+          styles.bottomBar,
+          {
+            backgroundColor: colors.background,
+            borderTopColor: colors.border,
+            paddingHorizontal: spacing.md,
+            paddingTop: spacing.md,
+            paddingBottom: spacing.md + insets.bottom,
+          },
+        ]}
       >
         <Button
           label="Confirm Reschedule"
@@ -144,14 +167,14 @@ export default function ConfirmRescheduleScreen() {
           style={{ marginBottom: spacing.sm }}
         />
 
-        <View style={[styles.warningBanner, { backgroundColor: palette.orange['0.5'] }]}>
+        <View style={[styles.warningBanner, { backgroundColor: colors.surfaceMuted }]}>
           <Ionicons
             name="warning"
             size={20}
-            color={palette.orange['5']}
+            color={colors.warning}
             style={{ marginRight: 8, marginTop: 2 }}
           />
-          <Typography variant="label" color={palette.orange['6']} style={{ flex: 1 }}>
+          <Typography variant="label" color={colors.warning} style={{ flex: 1 }}>
             Rescheduling less than 24 hours before the session may incur a fee.
           </Typography>
         </View>
@@ -198,11 +221,9 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     marginRight: 16,
-    backgroundColor: palette.neutral['2'],
   },
   bottomBar: {
     borderTopWidth: 1,
-    backgroundColor: '#FFFFFF',
   },
   warningBanner: {
     flexDirection: 'row',

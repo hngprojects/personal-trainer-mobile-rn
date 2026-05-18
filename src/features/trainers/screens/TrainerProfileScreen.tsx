@@ -193,7 +193,15 @@ export function TrainerProfileScreen() {
 
           {/* BUTTONS */}
           <Animated.View entering={FadeInUp.delay(300).duration(420)}>
-            <Pressable style={styles.primaryBtn}>
+            <Pressable
+              style={styles.primaryBtn}
+              onPress={() =>
+                router.push({
+                  pathname: '/book-a-session',
+                  params: { trainerId: trainer.id },
+                } as never)
+              }
+            >
               <Text style={styles.primaryText}>Work With {trainer.name.split(' ')[0]}</Text>
             </Pressable>
             <Pressable

@@ -2,10 +2,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Screen, Typography } from '@/shared/components';
-import { fonts, palette, useTheme } from '@/shared/theme';
+import { useStatusBarStyle } from '@/shared/hooks/useStatusBarStyle';
+import { fonts, useTheme } from '@/shared/theme';
 
 const REASONS = [
   'Something came up',
@@ -34,6 +37,8 @@ const TIME_SLOTS = [
 export function RescheduleSessionScreen() {
   useLocalSearchParams<{ id: string }>();
   const { spacing, colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const statusBarStyle = useStatusBarStyle();
   const [step, setStep] = useState(1);
   const [selectedReason, setSelectedReason] = useState('');
 
@@ -76,19 +81,29 @@ export function RescheduleSessionScreen() {
   };
 
   return (
-    <Screen padding={false} edges={['top']} backgroundColor="#FFFFFF">
-      <StatusBar style="dark" />
+    <Screen padding={false} edges={['top']}>
+      <StatusBar style={statusBarStyle} />
 
       <View style={styles.header}>
         <Pressable onPress={handleBack} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color={palette.neutral['9']} />
+          <Ionicons name="arrow-back" size={24} color={colors.icon} />
         </Pressable>
         <Typography variant="h3" style={styles.headerTitle}>
           Reschedule Session
         </Typography>
       </View>
 
-      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingHorizontal: spacing.md }]}>
+      <KeyboardAwareScrollView
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingHorizontal: spacing.md, paddingBottom: 120 + insets.bottom },
+        ]}
+        // Lift the focused input above the absolute-positioned footer
+        // (button + bottom safe-area inset).
+        bottomOffset={spacing.md * 2 + 48 + insets.bottom}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <Typography variant="label" color={colors.textSecondary} style={styles.stepIndicator}>
           Step {step} of 2
         </Typography>
@@ -109,9 +124,20 @@ export function RescheduleSessionScreen() {
             currentDay={currentDay}
           />
         )}
-      </ScrollView>
+      </KeyboardAwareScrollView>
 
-      <View style={[styles.footer, { padding: spacing.md }]}>
+      <View
+        style={[
+          styles.footer,
+          {
+            backgroundColor: colors.background,
+            borderTopColor: colors.border,
+            paddingHorizontal: spacing.md,
+            paddingTop: spacing.md,
+            paddingBottom: spacing.md + insets.bottom,
+          },
+        ]}
+      >
         <Button
           label={step === 1 ? 'Continue' : 'Continue to Confirm'}
           onPress={handleContinue}
@@ -143,29 +169,30 @@ function ReasonStep({
         Select a reason
       </Typography>
       <View style={styles.reasonsGrid}>
-        {REASONS.map((reason) => (
-          <Pressable
-            key={reason}
-            onPress={() => onSelectReason(reason)}
-            style={[
-              styles.reasonChip,
-              selectedReason === reason && [
-                styles.activeReasonChip,
-                { borderColor: colors.primary },
-              ],
-            ]}
-          >
-            <Typography
-              variant="label"
+        {REASONS.map((reason) => {
+          const isActive = selectedReason === reason;
+          return (
+            <Pressable
+              key={reason}
+              onPress={() => onSelectReason(reason)}
               style={[
-                styles.reasonText,
-                selectedReason === reason && [styles.activeReasonText, { color: colors.primary }],
+                styles.reasonChip,
+                {
+                  backgroundColor: isActive ? colors.primarySubtle : colors.background,
+                  borderColor: isActive ? colors.primary : colors.divider,
+                },
               ]}
             >
-              {reason}
-            </Typography>
-          </Pressable>
-        ))}
+              <Typography
+                variant="label"
+                color={isActive ? colors.primary : colors.textSecondary}
+                style={[styles.reasonText, isActive && styles.activeReasonText]}
+              >
+                {reason}
+              </Typography>
+            </Pressable>
+          );
+        })}
       </View>
 
       <Typography variant="body2" style={[styles.label, { marginTop: 24 }]}>
@@ -173,9 +200,17 @@ function ReasonStep({
       </Typography>
       <TextInput
         placeholder="Tell us a bit more about why you're rescheduling..."
+        placeholderTextColor={colors.iconMuted}
         multiline
         numberOfLines={4}
-        style={styles.textArea}
+        style={[
+          styles.textArea,
+          {
+            backgroundColor: colors.inputBackground,
+            borderColor: colors.divider,
+            color: colors.text,
+          },
+        ]}
       />
     </View>
   );
@@ -215,22 +250,27 @@ function DateTimeStep({
         Choose a slot that fits your schedule. All times are shown in your local timezone.
       </Typography>
 
-      <View style={styles.calendarContainer}>
+      <View
+        style={[
+          styles.calendarContainer,
+          { backgroundColor: colors.background, borderColor: colors.divider },
+        ]}
+      >
         <View style={styles.calendarHeader}>
           <Pressable onPress={onPrevMonth}>
-            <Ionicons name="chevron-back" size={20} color={palette.neutral['9']} />
+            <Ionicons name="chevron-back" size={20} color={colors.icon} />
           </Pressable>
           <Typography style={styles.calendarMonth}>
             {viewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
           </Typography>
           <Pressable onPress={onNextMonth}>
-            <Ionicons name="chevron-forward" size={20} color={palette.neutral['9']} />
+            <Ionicons name="chevron-forward" size={20} color={colors.icon} />
           </Pressable>
         </View>
 
         <View style={styles.daysRow}>
           {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map((d) => (
-            <Typography key={d} variant="label" style={styles.dayLabel}>
+            <Typography key={d} variant="label" color={colors.iconMuted} style={styles.dayLabel}>
               {d}
             </Typography>
           ))}
@@ -243,26 +283,21 @@ function DateTimeStep({
           ))}
           {Array.from({ length: 28 }, (_, i) => i + 1).map((date) => {
             const isPast = isCurrentMonth && date < currentDay;
+            const isSelected = selectedDate === date;
             return (
               <Pressable
                 key={date}
                 onPress={() => onSelectDate(date)}
                 style={[
                   styles.dateCircle,
-                  selectedDate === date && [
-                    styles.activeDateCircle,
-                    { backgroundColor: colors.primary },
-                  ],
-                  isPast && styles.unavailableDate,
+                  isSelected && { backgroundColor: colors.primary },
+                  isPast && { backgroundColor: colors.surfaceMuted },
                 ]}
                 disabled={isPast}
               >
                 <Typography
-                  style={[
-                    styles.dateText,
-                    selectedDate === date && styles.activeDateText,
-                    isPast && styles.unavailableText,
-                  ]}
+                  color={isSelected ? '#FFFFFF' : isPast ? colors.textMuted : colors.text}
+                  style={styles.dateText}
                 >
                   {date}
                 </Typography>
@@ -273,46 +308,52 @@ function DateTimeStep({
       </View>
 
       <View style={styles.legend}>
-        <LegendItem color={palette.neutral['2']} label="Unavailable" />
-        <LegendItem color={palette.neutral['1']} label="Available" />
+        <LegendItem color={colors.border} label="Unavailable" />
+        <LegendItem color={colors.divider} label="Available" />
         <LegendItem color={colors.primary} label="Selected" />
       </View>
 
       <Typography variant="body2" style={[styles.label, { marginTop: 24 }]}>
-        <Ionicons name="time-outline" size={16} /> Available Times in your Timezone ({timezoneStr})
+        <Ionicons name="time-outline" size={16} color={colors.icon} /> Available Times in your
+        Timezone ({timezoneStr})
       </Typography>
 
       <View style={styles.timesGrid}>
-        {TIME_SLOTS.map((time) => (
-          <Pressable
-            key={time}
-            onPress={() => onSelectTime(time)}
-            style={[
-              styles.timeSlot,
-              selectedTime === time && [
-                styles.activeTimeSlot,
-                { backgroundColor: colors.primary, borderColor: colors.primary },
-              ],
-            ]}
-          >
-            <Typography
-              variant="label"
-              style={[styles.timeText, selectedTime === time && styles.activeTimeText]}
+        {TIME_SLOTS.map((time) => {
+          const isSelected = selectedTime === time;
+          return (
+            <Pressable
+              key={time}
+              onPress={() => onSelectTime(time)}
+              style={[
+                styles.timeSlot,
+                {
+                  backgroundColor: isSelected ? colors.primary : colors.background,
+                  borderColor: isSelected ? colors.primary : colors.divider,
+                },
+              ]}
             >
-              {time}
-            </Typography>
-          </Pressable>
-        ))}
+              <Typography
+                variant="label"
+                color={isSelected ? '#FFFFFF' : colors.text}
+                style={[styles.timeText, isSelected && styles.activeTimeText]}
+              >
+                {time}
+              </Typography>
+            </Pressable>
+          );
+        })}
       </View>
     </View>
   );
 }
 
 function LegendItem({ color, label }: { color: string; label: string }) {
+  const { colors } = useTheme();
   return (
     <View style={styles.legendItem}>
       <View style={[styles.legendDot, { backgroundColor: color }]} />
-      <Typography variant="label" color={palette.neutral['5']}>
+      <Typography variant="label" color={colors.textSecondary}>
         {label}
       </Typography>
     </View>
@@ -336,7 +377,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingTop: 8,
-    paddingBottom: 100,
   },
   stepIndicator: {
     fontFamily: fonts.semibold,
@@ -364,27 +404,19 @@ const styles = StyleSheet.create({
   reasonChip: {
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: palette.neutral['1'],
     minWidth: '48%',
-  },
-  activeReasonChip: {
-    backgroundColor: palette.neutral['0.5'],
   },
   reasonText: {
     textAlign: 'center',
-    color: palette.neutral['5'],
   },
   activeReasonText: {
     fontFamily: fonts.semibold,
   },
   textArea: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: palette.neutral['1'],
     padding: 16,
     textAlignVertical: 'top',
     height: 120,
@@ -392,11 +424,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   calendarContainer: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: palette.neutral['1'],
   },
   calendarHeader: {
     flexDirection: 'row',
@@ -416,7 +446,6 @@ const styles = StyleSheet.create({
   dayLabel: {
     width: 40,
     textAlign: 'center',
-    color: palette.neutral['4'],
     fontSize: 10,
   },
   datesGrid: {
@@ -431,20 +460,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  activeDateCircle: {},
-  unavailableDate: {
-    backgroundColor: palette.neutral['0.5'],
-  },
   dateText: {
     fontFamily: fonts.medium,
     fontSize: 14,
-    color: palette.neutral['9'],
-  },
-  activeDateText: {
-    color: '#FFFFFF',
-  },
-  unavailableText: {
-    color: palette.neutral['3'],
   },
   legend: {
     flexDirection: 'row',
@@ -472,17 +490,12 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: palette.neutral['1'],
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
   },
-  activeTimeSlot: {},
   timeText: {
     fontSize: 12,
-    color: palette.neutral['7'],
   },
   activeTimeText: {
-    color: '#FFFFFF',
     fontFamily: fonts.semibold,
   },
   footer: {
@@ -490,8 +503,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
-    borderTopColor: palette.neutral['1'],
   },
 });

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Image, ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AccordionItem, Button, Typography } from '@/shared/components';
 import { palette, useTheme } from '@/shared/theme';
@@ -9,6 +9,7 @@ import { palette, useTheme } from '@/shared/theme';
 interface TestimonialScreenProps {
   onContinue: () => void;
   onSkip: () => void;
+  onBack: () => void;
   step: number;
   totalSteps: number;
 }
@@ -16,22 +17,27 @@ interface TestimonialScreenProps {
 export function TestimonialScreen({
   onContinue,
   onSkip,
+  onBack,
   step,
   totalSteps,
 }: TestimonialScreenProps) {
   const { colors, spacing } = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: colors.surface }]}
-      edges={['top', 'bottom']}
-    >
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.surface }]} edges={['top']}>
       <View style={[styles.header, { paddingHorizontal: spacing.md }]}>
+        <Pressable onPress={onBack} style={styles.backButton} hitSlop={8}>
+          <Ionicons name="chevron-back" size={24} color={colors.text} />
+          <Typography variant="body2" style={{ fontWeight: '500' }}>
+            Back
+          </Typography>
+        </Pressable>
         <View style={styles.stepContainer}>
           <Typography variant="body2" style={{ fontWeight: '500' }}>
             {step} of {totalSteps}
           </Typography>
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <Typography
             variant="body2"
             color={colors.primary}
@@ -43,7 +49,12 @@ export function TestimonialScreen({
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={[styles.content, { paddingHorizontal: spacing.md }]}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.content,
+          { paddingHorizontal: spacing.md, paddingBottom: 40 + insets.bottom },
+        ]}
+      >
         <Typography variant="h2" style={styles.title}>
           &quot;You don&apos;t stop when someone is yelling&quot;
         </Typography>
@@ -54,7 +65,7 @@ export function TestimonialScreen({
               <Ionicons key={i} name="star" size={20} color={palette.gold['4']} />
             ))}
           </View>
-          <Typography variant="body2" style={styles.quote}>
+          <Typography variant="body2" color={colors.text} style={styles.quote}>
             &quot;I love Chantelle because she pushes me harder than anyone else without resorting
             to yelling or negativity. Her support is incredible.&quot;
           </Typography>
@@ -64,7 +75,7 @@ export function TestimonialScreen({
               <Typography variant="label" style={{ fontWeight: '600' }}>
                 Sarah T.
               </Typography>
-              <Typography variant="label" color={palette.neutral['5']}>
+              <Typography variant="label" color={colors.textSecondary}>
                 Lost 15 lbs
               </Typography>
             </View>
@@ -90,7 +101,18 @@ export function TestimonialScreen({
         </View>
       </ScrollView>
 
-      <View style={[styles.footer, { padding: spacing.md }]}>
+      <View
+        style={[
+          styles.footer,
+          {
+            backgroundColor: colors.background,
+            borderTopColor: colors.border,
+            paddingHorizontal: spacing.md,
+            paddingTop: spacing.md,
+            paddingBottom: spacing.md + insets.bottom,
+          },
+        ]}
+      >
         <Button label="Continue" onPress={onContinue} />
       </View>
     </SafeAreaView>
@@ -103,9 +125,14 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     alignItems: 'center',
     height: 56,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: -8,
   },
   stepContainer: {
     flexDirection: 'row',
@@ -115,11 +142,9 @@ const styles = StyleSheet.create({
   divider: {
     width: 1,
     height: 12,
-    backgroundColor: palette.neutral['3'],
   },
   content: {
     paddingTop: 16,
-    paddingBottom: 40,
   },
   title: {
     textAlign: 'center',
@@ -140,7 +165,6 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     lineHeight: 24,
     marginBottom: 16,
-    color: palette.neutral['7'],
   },
   author: {
     flexDirection: 'row',
@@ -157,6 +181,5 @@ const styles = StyleSheet.create({
   },
   footer: {
     borderTopWidth: 1,
-    borderTopColor: palette.neutral['2'],
   },
 });

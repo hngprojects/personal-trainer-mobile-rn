@@ -6,8 +6,8 @@ import { StyleSheet, Switch } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useAuthStore, useLogout } from '@/features/auth';
-import { Avatar, Button, LogoRefreshScrollView, toast, Typography } from '@/shared/components';
+import { useAuthStore } from '@/features/auth';
+import { Avatar, LogoRefreshScrollView, Typography } from '@/shared/components';
 import { useStatusBarStyle } from '@/shared/hooks/useStatusBarStyle';
 import { fonts, palette, useTheme } from '@/shared/theme';
 
@@ -18,7 +18,6 @@ import { SettingsRow } from './SettingsRow';
 
 export function ProfileScreen() {
   const user = useAuthStore((s) => s.user);
-  const logoutMutation = useLogout();
   const { isDark, setMode, colors } = useTheme();
   const statusBarStyle = useStatusBarStyle();
   const { pick: pickAvatar, isUploading } = usePickAndUploadAvatar();
@@ -26,12 +25,6 @@ export function ProfileScreen() {
   // Pull fresh profile data on mount; the hook also syncs the auth store
   // so the rest of the UI reads from useAuthStore as before.
   const { refetch, isRefetching } = useProfile();
-
-  const handleLogout = () => {
-    logoutMutation.mutate(undefined, {
-      onError: () => toast.error("We couldn't reach the server, but you've been signed out."),
-    });
-  };
 
   const navigate = (path: string) => () => router.push(path as never);
 
@@ -135,10 +128,6 @@ export function ProfileScreen() {
             onPress={navigate('/faq')}
           />
         </Animated.View>
-
-        <Animated.View entering={FadeInUp.delay(320).duration(360)} style={styles.logoutWrap}>
-          <Button label="Log Out" isLoading={logoutMutation.isPending} onPress={handleLogout} />
-        </Animated.View>
       </LogoRefreshScrollView>
     </SafeAreaView>
   );
@@ -174,9 +163,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: fonts.bold,
     marginBottom: 4,
-  },
-  logoutWrap: {
-    paddingHorizontal: 20,
-    paddingTop: 24,
   },
 });

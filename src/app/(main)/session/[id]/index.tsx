@@ -2,16 +2,18 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Image, Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useSessionStore } from '@/features/sessions/store/useSessionStore';
 import { Button, Screen, Typography } from '@/shared/components';
-import { fonts, palette, useTheme } from '@/shared/theme';
+import { fonts, useTheme } from '@/shared/theme';
 
 export default function SessionDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { sessions, cancelSession } = useSessionStore();
   const { colors, spacing } = useTheme();
+  const insets = useSafeAreaInsets();
 
   const session = sessions.find((s) => s.id === id);
 
@@ -38,7 +40,7 @@ export default function SessionDetailsScreen() {
 
   const handleContinueReschedule = () => {
     setIsRescheduleModalVisible(false);
-    router.push(`/session/${session.id}/reschedule`);
+    router.push({ pathname: '/session/[id]/reschedule', params: { id: session.id } });
   };
 
   const handleContinueCancel = () => {
@@ -48,7 +50,7 @@ export default function SessionDetailsScreen() {
   };
 
   const renderModalContent = (type: 'reschedule' | 'cancel') => (
-    <View style={styles.modalOverlay}>
+    <View style={[styles.modalOverlay, { backgroundColor: colors.modalBackdrop }]}>
       <Pressable
         style={styles.modalDismissArea}
         onPress={() =>
@@ -57,13 +59,22 @@ export default function SessionDetailsScreen() {
             : setIsCancelModalVisible(false)
         }
       />
-      <View style={[styles.modalContent, { padding: spacing.lg }]}>
+      <View
+        style={[
+          styles.modalContent,
+          {
+            backgroundColor: colors.background,
+            padding: spacing.lg,
+            paddingBottom: spacing.lg + insets.bottom,
+          },
+        ]}
+      >
         <Typography variant="h3" style={{ marginBottom: spacing.sm }}>
           {type === 'reschedule' ? 'Why do you want to reschedule?' : 'Why do you need to cancel?'}
         </Typography>
         <Typography
           variant="body2"
-          color={palette.neutral['5']}
+          color={colors.textSecondary}
           style={{ marginBottom: spacing.md }}
         >
           Please select a reason so we can let the trainer know.
@@ -77,14 +88,14 @@ export default function SessionDetailsScreen() {
                 key={reason}
                 style={[
                   styles.reasonBadge,
-                  { borderColor: isSelected ? colors.primary : palette.neutral['2'] },
-                  isSelected && { backgroundColor: palette.highlightBlue['0.5'] },
+                  { borderColor: isSelected ? colors.primary : colors.border },
+                  isSelected && { backgroundColor: colors.primarySubtle },
                 ]}
                 onPress={() => setSelectedReason(reason)}
               >
                 <Typography
                   variant="label"
-                  color={isSelected ? colors.primary : palette.neutral['7']}
+                  color={isSelected ? colors.primary : colors.text}
                   style={{ fontWeight: isSelected ? '600' : '400' }}
                 >
                   {reason}
@@ -98,9 +109,16 @@ export default function SessionDetailsScreen() {
           Additional details
         </Typography>
         <TextInput
-          style={[styles.textInput, { borderColor: palette.neutral['2'] }]}
+          style={[
+            styles.textInput,
+            {
+              borderColor: colors.border,
+              backgroundColor: colors.inputBackground,
+              color: colors.text,
+            },
+          ]}
           placeholder="I have a doctor's appointment at that time..."
-          placeholderTextColor={palette.neutral['4']}
+          placeholderTextColor={colors.iconMuted}
           multiline
           numberOfLines={4}
           value={additionalDetails}
@@ -117,8 +135,14 @@ export default function SessionDetailsScreen() {
     </View>
   );
 
+  const hasBottomBar = session.status === 'upcoming';
+  // Reserve enough scroll space for the floating bottom action bar so the last
+  // detail row never gets hidden behind it (two stacked buttons + spacing +
+  // device safe-area).
+  const scrollBottomPadding = hasBottomBar ? 140 + insets.bottom : spacing.lg + insets.bottom;
+
   return (
-    <Screen padding={false} backgroundColor={colors.surface}>
+    <Screen padding={false} edges={['top']} backgroundColor={colors.surface}>
       <View style={[styles.header, { paddingHorizontal: spacing.md }]}>
         <Pressable onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
@@ -128,32 +152,37 @@ export default function SessionDetailsScreen() {
         </Typography>
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: spacing.md, paddingBottom: 100 }}>
+      <ScrollView
+        contentContainerStyle={{ padding: spacing.md, paddingBottom: scrollBottomPadding }}
+      >
         <View style={styles.trainerInfo}>
-          <Image source={{ uri: session.trainerAvatar }} style={styles.avatarLarge} />
+          <Image
+            source={{ uri: session.trainerAvatar }}
+            style={[styles.avatarLarge, { backgroundColor: colors.surfaceMuted }]}
+          />
           <View>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Typography variant="h3">{session.trainerName}</Typography>
               <Ionicons
                 name="checkmark-circle"
                 size={16}
-                color={palette.success['5']}
+                color={colors.success}
                 style={{ marginLeft: 4 }}
               />
             </View>
-            <Typography variant="body2" color={palette.neutral['5']}>
+            <Typography variant="body2" color={colors.textSecondary}>
               Certified Fitness Trainer
             </Typography>
           </View>
         </View>
 
-        <View style={[styles.section, { borderTopColor: palette.neutral['2'] }]}>
+        <View style={[styles.section, { borderTopColor: colors.border }]}>
           <Typography variant="h3" style={styles.sectionTitle}>
             Booking Details
           </Typography>
           <View style={styles.detailRow}>
-            <Ionicons name="calendar-outline" size={20} color={palette.neutral['5']} />
-            <Typography variant="body2" style={styles.detailText}>
+            <Ionicons name="calendar-outline" size={20} color={colors.iconMuted} />
+            <Typography variant="body2" color={colors.text} style={styles.detailText}>
               {new Date(session.date).toLocaleDateString('en-US', {
                 weekday: 'short',
                 month: 'short',
@@ -163,40 +192,49 @@ export default function SessionDetailsScreen() {
             </Typography>
           </View>
           <View style={styles.detailRow}>
-            <Ionicons name="time-outline" size={20} color={palette.neutral['5']} />
-            <Typography variant="body2" style={styles.detailText}>
+            <Ionicons name="time-outline" size={20} color={colors.iconMuted} />
+            <Typography variant="body2" color={colors.text} style={styles.detailText}>
               {session.startTime} - {session.endTime} (1 hr)
             </Typography>
           </View>
           <View style={styles.detailRow}>
-            <Ionicons name="videocam-outline" size={20} color={palette.neutral['5']} />
-            <Typography variant="body2" style={styles.detailText}>
+            <Ionicons name="videocam-outline" size={20} color={colors.iconMuted} />
+            <Typography variant="body2" color={colors.text} style={styles.detailText}>
               {session.platform} {session.link ? '(Zoom)' : ''}
             </Typography>
           </View>
           {session.link && (
             <View style={styles.detailRow}>
-              <Ionicons name="link-outline" size={20} color={palette.neutral['5']} />
-              <Typography variant="body2" style={[styles.detailText, { color: colors.primary }]}>
+              <Ionicons name="link-outline" size={20} color={colors.iconMuted} />
+              <Typography variant="body2" color={colors.primary} style={styles.detailText}>
                 {session.link}
               </Typography>
             </View>
           )}
         </View>
 
-        <View style={[styles.section, { borderTopColor: palette.neutral['2'] }]}>
+        <View style={[styles.section, { borderTopColor: colors.border }]}>
           <Typography variant="h3" style={styles.sectionTitle}>
             What to bring
           </Typography>
-          <Typography variant="body2" color={palette.neutral['7']}>
+          <Typography variant="body2" color={colors.text}>
             Water bottle, towel, yoga mat
           </Typography>
         </View>
       </ScrollView>
 
-      {session.status === 'upcoming' && (
+      {hasBottomBar && (
         <View
-          style={[styles.bottomBar, { borderTopColor: palette.neutral['2'], padding: spacing.md }]}
+          style={[
+            styles.bottomBar,
+            {
+              backgroundColor: colors.background,
+              borderTopColor: colors.border,
+              paddingHorizontal: spacing.md,
+              paddingTop: spacing.md,
+              paddingBottom: spacing.md + insets.bottom,
+            },
+          ]}
         >
           <Button
             label="Reschedule"
@@ -247,7 +285,6 @@ const styles = StyleSheet.create({
     height: 64,
     borderRadius: 32,
     marginRight: 16,
-    backgroundColor: palette.neutral['2'],
   },
   section: {
     paddingVertical: 20,
@@ -263,22 +300,18 @@ const styles = StyleSheet.create({
   },
   detailText: {
     marginLeft: 12,
-    color: palette.neutral['7'],
   },
   bottomBar: {
     borderTopWidth: 1,
-    backgroundColor: '#FFFFFF',
   },
   modalOverlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.4)',
   },
   modalDismissArea: {
     flex: 1,
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
   },

@@ -6,13 +6,15 @@ import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 
 import { Button, Screen, Typography } from '@/shared/components';
-import { fonts, palette, useTheme } from '@/shared/theme';
+import { useStatusBarStyle } from '@/shared/hooks/useStatusBarStyle';
+import { fonts, useTheme } from '@/shared/theme';
 
 import { mockSessions } from '../data/sessions.data';
 import { SessionCard } from './SessionCard';
 
 export function SessionsScreen() {
   const { spacing, colors } = useTheme();
+  const statusBarStyle = useStatusBarStyle();
   const [activeTab, setActiveTab] = useState<'Upcoming' | 'History'>('Upcoming');
 
   const upcomingSessions = mockSessions.filter(
@@ -26,26 +28,35 @@ export function SessionsScreen() {
   const isEmpty = displayedSessions.length === 0;
 
   return (
-    <Screen scrollable={false} padding={false} edges={['top']} backgroundColor="#FFFFFF">
-      <StatusBar style="dark" />
+    <Screen scrollable={false} padding={false} edges={['top']}>
+      <StatusBar style={statusBarStyle} />
 
       <View style={[styles.body, { paddingHorizontal: spacing.md, paddingTop: spacing.lg }]}>
         <Animated.View entering={FadeInDown.duration(420)}>
-          <Typography style={styles.title}>Sessions</Typography>
+          <Typography style={[styles.title, { color: colors.text }]}>Sessions</Typography>
         </Animated.View>
 
         {/* Tabs */}
-        <View style={[styles.tabsContainer, { marginTop: spacing.md }]}>
+        <View
+          style={[
+            styles.tabsContainer,
+            { marginTop: spacing.md, backgroundColor: colors.surfaceMuted },
+          ]}
+        >
           {(['Upcoming', 'History'] as const).map((tab) => (
             <Pressable
               key={tab}
               onPress={() => setActiveTab(tab)}
-              style={[styles.tab, activeTab === tab && styles.activeTab]}
+              style={[
+                styles.tab,
+                activeTab === tab && [styles.activeTab, { backgroundColor: colors.background }],
+              ]}
             >
               <Typography
                 style={[
                   styles.tabText,
-                  activeTab === tab ? styles.activeTabText : { color: colors.textSecondary },
+                  { color: activeTab === tab ? colors.text : colors.textSecondary },
+                  activeTab === tab && styles.activeTabText,
                 ]}
               >
                 {tab}
@@ -59,11 +70,13 @@ export function SessionsScreen() {
             entering={FadeIn.delay(150).duration(450)}
             style={[styles.empty, { marginTop: spacing.xxl }]}
           >
-            <View style={styles.iconCircle}>
-              <Ionicons name="calendar-outline" size={32} color={palette.neutral['5']} />
+            <View style={[styles.iconCircle, { backgroundColor: colors.surfaceMuted }]}>
+              <Ionicons name="calendar-outline" size={32} color={colors.iconMuted} />
             </View>
-            <Typography style={styles.emptyTitle}>No scheduled session yet?</Typography>
-            <Typography style={styles.emptyText}>
+            <Typography style={[styles.emptyTitle, { color: colors.text }]}>
+              No scheduled session yet?
+            </Typography>
+            <Typography style={[styles.emptyText, { color: colors.textSecondary }]}>
               Connect with one of our trainers to schedule your first session.
             </Typography>
             <Button
@@ -91,11 +104,9 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontFamily: fonts.bold,
-    color: palette.neutral['9'],
   },
   tabsContainer: {
     flexDirection: 'row',
-    backgroundColor: palette.neutral['0.5'],
     borderRadius: 12,
     padding: 4,
   },
@@ -106,7 +117,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   activeTab: {
-    backgroundColor: '#FFFFFF',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -118,7 +128,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.medium,
   },
   activeTabText: {
-    color: palette.neutral['9'],
     fontFamily: fonts.semibold,
   },
   empty: {
@@ -129,7 +138,6 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: palette.neutral['0.5'],
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
@@ -137,13 +145,11 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 16,
     fontFamily: fonts.semibold,
-    color: palette.neutral['9'],
     marginBottom: 8,
   },
   emptyText: {
     fontSize: 13,
     fontFamily: fonts.regular,
-    color: palette.neutral['5'],
     textAlign: 'center',
     lineHeight: 20,
   },
