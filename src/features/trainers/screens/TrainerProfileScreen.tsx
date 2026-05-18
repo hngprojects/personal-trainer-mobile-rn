@@ -152,7 +152,15 @@ export function TrainerProfileScreen() {
           <Pressable style={styles.primaryBtn}>
             <Text style={styles.primaryText}>Work With Charles</Text>
           </Pressable>
-          <Pressable style={styles.secondaryBtn}>
+          <Pressable
+            style={styles.secondaryBtn}
+            onPress={() =>
+              router.push({
+                pathname: '/book-a-call',
+                params: { trainerId: trainer.id },
+              } as never)
+            }
+          >
             <Text style={styles.secondaryText}>Request a Call</Text>
           </Pressable>
         </View>
