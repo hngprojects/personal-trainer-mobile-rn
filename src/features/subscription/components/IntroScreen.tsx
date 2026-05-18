@@ -4,7 +4,7 @@ import { Image, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button, Typography } from '@/shared/components';
-import { fonts, palette, useTheme } from '@/shared/theme';
+import { palette, useTheme } from '@/shared/theme';
 
 interface IntroScreenProps {
   onContinue: () => void;
@@ -17,7 +17,10 @@ export function IntroScreen({ onContinue, onSkip, step, totalSteps }: IntroScree
   const { colors, spacing } = useTheme();
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.surface }]} edges={['top', 'bottom']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.surface }]}
+      edges={['top', 'bottom']}
+    >
       <View style={[styles.header, { paddingHorizontal: spacing.md }]}>
         <View style={styles.stepContainer}>
           <Typography variant="body2" style={{ fontWeight: '500' }}>
@@ -51,7 +54,8 @@ export function IntroScreen({ onContinue, onSkip, step, totalSteps }: IntroScree
         </Typography>
 
         <Typography variant="body1" color={palette.neutral['6']} style={styles.description}>
-          My job is to help you crush it. No sugar-coating, no fluff—just real talk and real results. Are you ready to level up?
+          My job is to help you crush it. No sugar-coating, no fluff—just real talk and real
+          results. Are you ready to level up?
         </Typography>
       </View>
 

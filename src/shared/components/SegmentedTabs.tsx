@@ -40,11 +40,7 @@ export function SegmentedTabs({ tabs, activeIndex, onChange }: SegmentedTabsProp
       {tabs.map((tab, index) => {
         const isActive = activeIndex === index;
         return (
-          <Pressable
-            key={tab}
-            style={styles.tab}
-            onPress={() => onChange(index)}
-          >
+          <Pressable key={tab} style={styles.tab} onPress={() => onChange(index)}>
             <Typography
               variant="body2"
               color={isActive ? colors.primary : palette.neutral['5']}

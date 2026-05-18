@@ -62,7 +62,11 @@ export function TimelineIndicator({ steps }: TimelineIndicatorProps) {
                 <View
                   style={[
                     styles.line,
-                    { backgroundColor: step.isCompleted ? palette.success['3'] : palette.neutral['2'] },
+                    {
+                      backgroundColor: step.isCompleted
+                        ? palette.success['3']
+                        : palette.neutral['2'],
+                    },
                   ]}
                 />
               )}

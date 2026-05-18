@@ -61,7 +61,11 @@ export default function SessionDetailsScreen() {
         <Typography variant="h3" style={{ marginBottom: spacing.sm }}>
           {type === 'reschedule' ? 'Why do you want to reschedule?' : 'Why do you need to cancel?'}
         </Typography>
-        <Typography variant="body2" color={palette.neutral['5']} style={{ marginBottom: spacing.md }}>
+        <Typography
+          variant="body2"
+          color={palette.neutral['5']}
+          style={{ marginBottom: spacing.md }}
+        >
           Please select a reason so we can let the trainer know.
         </Typography>
 
@@ -79,7 +83,7 @@ export default function SessionDetailsScreen() {
                 onPress={() => setSelectedReason(reason)}
               >
                 <Typography
-                  variant="body3"
+                  variant="label"
                   color={isSelected ? colors.primary : palette.neutral['7']}
                   style={{ fontWeight: isSelected ? '600' : '400' }}
                 >
@@ -130,7 +134,12 @@ export default function SessionDetailsScreen() {
           <View>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Typography variant="h3">{session.trainerName}</Typography>
-              <Ionicons name="checkmark-circle" size={16} color={palette.success['5']} style={{ marginLeft: 4 }} />
+              <Ionicons
+                name="checkmark-circle"
+                size={16}
+                color={palette.success['5']}
+                style={{ marginLeft: 4 }}
+              />
             </View>
             <Typography variant="body2" color={palette.neutral['5']}>
               Certified Fitness Trainer
@@ -139,7 +148,7 @@ export default function SessionDetailsScreen() {
         </View>
 
         <View style={[styles.section, { borderTopColor: palette.neutral['2'] }]}>
-          <Typography variant="h4" style={styles.sectionTitle}>
+          <Typography variant="h3" style={styles.sectionTitle}>
             Booking Details
           </Typography>
           <View style={styles.detailRow}>
@@ -176,7 +185,7 @@ export default function SessionDetailsScreen() {
         </View>
 
         <View style={[styles.section, { borderTopColor: palette.neutral['2'] }]}>
-          <Typography variant="h4" style={styles.sectionTitle}>
+          <Typography variant="h3" style={styles.sectionTitle}>
             What to bring
           </Typography>
           <Typography variant="body2" color={palette.neutral['7']}>
@@ -186,7 +195,9 @@ export default function SessionDetailsScreen() {
       </ScrollView>
 
       {session.status === 'upcoming' && (
-        <View style={[styles.bottomBar, { borderTopColor: palette.neutral['2'], padding: spacing.md }]}>
+        <View
+          style={[styles.bottomBar, { borderTopColor: palette.neutral['2'], padding: spacing.md }]}
+        >
           <Button
             label="Reschedule"
             onPress={() => setIsRescheduleModalVisible(true)}

@@ -63,7 +63,12 @@ const mockSessions: Session[] = [
 
 interface SessionStore {
   sessions: Session[];
-  rescheduleSession: (id: string, newDate: string, newStartTime: string, newEndTime: string) => void;
+  rescheduleSession: (
+    id: string,
+    newDate: string,
+    newStartTime: string,
+    newEndTime: string,
+  ) => void;
   cancelSession: (id: string) => void;
   clearSessions: () => void;
   resetMockSessions: () => void;
@@ -74,14 +79,12 @@ export const useSessionStore = create<SessionStore>((set) => ({
   rescheduleSession: (id, newDate, newStartTime, newEndTime) =>
     set((state) => ({
       sessions: state.sessions.map((s) =>
-        s.id === id ? { ...s, date: newDate, startTime: newStartTime, endTime: newEndTime } : s
+        s.id === id ? { ...s, date: newDate, startTime: newStartTime, endTime: newEndTime } : s,
       ),
     })),
   cancelSession: (id) =>
     set((state) => ({
-      sessions: state.sessions.map((s) =>
-        s.id === id ? { ...s, status: 'canceled' } : s
-      ),
+      sessions: state.sessions.map((s) => (s.id === id ? { ...s, status: 'canceled' } : s)),
     })),
   clearSessions: () => set({ sessions: [] }),
   resetMockSessions: () => set({ sessions: [...mockSessions] }),

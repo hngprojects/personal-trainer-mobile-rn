@@ -13,11 +13,19 @@ interface TestimonialScreenProps {
   totalSteps: number;
 }
 
-export function TestimonialScreen({ onContinue, onSkip, step, totalSteps }: TestimonialScreenProps) {
+export function TestimonialScreen({
+  onContinue,
+  onSkip,
+  step,
+  totalSteps,
+}: TestimonialScreenProps) {
   const { colors, spacing } = useTheme();
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.surface }]} edges={['top', 'bottom']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.surface }]}
+      edges={['top', 'bottom']}
+    >
       <View style={[styles.header, { paddingHorizontal: spacing.md }]}>
         <View style={styles.stepContainer}>
           <Typography variant="body2" style={{ fontWeight: '500' }}>
@@ -37,7 +45,7 @@ export function TestimonialScreen({ onContinue, onSkip, step, totalSteps }: Test
 
       <ScrollView contentContainerStyle={[styles.content, { paddingHorizontal: spacing.md }]}>
         <Typography variant="h2" style={styles.title}>
-          "You don't stop when someone is yelling"
+          &quot;You don&apos;t stop when someone is yelling&quot;
         </Typography>
 
         <View style={styles.testimonialCard}>
@@ -47,13 +55,11 @@ export function TestimonialScreen({ onContinue, onSkip, step, totalSteps }: Test
             ))}
           </View>
           <Typography variant="body2" style={styles.quote}>
-            "I love Chantelle because she pushes me harder than anyone else without resorting to yelling or negativity. Her support is incredible."
+            &quot;I love Chantelle because she pushes me harder than anyone else without resorting
+            to yelling or negativity. Her support is incredible.&quot;
           </Typography>
           <View style={styles.author}>
-            <Image
-              source={{ uri: 'https://i.pravatar.cc/100?img=5' }}
-              style={styles.authorImage}
-            />
+            <Image source={{ uri: 'https://i.pravatar.cc/100?img=5' }} style={styles.authorImage} />
             <View>
               <Typography variant="label" style={{ fontWeight: '600' }}>
                 Sarah T.

@@ -8,7 +8,11 @@ import { Button, Screen, Typography } from '@/shared/components';
 import { fonts, palette, useTheme } from '@/shared/theme';
 
 export default function ConfirmRescheduleScreen() {
-  const { id, newDate, newTime } = useLocalSearchParams<{ id: string; newDate: string; newTime: string }>();
+  const { id, newDate, newTime } = useLocalSearchParams<{
+    id: string;
+    newDate: string;
+    newTime: string;
+  }>();
   const router = useRouter();
   const { sessions, rescheduleSession } = useSessionStore();
   const { colors, spacing } = useTheme();
@@ -60,7 +64,7 @@ export default function ConfirmRescheduleScreen() {
       </View>
 
       <ScrollView contentContainerStyle={{ padding: spacing.md, paddingBottom: 100 }}>
-        <Typography variant="body3" color={palette.neutral['5']} style={{ marginBottom: 4 }}>
+        <Typography variant="label" color={palette.neutral['5']} style={{ marginBottom: 4 }}>
           Step 2 of 2
         </Typography>
         <Typography variant="h3" style={{ marginBottom: spacing.xl }}>
@@ -69,35 +73,47 @@ export default function ConfirmRescheduleScreen() {
 
         <View style={[styles.comparisonCard, { borderColor: palette.neutral['2'] }]}>
           <View style={styles.comparisonColumn}>
-            <Typography variant="body3" color={palette.neutral['5']}>
+            <Typography variant="label" color={palette.neutral['5']}>
               CURRENT
             </Typography>
-            <Typography variant="body2" style={{ fontWeight: '600', color: palette.orange['5'], marginTop: 8 }}>
+            <Typography
+              variant="body2"
+              style={{ fontWeight: '600', color: palette.orange['5'], marginTop: 8 }}
+            >
               {formatDate(oldDateObj)}
             </Typography>
-            <Typography variant="body2" style={{ fontWeight: '500', color: palette.orange['5'], marginTop: 4 }}>
+            <Typography
+              variant="body2"
+              style={{ fontWeight: '500', color: palette.orange['5'], marginTop: 4 }}
+            >
               {session.startTime}
             </Typography>
           </View>
-          
+
           <View style={styles.arrowContainer}>
             <Ionicons name="arrow-forward" size={24} color={palette.neutral['4']} />
           </View>
 
           <View style={styles.comparisonColumn}>
-            <Typography variant="body3" color={palette.neutral['5']}>
+            <Typography variant="label" color={palette.neutral['5']}>
               NEW
             </Typography>
-            <Typography variant="body2" style={{ fontWeight: '600', color: colors.primary, marginTop: 8 }}>
+            <Typography
+              variant="body2"
+              style={{ fontWeight: '600', color: colors.primary, marginTop: 8 }}
+            >
               {formatDate(newDateObj)}
             </Typography>
-            <Typography variant="body2" style={{ fontWeight: '500', color: colors.primary, marginTop: 4 }}>
+            <Typography
+              variant="body2"
+              style={{ fontWeight: '500', color: colors.primary, marginTop: 4 }}
+            >
               {newTime}
             </Typography>
           </View>
         </View>
 
-        <Typography variant="h4" style={{ marginTop: spacing.xl, marginBottom: spacing.md }}>
+        <Typography variant="h3" style={{ marginTop: spacing.xl, marginBottom: spacing.md }}>
           Trainer
         </Typography>
         <View style={styles.trainerInfo}>
@@ -105,7 +121,12 @@ export default function ConfirmRescheduleScreen() {
           <View>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Typography variant="h3">{session.trainerName}</Typography>
-              <Ionicons name="checkmark-circle" size={16} color={palette.success['5']} style={{ marginLeft: 4 }} />
+              <Ionicons
+                name="checkmark-circle"
+                size={16}
+                color={palette.success['5']}
+                style={{ marginLeft: 4 }}
+              />
             </View>
             <Typography variant="body2" color={palette.neutral['5']}>
               Certified Fitness Trainer
@@ -114,16 +135,23 @@ export default function ConfirmRescheduleScreen() {
         </View>
       </ScrollView>
 
-      <View style={[styles.bottomBar, { borderTopColor: palette.neutral['2'], padding: spacing.md }]}>
+      <View
+        style={[styles.bottomBar, { borderTopColor: palette.neutral['2'], padding: spacing.md }]}
+      >
         <Button
           label="Confirm Reschedule"
           onPress={handleConfirm}
           style={{ marginBottom: spacing.sm }}
         />
-        
+
         <View style={[styles.warningBanner, { backgroundColor: palette.orange['0.5'] }]}>
-          <Ionicons name="warning" size={20} color={palette.orange['5']} style={{ marginRight: 8, marginTop: 2 }} />
-          <Typography variant="body3" color={palette.orange['6']} style={{ flex: 1 }}>
+          <Ionicons
+            name="warning"
+            size={20}
+            color={palette.orange['5']}
+            style={{ marginRight: 8, marginTop: 2 }}
+          />
+          <Typography variant="label" color={palette.orange['6']} style={{ flex: 1 }}>
             Rescheduling less than 24 hours before the session may incur a fee.
           </Typography>
         </View>

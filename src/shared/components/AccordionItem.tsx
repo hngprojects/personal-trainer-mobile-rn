@@ -54,7 +54,12 @@ export function AccordionItem({ title, content, isInitiallyExpanded = false }: A
   });
 
   return (
-    <View style={[styles.container, { borderColor: palette.neutral['2'], backgroundColor: palette.neutral['0.5'] }]}>
+    <View
+      style={[
+        styles.container,
+        { borderColor: palette.neutral['2'], backgroundColor: palette.neutral['0.5'] },
+      ]}
+    >
       <Pressable style={styles.header} onPress={toggle}>
         <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={20} color={colors.text} />
         <Typography variant="body2" style={styles.titleText}>

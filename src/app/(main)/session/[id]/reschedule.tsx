@@ -41,12 +41,13 @@ export default function RescheduleScreen() {
   const handleContinue = () => {
     // In a real app we'd pass the actual Date object
     router.push({
-      pathname: `/session/${session.id}/confirm-reschedule`,
+      pathname: `/(main)/session/[id]/confirm-reschedule`,
       params: {
+        id: session.id,
         newDate: `2024-08-${selectedDate.toString().padStart(2, '0')}`,
         newTime: selectedTime,
       },
-    });
+    } as any);
   };
 
   const renderCalendar = () => {
@@ -83,7 +84,7 @@ export default function RescheduleScreen() {
               >
                 {day}
               </Typography>
-            </Pressable>
+            </Pressable>,
           );
           currentDay++;
         } else {
@@ -93,7 +94,7 @@ export default function RescheduleScreen() {
       grid.push(
         <View key={`row-${row}`} style={styles.calendarRow}>
           {rowCells}
-        </View>
+        </View>,
       );
       if (currentDay > daysInMonth) break;
     }
@@ -101,7 +102,7 @@ export default function RescheduleScreen() {
     return (
       <View style={styles.calendarContainer}>
         <View style={styles.calendarHeader}>
-          <Typography variant="h4" style={{ fontFamily: fonts.bold }}>
+          <Typography variant="h3" style={{ fontFamily: fonts.bold }}>
             August 2024
           </Typography>
           <View style={{ flexDirection: 'row', gap: 16 }}>
@@ -113,7 +114,7 @@ export default function RescheduleScreen() {
         <View style={styles.calendarDaysHeader}>
           {daysOfWeek.map((d, i) => (
             <View key={`dow-${i}`} style={styles.calendarCell}>
-              <Typography variant="body3" color={palette.neutral['5']}>
+              <Typography variant="label" color={palette.neutral['5']}>
                 {d}
               </Typography>
             </View>
@@ -136,7 +137,7 @@ export default function RescheduleScreen() {
       </View>
 
       <ScrollView contentContainerStyle={{ padding: spacing.md, paddingBottom: 100 }}>
-        <Typography variant="body3" color={palette.neutral['5']} style={{ marginBottom: 4 }}>
+        <Typography variant="label" color={palette.neutral['5']} style={{ marginBottom: 4 }}>
           Step 1 of 2
         </Typography>
         <Typography variant="h3" style={{ marginBottom: spacing.xl }}>
@@ -167,7 +168,7 @@ export default function RescheduleScreen() {
                   onPress={() => setSelectedTime(time)}
                 >
                   <Typography
-                    variant="body3"
+                    variant="label"
                     color={isSelected ? colors.primary : palette.neutral['7']}
                     style={{ fontWeight: isSelected ? '600' : '500' }}
                   >
@@ -180,11 +181,10 @@ export default function RescheduleScreen() {
         </View>
       </ScrollView>
 
-      <View style={[styles.bottomBar, { borderTopColor: palette.neutral['2'], padding: spacing.md }]}>
-        <Button
-          label="Continue to confirm"
-          onPress={handleContinue}
-        />
+      <View
+        style={[styles.bottomBar, { borderTopColor: palette.neutral['2'], padding: spacing.md }]}
+      >
+        <Button label="Continue to confirm" onPress={handleContinue} />
       </View>
     </Screen>
   );

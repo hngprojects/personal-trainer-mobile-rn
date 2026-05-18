@@ -19,7 +19,12 @@ const PLANS = [
     title: 'The Guaranteed',
     price: '$80',
     billing: 'per month, billed half-yearly',
-    features: ['Custom workout plan', 'Nutrition guidance', '24/7 direct messaging', 'Weekly check-ins'],
+    features: [
+      'Custom workout plan',
+      'Nutrition guidance',
+      '24/7 direct messaging',
+      'Weekly check-ins',
+    ],
     tag: 'BEST VALUE',
   },
   {
@@ -34,16 +39,29 @@ const PLANS = [
     title: 'The Consistent',
     price: '$120',
     billing: 'per month, billed monthly',
-    features: ['Custom workout plan', 'Nutrition guidance', '24/7 direct messaging', 'Bi-weekly check-ins'],
+    features: [
+      'Custom workout plan',
+      'Nutrition guidance',
+      '24/7 direct messaging',
+      'Bi-weekly check-ins',
+    ],
   },
 ];
 
-export function SubscriptionPlansScreen({ onBack, onSelectPlan, step, totalSteps }: SubscriptionPlansScreenProps) {
+export function SubscriptionPlansScreen({
+  onBack,
+  onSelectPlan,
+  step,
+  totalSteps,
+}: SubscriptionPlansScreenProps) {
   const { colors, spacing } = useTheme();
   const [selectedPlanId, setSelectedPlanId] = useState<string>('guaranteed');
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.surface }]} edges={['top', 'bottom']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.surface }]}
+      edges={['top', 'bottom']}
+    >
       <View style={[styles.header, { paddingHorizontal: spacing.md }]}>
         <Pressable onPress={onBack} style={styles.backButton}>
           <Ionicons name="chevron-back" size={24} color={colors.text} />
@@ -80,7 +98,11 @@ export function SubscriptionPlansScreen({ onBack, onSelectPlan, step, totalSteps
               >
                 {plan.tag && (
                   <View style={[styles.tag, { backgroundColor: palette.success['0.5'] }]}>
-                    <Typography variant="label" color={palette.success['6']} style={{ fontWeight: '600' }}>
+                    <Typography
+                      variant="label"
+                      color={palette.success['6']}
+                      style={{ fontWeight: '600' }}
+                    >
                       {plan.tag}
                     </Typography>
                   </View>
@@ -92,7 +114,11 @@ export function SubscriptionPlansScreen({ onBack, onSelectPlan, step, totalSteps
                 <Typography variant="h1" style={{ marginBottom: 4 }}>
                   {plan.price}
                 </Typography>
-                <Typography variant="label" color={palette.neutral['5']} style={{ marginBottom: 16 }}>
+                <Typography
+                  variant="label"
+                  color={palette.neutral['5']}
+                  style={{ marginBottom: 16 }}
+                >
                   {plan.billing}
                 </Typography>
 

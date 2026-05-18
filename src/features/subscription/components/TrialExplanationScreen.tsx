@@ -12,7 +12,12 @@ interface TrialExplanationScreenProps {
   totalSteps: number;
 }
 
-export function TrialExplanationScreen({ onContinue, onSkip, step, totalSteps }: TrialExplanationScreenProps) {
+export function TrialExplanationScreen({
+  onContinue,
+  onSkip,
+  step,
+  totalSteps,
+}: TrialExplanationScreenProps) {
   const { colors, spacing } = useTheme();
 
   const timelineSteps = [
@@ -40,7 +45,10 @@ export function TrialExplanationScreen({ onContinue, onSkip, step, totalSteps }:
   ];
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.surface }]} edges={['top', 'bottom']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.surface }]}
+      edges={['top', 'bottom']}
+    >
       <View style={[styles.header, { paddingHorizontal: spacing.md }]}>
         <View style={styles.stepContainer}>
           <Typography variant="body2" style={{ fontWeight: '500' }}>
@@ -63,7 +71,7 @@ export function TrialExplanationScreen({ onContinue, onSkip, step, totalSteps }:
           How your 7-day trial works
         </Typography>
         <Typography variant="body2" color={palette.neutral['6']} style={styles.subtitle}>
-          Cancel anytime within 7 days and you won't be charged.
+          Cancel anytime within 7 days and you won&apos;t be charged.
         </Typography>
 
         <View style={styles.timelineWrapper}>
@@ -72,7 +80,10 @@ export function TrialExplanationScreen({ onContinue, onSkip, step, totalSteps }:
 
         <View style={[styles.alertBox, { backgroundColor: palette.success['0.5'] }]}>
           <Typography variant="body2" color={palette.success['6']} style={{ fontWeight: '500' }}>
-            Next billing date: <Typography variant="body2" style={{ fontWeight: '700' }}>August 31</Typography>
+            Next billing date:{' '}
+            <Typography variant="body2" style={{ fontWeight: '700' }}>
+              August 31
+            </Typography>
           </Typography>
           <Typography variant="label" color={palette.success['5']} style={{ marginTop: 4 }}>
             Cancel anytime before this date.

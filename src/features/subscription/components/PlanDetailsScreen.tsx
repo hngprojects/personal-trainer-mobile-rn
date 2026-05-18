@@ -16,7 +16,10 @@ export function PlanDetailsScreen({ onBack, onSubscribe, planId }: PlanDetailsSc
   const { colors, spacing } = useTheme();
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.surface }]} edges={['top', 'bottom']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.surface }]}
+      edges={['top', 'bottom']}
+    >
       <View style={[styles.header, { paddingHorizontal: spacing.md }]}>
         <Pressable onPress={onBack} style={styles.backButton}>
           <Ionicons name="chevron-back" size={24} color={colors.text} />
@@ -82,15 +85,21 @@ export function PlanDetailsScreen({ onBack, onSubscribe, planId }: PlanDetailsSc
           <View style={styles.resultsGrid}>
             <View style={styles.resultBox}>
               <Ionicons name="trending-down" size={24} color={palette.neutral['6']} />
-              <Typography variant="label" style={{ marginTop: 8 }}>Weight loss</Typography>
+              <Typography variant="label" style={{ marginTop: 8 }}>
+                Weight loss
+              </Typography>
             </View>
             <View style={styles.resultBox}>
               <Ionicons name="barbell" size={24} color={palette.neutral['6']} />
-              <Typography variant="label" style={{ marginTop: 8 }}>Muscle gain</Typography>
+              <Typography variant="label" style={{ marginTop: 8 }}>
+                Muscle gain
+              </Typography>
             </View>
             <View style={styles.resultBox}>
               <Ionicons name="flash" size={24} color={palette.neutral['6']} />
-              <Typography variant="label" style={{ marginTop: 8 }}>More energy</Typography>
+              <Typography variant="label" style={{ marginTop: 8 }}>
+                More energy
+              </Typography>
             </View>
           </View>
         </View>
