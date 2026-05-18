@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm typecheck *)",
+      "Bash(pnpm lint *)",
+      "Bash(npx expo *)",
+      "Bash(pnpm format *)",
+      "Bash(git checkout *)",
+      "Bash(git merge *)",
+      "Read(//tmp/**)",
+      "Bash(git restore *)",
+      "Bash(git ls-tree *)",
+      "Bash(git add *)",
+      "Bash(git commit --no-verify -m 'Merge origin/dev into feat/onbaording-homescreen *)"
+    ]
+  }
+}

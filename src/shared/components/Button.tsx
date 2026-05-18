@@ -13,7 +13,7 @@ import { useTheme } from '@/shared/theme';
 
 import { Typography } from './Typography';
 
-type ButtonVariant = 'primary' | 'outline' | 'ghost';
+type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost';
 
 interface ButtonProps extends Omit<PressableProps, 'style'> {
   label: string;
@@ -21,6 +21,8 @@ interface ButtonProps extends Omit<PressableProps, 'style'> {
   isLoading?: boolean;
   style?: StyleProp<ViewStyle>;
 }
+
+const BRAND_NAVY_PRESSED = '#06203F';
 
 export function Button({
   label,
@@ -30,41 +32,39 @@ export function Button({
   style,
   ...props
 }: ButtonProps) {
-  const { colors, spacing } = useTheme();
-  const isDisabled = disabled || isLoading;
+  const { colors } = useTheme();
+  const isDisabled = !!(disabled || isLoading);
 
-  const containerStyle = [
-    styles.base,
-    {
-      paddingVertical: spacing.sm + 4,
-      paddingHorizontal: spacing.lg,
-      borderRadius: spacing.sm,
-      opacity: isDisabled ? 0.6 : 1,
-    },
-    variant === 'primary' && { backgroundColor: colors.primary },
-    variant === 'outline' && {
-      backgroundColor: 'transparent',
-      borderWidth: 1.5,
-      borderColor: colors.primary,
-    },
-    variant === 'ghost' && { backgroundColor: 'transparent' },
-    style,
-  ];
-
-  const textColor = variant === 'primary' ? '#FFFFFF' : colors.primary;
+  const { background, text } = resolveColors(variant, isDisabled, colors);
 
   return (
     <Pressable
-      style={containerStyle}
+      // Key tied to disabled state forces a clean remount when validity flips,
+      // bypassing the RN reconciler bailout that was caching the native bg.
+      key={isDisabled ? 'disabled' : 'active'}
+      style={[
+        styles.base,
+        { backgroundColor: background },
+        variant === 'outline' && {
+          borderWidth: 1.5,
+          borderColor: isDisabled ? colors.border : colors.primary,
+        },
+        variant === 'secondary' && {
+          borderWidth: 1,
+          borderColor: colors.border,
+          opacity: isDisabled ? 0.55 : 1,
+        },
+        style,
+      ]}
       disabled={isDisabled}
-      android_ripple={{ color: colors.primaryPressed }}
+      android_ripple={isDisabled ? undefined : { color: BRAND_NAVY_PRESSED }}
       {...props}
     >
       <View style={styles.content}>
         {isLoading ? (
-          <ActivityIndicator color={textColor} size="small" />
+          <ActivityIndicator color={text} size="small" />
         ) : (
-          <Typography variant="body1" color={textColor} style={styles.label}>
+          <Typography variant="body1" color={text} style={styles.label}>
             {label}
           </Typography>
         )}
@@ -73,10 +73,38 @@ export function Button({
   );
 }
 
+function resolveColors(
+  variant: ButtonVariant,
+  isDisabled: boolean,
+  colors: ReturnType<typeof useTheme>['colors'],
+) {
+  const disabledText = colors.textSecondary;
+  if (variant === 'primary') {
+    return {
+      background: isDisabled ? colors.surfaceMuted : colors.primary,
+      text: isDisabled ? disabledText : '#FFFFFF',
+    };
+  }
+  if (variant === 'secondary') {
+    return {
+      background: colors.surface,
+      text: isDisabled ? disabledText : colors.primary,
+    };
+  }
+  // outline + ghost
+  return {
+    background: 'transparent',
+    text: isDisabled ? disabledText : colors.primary,
+  };
+}
+
 const styles = StyleSheet.create({
   base: {
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 10,
   },
   content: {
     flexDirection: 'row',

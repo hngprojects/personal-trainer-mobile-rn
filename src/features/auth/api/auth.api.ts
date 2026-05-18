@@ -1,55 +1,54 @@
-import { ApiError } from '@/shared/api/types';
+import { client } from '@/shared/api/client';
 
-import type { AuthResponse, AuthTokens, LoginRequest, RegisterRequest } from './auth.types';
+import type { ApiEnvelope, AuthResponse, AuthTokens, RawAuthData } from './auth.types';
 
-const DUMMY_USER = {
-  id: 'logickoder',
-  email: 'jeffery@logickoder.dev',
-  firstName: 'Jeffery',
-  lastName: 'Orazulike',
-};
-
-const DUMMY_ACCESS = 'dummy.access.token';
-const DUMMY_REFRESH = 'dummy.refresh.token';
-const DUMMY_ACCESS_ROTATED = 'dummy.access.token.rotated';
-
-function delay(ms: number) {
-  return new Promise<void>((resolve) => setTimeout(resolve, ms));
-}
-
-async function login(data: LoginRequest): Promise<AuthResponse> {
-  await delay(800);
-  if (data.email === 'jeffery@logickoder.dev' && data.password === 'Password1') {
-    return {
-      user: DUMMY_USER,
-      tokens: { accessToken: DUMMY_ACCESS, refreshToken: DUMMY_REFRESH },
-    };
-  }
-  throw new ApiError('Invalid credentials', 401);
-}
-
-async function register(data: RegisterRequest): Promise<AuthResponse> {
-  await delay(1000);
-  if (!data.email || !data.password) {
-    throw new ApiError('Email and password are required', 400);
-  }
+function unwrap(data: RawAuthData): AuthResponse {
   return {
     user: {
-      id: `user-${Date.now()}`,
-      email: data.email,
-      firstName: data.firstName,
-      lastName: data.lastName,
+      id: data.user.id,
+      email: data.user.email,
+      name: data.user.name,
+      userType: data.user.user_type,
+      profileComplete: data.user.profile_complete,
+      gender: data.user.gender ?? null,
+      fitnessGoals: data.user.fitness_goals ?? null,
+      fitnessLevel: data.user.fitness_level ?? null,
+      avatarUrl: data.user.avatar_url ?? null,
     },
-    tokens: { accessToken: DUMMY_ACCESS, refreshToken: DUMMY_REFRESH },
+    tokens: {
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token,
+    },
+    isNewUser: data.is_new_user,
+    expiresIn: data.expires_in,
   };
 }
 
-async function refreshTokens(refreshToken: string): Promise<AuthTokens> {
-  await delay(400);
-  if (refreshToken === DUMMY_REFRESH) {
-    return { accessToken: DUMMY_ACCESS_ROTATED, refreshToken: DUMMY_REFRESH };
-  }
-  throw new ApiError('Refresh token invalid', 401);
+async function googleAuth(idToken: string): Promise<AuthResponse> {
+  const res = await client.post<ApiEnvelope<RawAuthData>>('/auth/google/mobile', {
+    id_token: idToken,
+  });
+  return unwrap(res.data.data);
 }
 
-export const authApi = { login, register, refreshTokens };
+async function refreshTokens(refreshToken: string): Promise<AuthTokens> {
+  const res = await client.post<ApiEnvelope<{ access_token: string; refresh_token: string }>>(
+    '/auth/refresh',
+    { refresh_token: refreshToken },
+  );
+  return {
+    accessToken: res.data.data.access_token,
+    refreshToken: res.data.data.refresh_token,
+  };
+}
+
+async function logout(refreshToken: string): Promise<void> {
+  // Skip the refresh-on-401 interceptor for this call. The server may invalidate
+  // the refresh token immediately, which would cause the auto-retry to fail with
+  // "invalid token". Logout is best-effort — let the caller handle a non-2xx.
+  await client.post('/auth/logout', { refresh_token: refreshToken }, {
+    _skipAuthRefresh: true,
+  } as Parameters<typeof client.post>[2]);
+}
+
+export const authApi = { googleAuth, refreshTokens, logout };

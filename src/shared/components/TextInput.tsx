@@ -1,51 +1,69 @@
-import React, { forwardRef } from 'react';
-import { StyleSheet, TextInput as RNTextInput, TextInputProps, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import React, { forwardRef, useState } from 'react';
+import {
+  Pressable,
+  StyleSheet,
+  TextInput as RNTextInput,
+  TextInputProps,
+  View,
+} from 'react-native';
 
-import { useTheme } from '@/shared/theme';
+import { fonts, useTheme } from '@/shared/theme';
 
 import { Typography } from './Typography';
 
-interface AppTextInputProps extends TextInputProps {
+export interface AppTextInputProps extends TextInputProps {
   label?: string;
   error?: string;
+  required?: boolean;
 }
 
 export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
-  ({ label, error, style, ...props }, ref) => {
-    const { colors, spacing, typography } = useTheme();
+  ({ label, error, required, secureTextEntry, style, ...props }, ref) => {
+    const { colors } = useTheme();
+    const isPassword = !!secureTextEntry;
+    const [hidden, setHidden] = useState(isPassword);
+    const hasError = !!error;
 
     return (
       <View style={styles.container}>
         {label && (
-          <Typography variant="label" style={styles.label}>
+          <Typography style={[styles.label, { color: colors.text }]}>
             {label}
+            {required ? (
+              <Typography style={[styles.required, { color: colors.error }]}> *</Typography>
+            ) : null}
           </Typography>
         )}
-        <RNTextInput
-          ref={ref}
+        <View
           style={[
-            styles.input,
-            typography.body1,
+            styles.inputWrapper,
             {
-              color: colors.text,
+              borderColor: hasError ? colors.error : colors.border,
               backgroundColor: colors.inputBackground,
-              borderColor: error ? colors.error : colors.border,
-              paddingHorizontal: spacing.md,
-              paddingVertical: spacing.sm + 4,
-              borderRadius: spacing.sm,
             },
-            style,
           ]}
-          placeholderTextColor={colors.textSecondary}
-          autoCapitalize="none"
-          autoCorrect={false}
-          {...props}
-        />
-        {error && (
-          <Typography variant="label" color={colors.error} style={styles.error}>
-            {error}
-          </Typography>
-        )}
+        >
+          <RNTextInput
+            ref={ref}
+            secureTextEntry={isPassword ? hidden : false}
+            placeholderTextColor={colors.textSecondary}
+            autoCapitalize="none"
+            autoCorrect={false}
+            style={[styles.input, { color: colors.text }, style]}
+            {...props}
+          />
+          {isPassword && (
+            <Pressable onPress={() => setHidden((h) => !h)} hitSlop={8} style={styles.iconButton}>
+              <Ionicons
+                name={hidden ? 'eye-outline' : 'eye-off-outline'}
+                size={20}
+                color={colors.textSecondary}
+              />
+            </Pressable>
+          )}
+        </View>
+        {error && <Typography style={[styles.error, { color: colors.error }]}>{error}</Typography>}
       </View>
     );
   },
@@ -54,8 +72,34 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
 TextInput.displayName = 'TextInput';
 
 const styles = StyleSheet.create({
-  container: { gap: 4 },
-  label: { marginBottom: 2 },
-  input: { borderWidth: 1.5 },
-  error: { marginTop: 2 },
+  container: { gap: 6 },
+  label: {
+    fontSize: 14,
+    fontFamily: fonts.medium,
+  },
+  required: {
+    fontSize: 14,
+    fontFamily: fonts.medium,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 14,
+  },
+  input: {
+    flex: 1,
+    paddingVertical: 14,
+    fontSize: 14,
+    fontFamily: fonts.regular,
+  },
+  iconButton: {
+    paddingLeft: 8,
+  },
+  error: {
+    fontSize: 12,
+    fontFamily: fonts.regular,
+    textAlign: 'right',
+  },
 });
