@@ -3,7 +3,10 @@ import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeIn, FadeInDown, FadeInUp, ZoomIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { useTheme } from '@/shared/theme';
 
 import { trainers } from '../data/trainers.data';
 
@@ -11,9 +14,10 @@ export function TrainerProfileScreen() {
   const insets = useSafeAreaInsets();
   const trainer = trainers[0];
   const [tab, setTab] = useState('Coach');
+  const { colors } = useTheme();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar style="light" />
 
       {/* Back button respects the top safe-area inset so it doesn't sit under the notch. */}
@@ -31,62 +35,92 @@ export function TrainerProfileScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* HERO — cover image extends edge-to-edge under the status bar */}
-        <View style={styles.hero}>
-          <Image source={{ uri: trainer.coverImage }} style={styles.cover} />
-          <Image source={{ uri: trainer.image }} style={styles.avatar} />
-        </View>
+        <Animated.View entering={FadeIn.duration(420)} style={styles.hero}>
+          <Animated.Image
+            entering={FadeIn.duration(520)}
+            source={{ uri: trainer.coverImage }}
+            style={styles.cover}
+          />
+          <Animated.Image
+            entering={ZoomIn.delay(180).duration(380)}
+            source={{ uri: trainer.image }}
+            style={[styles.avatar, { borderColor: colors.background }]}
+          />
+        </Animated.View>
 
         {/* CONTENT */}
         <View style={styles.info}>
-          <Text style={styles.name}>Charles Effiong</Text>
-          <Text style={styles.role}>Coach · More · 7 yrs</Text>
+          <Animated.View entering={FadeInDown.delay(80).duration(380)}>
+            <Text style={[styles.name, { color: colors.text }]}>{trainer.name}</Text>
+            <Text style={[styles.role, { color: colors.textSecondary }]}>
+              {trainer.specialty} · {trainer.experience}
+            </Text>
+          </Animated.View>
 
           {/* STATS */}
-          <View style={styles.stats}>
+          <Animated.View
+            entering={FadeInUp.delay(140).duration(420)}
+            style={[styles.stats, { borderBottomColor: colors.divider }]}
+          >
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>Exp</Text>
-              <Text style={styles.statNumber}>5+</Text>
+              <Text style={[styles.statValue, { color: colors.textSecondary }]}>Exp</Text>
+              <Text style={[styles.statNumber, { color: colors.text }]}>5+</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>Clients</Text>
-              <Text style={styles.statNumber}>37</Text>
+              <Text style={[styles.statValue, { color: colors.textSecondary }]}>Clients</Text>
+              <Text style={[styles.statNumber, { color: colors.text }]}>37</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>Rating</Text>
-              <Text style={styles.statNumber}>4.8</Text>
+              <Text style={[styles.statValue, { color: colors.textSecondary }]}>Rating</Text>
+              <Text style={[styles.statNumber, { color: colors.text }]}>4.8</Text>
             </View>
-          </View>
+          </Animated.View>
 
           {/* TABS */}
-          <View style={styles.tabs}>
+          <Animated.View
+            entering={FadeInUp.delay(220).duration(420)}
+            style={[styles.tabs, { backgroundColor: colors.surfaceMuted }]}
+          >
             {['Coach', 'Benefits', 'Ratings'].map((item) => (
               <Pressable
                 key={item}
                 onPress={() => setTab(item)}
                 style={[styles.tabButton, tab === item && styles.activeTab]}
               >
-                <Text style={[styles.tabText, tab === item && styles.activeText]}>{item}</Text>
+                <Text
+                  style={[
+                    styles.tabText,
+                    { color: colors.textSecondary },
+                    tab === item && styles.activeText,
+                  ]}
+                >
+                  {item}
+                </Text>
               </Pressable>
             ))}
-          </View>
+          </Animated.View>
 
           {/* COACH TAB */}
           {tab === 'Coach' && (
-            <>
-              <Text style={styles.sectionTitle}>About Charles Effiong</Text>
-              <Text style={styles.description}>
+            <Animated.View key="Coach" entering={FadeInUp.duration(360)}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                About Charles Effiong
+              </Text>
+              <Text style={[styles.description, { color: colors.textSecondary }]}>
                 I help busy clients build stronger bodies through custom fitness coaching, nutrition
                 planning and consistency.
               </Text>
 
-              <Text style={styles.sectionTitle}>Training Style</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Training Style</Text>
               <View style={styles.gallery}>
                 <Image source={{ uri: trainer.image }} style={styles.galleryImage} />
                 <Image source={{ uri: trainer.coverImage }} style={styles.galleryImage} />
                 <Image source={{ uri: trainer.image }} style={styles.galleryImage} />
               </View>
 
-              <Text style={styles.sectionTitle}>See Trainer In Action</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                See Trainer In Action
+              </Text>
               <Pressable onPress={() => router.push('/trainer-video')} style={styles.videoWrap}>
                 <Image source={{ uri: trainer.image }} style={styles.video} />
                 <View style={styles.videoOverlay} />
@@ -94,12 +128,12 @@ export function TrainerProfileScreen() {
                   <Ionicons name="play" size={22} color="#0F2E5C" />
                 </View>
               </Pressable>
-            </>
+            </Animated.View>
           )}
 
           {/* BENEFITS TAB */}
           {tab === 'Benefits' && (
-            <>
+            <Animated.View key="Benefits" entering={FadeInUp.duration(360)}>
               {[
                 {
                   title: 'Personalized Training Plans',
@@ -109,60 +143,79 @@ export function TrainerProfileScreen() {
                 { title: 'Proven Results', text: 'Track measurable transformation progress.' },
                 { title: 'Structured Progression', text: 'Clear systems that help you improve.' },
               ].map((item) => (
-                <View key={item.title} style={styles.benefitCard}>
+                <View
+                  key={item.title}
+                  style={[styles.benefitCard, { backgroundColor: colors.surface }]}
+                >
                   <View style={styles.iconWrapper}>
                     <View style={styles.iconInner} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.benefitTitle}>{item.title}</Text>
-                    <Text style={styles.benefitText}>{item.text}</Text>
+                    <Text style={[styles.benefitTitle, { color: colors.text }]}>{item.title}</Text>
+                    <Text style={[styles.benefitText, { color: colors.textSecondary }]}>
+                      {item.text}
+                    </Text>
                   </View>
                 </View>
               ))}
-            </>
+            </Animated.View>
           )}
 
           {/* RATINGS TAB */}
           {tab === 'Ratings' && (
-            <>
+            <Animated.View key="Ratings" entering={FadeInUp.duration(360)}>
               <View style={styles.ratingHeader}>
-                <Text style={styles.sectionTitle}>Trainer Ratings</Text>
-                <Text style={styles.mostRecent}>Most Recent</Text>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>Trainer Ratings</Text>
+                <Text style={[styles.mostRecent, { color: colors.textSecondary }]}>
+                  Most Recent
+                </Text>
               </View>
 
               {[1, 2, 3].map((item) => (
-                <View key={item} style={styles.ratingCard}>
+                <View key={item} style={[styles.ratingCard, { backgroundColor: colors.surface }]}>
                   <View style={styles.ratingTop}>
-                    <View style={styles.userAvatar} />
+                    <View style={[styles.userAvatar, { backgroundColor: colors.surfaceMuted }]} />
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.reviewer}>Sarah Adams</Text>
-                      <Text style={styles.reviewDate}>2 days ago</Text>
+                      <Text style={[styles.reviewer, { color: colors.text }]}>Sarah Adams</Text>
+                      <Text style={[styles.reviewDate, { color: colors.textSecondary }]}>
+                        2 days ago
+                      </Text>
                     </View>
                     <Text style={styles.star}>⭐ 4.5</Text>
                   </View>
-                  <Text style={styles.reviewText}>
+                  <Text style={[styles.reviewText, { color: colors.textSecondary }]}>
                     Charles helped me stay disciplined and finally hit my fitness goals.
                   </Text>
                 </View>
               ))}
-            </>
+            </Animated.View>
           )}
 
           {/* BUTTONS */}
-          <Pressable style={styles.primaryBtn}>
-            <Text style={styles.primaryText}>Work With Charles</Text>
-          </Pressable>
-          <Pressable
-            style={styles.secondaryBtn}
-            onPress={() =>
-              router.push({
-                pathname: '/book-a-call',
-                params: { trainerId: trainer.id },
-              } as never)
-            }
-          >
-            <Text style={styles.secondaryText}>Request a Call</Text>
-          </Pressable>
+          <Animated.View entering={FadeInUp.delay(300).duration(420)}>
+            <Pressable
+              style={styles.primaryBtn}
+              onPress={() =>
+                router.push({
+                  pathname: '/book-a-session',
+                  params: { trainerId: trainer.id },
+                } as never)
+              }
+            >
+              <Text style={styles.primaryText}>Work With {trainer.name.split(' ')[0]}</Text>
+            </Pressable>
+            <Pressable
+              style={styles.secondaryBtn}
+              onPress={() =>
+                router.push({
+                  pathname: '/book-a-call',
+                  params: { trainerId: trainer.id },
+                } as never)
+              }
+            >
+              <Text style={styles.secondaryText}>Request a Call</Text>
+            </Pressable>
+          </Animated.View>
         </View>
       </ScrollView>
     </View>
@@ -170,7 +223,7 @@ export function TrainerProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1 },
   scroll: { flex: 1 },
   backButton: {
     position: 'absolute',
@@ -190,38 +243,35 @@ const styles = StyleSheet.create({
     height: 75,
     borderRadius: 40,
     borderWidth: 3,
-    borderColor: '#fff',
     position: 'absolute',
     alignSelf: 'center',
     bottom: 8,
   },
   info: { paddingHorizontal: 16 },
   name: { textAlign: 'center', fontWeight: '700', fontSize: 18 },
-  role: { textAlign: 'center', color: '#888', marginTop: 4, fontSize: 11 },
+  role: { textAlign: 'center', marginTop: 4, fontSize: 11 },
   stats: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 18,
     paddingBottom: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#EFEFEF',
   },
   statItem: { flex: 1, alignItems: 'center' },
-  statValue: { color: '#999', fontSize: 11 },
+  statValue: { fontSize: 11 },
   statNumber: { marginTop: 4, fontWeight: '700', fontSize: 14 },
   tabs: {
     flexDirection: 'row',
-    backgroundColor: '#F5F5F5',
     borderRadius: 12,
     marginTop: 18,
     padding: 4,
   },
   tabButton: { flex: 1, paddingVertical: 10, borderRadius: 10 },
   activeTab: { backgroundColor: '#0D6EFD' },
-  tabText: { textAlign: 'center', color: '#777', fontSize: 12, fontWeight: '600' },
+  tabText: { textAlign: 'center', fontSize: 12, fontWeight: '600' },
   activeText: { color: '#fff' },
   sectionTitle: { marginTop: 18, marginBottom: 10, fontWeight: '700', fontSize: 13 },
-  description: { fontSize: 11, color: '#666', lineHeight: 18 },
+  description: { fontSize: 11, lineHeight: 18 },
   gallery: { flexDirection: 'row', justifyContent: 'space-between' },
   galleryImage: { width: '31%', height: 70, borderRadius: 10 },
   videoWrap: {
@@ -257,7 +307,6 @@ const styles = StyleSheet.create({
   },
   iconInner: { width: 18, height: 18, borderRadius: 6, backgroundColor: '#DCE7FF' },
   benefitCard: {
-    backgroundColor: '#F8F8F8',
     borderRadius: 14,
     padding: 14,
     marginTop: 10,
@@ -265,27 +314,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   benefitTitle: { fontWeight: '700', fontSize: 12 },
-  benefitText: { color: '#888', fontSize: 10, marginTop: 4 },
+  benefitText: { fontSize: 10, marginTop: 4 },
   ratingHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: 18,
   },
-  mostRecent: { color: '#999', fontSize: 10 },
-  ratingCard: { backgroundColor: '#F8F8F8', borderRadius: 14, padding: 14, marginTop: 10 },
+  mostRecent: { fontSize: 10 },
+  ratingCard: { borderRadius: 14, padding: 14, marginTop: 10 },
   ratingTop: { flexDirection: 'row', alignItems: 'center' },
   userAvatar: {
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: '#DDD',
     marginRight: 10,
   },
   reviewer: { fontWeight: '700', fontSize: 12 },
-  reviewDate: { color: '#999', fontSize: 10, marginTop: 2 },
+  reviewDate: { fontSize: 10, marginTop: 2 },
   star: { color: '#F4A100', fontSize: 12, fontWeight: '700' },
-  reviewText: { color: '#777', fontSize: 11, marginTop: 10, lineHeight: 18 },
+  reviewText: { fontSize: 11, marginTop: 10, lineHeight: 18 },
   primaryBtn: { backgroundColor: '#005F86', marginTop: 20, paddingVertical: 13, borderRadius: 8 },
   primaryText: { color: '#fff', textAlign: 'center', fontWeight: '700', fontSize: 12 },
   secondaryBtn: {

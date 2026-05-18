@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
-import { palette } from '@/shared/theme';
+import { palette, useTheme } from '@/shared/theme';
 
 interface ProfileStepProgressProps {
   step: number;
@@ -10,6 +10,7 @@ interface ProfileStepProgressProps {
 }
 
 export function ProfileStepProgress({ step, total }: ProfileStepProgressProps) {
+  const { colors } = useTheme();
   const progress = useSharedValue((step + 1) / total);
 
   React.useEffect(() => {
@@ -21,7 +22,7 @@ export function ProfileStepProgress({ step, total }: ProfileStepProgressProps) {
   }));
 
   return (
-    <View style={styles.track}>
+    <View style={[styles.track, { backgroundColor: colors.surfaceMuted }]}>
       <Animated.View style={[styles.fill, fillStyle]} />
     </View>
   );
@@ -31,7 +32,6 @@ const styles = StyleSheet.create({
   track: {
     height: 6,
     borderRadius: 999,
-    backgroundColor: palette.neutral['1'],
     overflow: 'hidden',
   },
   fill: {

@@ -3,25 +3,29 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Screen, Typography } from '@/shared/components';
-import { fonts, palette, useTheme } from '@/shared/theme';
+import { useStatusBarStyle } from '@/shared/hooks/useStatusBarStyle';
+import { fonts, useTheme } from '@/shared/theme';
 
 import { mockSessions } from '../data/sessions.data';
 
 export function SessionDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { spacing, colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const statusBarStyle = useStatusBarStyle();
 
   const session = mockSessions.find((s) => s.id === id);
 
   if (!session) {
     return (
-      <Screen padding={false} edges={['top']} backgroundColor="#FFFFFF">
-        <StatusBar style="dark" />
+      <Screen padding={false} edges={['top']}>
+        <StatusBar style={statusBarStyle} />
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={24} color={palette.neutral['9']} />
+            <Ionicons name="arrow-back" size={24} color={colors.icon} />
           </Pressable>
           <Typography variant="h3" style={styles.headerTitle}>
             Session Not Found
@@ -54,29 +58,39 @@ export function SessionDetailsScreen() {
   };
 
   return (
-    <Screen padding={false} edges={['top']} backgroundColor="#FFFFFF">
-      <StatusBar style="dark" />
+    <Screen padding={false} edges={['top']}>
+      <StatusBar style={statusBarStyle} />
 
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color={palette.neutral['9']} />
+          <Ionicons name="arrow-back" size={24} color={colors.icon} />
         </Pressable>
         <Typography variant="h3" style={styles.headerTitle}>
           Session Details
         </Typography>
       </View>
 
-      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingHorizontal: spacing.md }]}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingHorizontal: spacing.md, paddingBottom: 120 + insets.bottom },
+        ]}
+      >
         <Typography variant="body2" color={colors.textSecondary} style={styles.sectionLabel}>
           Your Trainer
         </Typography>
 
-        <View style={styles.trainerCard}>
+        <View
+          style={[
+            styles.trainerCard,
+            { backgroundColor: colors.background, borderColor: colors.divider },
+          ]}
+        >
           <Image source={{ uri: session.trainerAvatar }} style={styles.trainerAvatar} />
           <View style={styles.trainerInfo}>
             <View style={styles.trainerHeader}>
               <Typography style={styles.trainerName}>{session.trainerName}</Typography>
-              <Ionicons name="checkmark-circle" size={16} color={palette.success['5']} />
+              <Ionicons name="checkmark-circle" size={16} color={colors.success} />
             </View>
             <Typography variant="label" color={colors.textSecondary}>
               Strength & Accountability
@@ -88,7 +102,12 @@ export function SessionDetailsScreen() {
           Booking Information
         </Typography>
 
-        <View style={styles.infoList}>
+        <View
+          style={[
+            styles.infoList,
+            { backgroundColor: colors.background, borderColor: colors.divider },
+          ]}
+        >
           <InfoItem icon="calendar-outline" label="Date" value={session.date} />
           <InfoItem icon="time-outline" label="Time" value={session.time} />
           <InfoItem icon="hourglass-outline" label="Duration" value={session.duration} />
@@ -106,7 +125,13 @@ export function SessionDetailsScreen() {
 
         <View style={styles.goalsContainer}>
           {(session.goals || ['Cardio', 'Core Strength', 'Weight Loss', 'Mobility']).map((goal) => (
-            <View key={goal} style={styles.goalTag}>
+            <View
+              key={goal}
+              style={[
+                styles.goalTag,
+                { backgroundColor: colors.surfaceMuted, borderColor: colors.divider },
+              ]}
+            >
               <Typography variant="label" color={colors.textSecondary}>
                 {goal}
               </Typography>
@@ -115,7 +140,18 @@ export function SessionDetailsScreen() {
         </View>
       </ScrollView>
 
-      <View style={[styles.footer, { padding: spacing.md }]}>
+      <View
+        style={[
+          styles.footer,
+          {
+            backgroundColor: colors.background,
+            borderTopColor: colors.border,
+            paddingHorizontal: spacing.md,
+            paddingTop: spacing.md,
+            paddingBottom: spacing.md + insets.bottom,
+          },
+        ]}
+      >
         <Button label="Reschedule" onPress={handleReschedule} />
       </View>
     </Screen>
@@ -137,13 +173,13 @@ function InfoItem({
   return (
     <View style={styles.infoItem}>
       <View style={styles.infoIconLabel}>
-        <Ionicons name={icon} size={20} color={palette.neutral['4']} />
+        <Ionicons name={icon} size={20} color={colors.iconMuted} />
         <Typography variant="body2" color={colors.textSecondary} style={styles.infoLabel}>
           {label}
         </Typography>
       </View>
       <View style={styles.infoValueContainer}>
-        {isPlatform && <View style={styles.platformDot} />}
+        {isPlatform && <View style={[styles.platformDot, { backgroundColor: colors.primary }]} />}
         <Typography variant="body2" style={styles.infoValue}>
           {value}
         </Typography>
@@ -169,7 +205,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingTop: 8,
-    paddingBottom: 100,
   },
   sectionLabel: {
     fontFamily: fonts.semibold,
@@ -180,10 +215,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: palette.neutral['1'],
   },
   trainerAvatar: {
     width: 56,
@@ -203,10 +236,8 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bold,
   },
   infoList: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: palette.neutral['1'],
     paddingVertical: 8,
   },
   infoItem: {
@@ -237,7 +268,6 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#3B82F6',
   },
   goalsContainer: {
     flexDirection: 'row',
@@ -247,18 +277,14 @@ const styles = StyleSheet.create({
   goalTag: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: palette.neutral['0.5'],
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: palette.neutral['1'],
   },
   footer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
-    borderTopColor: palette.neutral['1'],
   },
 });

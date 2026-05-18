@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Typography } from '@/shared/components';
-import { palette, useTheme } from '@/shared/theme';
+import { useTheme } from '@/shared/theme';
 
 interface SubscriptionPlansScreenProps {
   onBack: () => void;
@@ -55,13 +55,11 @@ export function SubscriptionPlansScreen({
   totalSteps,
 }: SubscriptionPlansScreenProps) {
   const { colors, spacing } = useTheme();
+  const insets = useSafeAreaInsets();
   const [selectedPlanId, setSelectedPlanId] = useState<string>('guaranteed');
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: colors.surface }]}
-      edges={['top', 'bottom']}
-    >
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.surface }]} edges={['top']}>
       <View style={[styles.header, { paddingHorizontal: spacing.md }]}>
         <Pressable onPress={onBack} style={styles.backButton}>
           <Ionicons name="chevron-back" size={24} color={colors.text} />
@@ -74,11 +72,16 @@ export function SubscriptionPlansScreen({
         </Typography>
       </View>
 
-      <ScrollView contentContainerStyle={[styles.content, { paddingHorizontal: spacing.md }]}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.content,
+          { paddingHorizontal: spacing.md, paddingBottom: 40 + insets.bottom },
+        ]}
+      >
         <Typography variant="h2" style={styles.title}>
           Choose your plan
         </Typography>
-        <Typography variant="body2" color={palette.neutral['6']} style={styles.subtitle}>
+        <Typography variant="body2" color={colors.textSecondary} style={styles.subtitle}>
           A plan to suit every budget and lifestyle.
         </Typography>
 
@@ -92,15 +95,18 @@ export function SubscriptionPlansScreen({
                 onPress={() => setSelectedPlanId(plan.id)}
                 style={[
                   styles.planCard,
-                  { borderColor: isSelected ? palette.success['4'] : palette.neutral['2'] },
+                  {
+                    backgroundColor: colors.background,
+                    borderColor: isSelected ? colors.success : colors.border,
+                  },
                   isSelected && { borderWidth: 2 },
                 ]}
               >
                 {plan.tag && (
-                  <View style={[styles.tag, { backgroundColor: palette.success['0.5'] }]}>
+                  <View style={[styles.tag, { backgroundColor: colors.surfaceMuted }]}>
                     <Typography
                       variant="label"
-                      color={palette.success['6']}
+                      color={colors.success}
                       style={{ fontWeight: '600' }}
                     >
                       {plan.tag}
@@ -116,7 +122,7 @@ export function SubscriptionPlansScreen({
                 </Typography>
                 <Typography
                   variant="label"
-                  color={palette.neutral['5']}
+                  color={colors.textSecondary}
                   style={{ marginBottom: 16 }}
                 >
                   {plan.billing}
@@ -128,7 +134,7 @@ export function SubscriptionPlansScreen({
                       <Ionicons
                         name="checkmark-circle"
                         size={18}
-                        color={isSelected ? palette.success['5'] : palette.neutral['4']}
+                        color={isSelected ? colors.success : colors.iconMuted}
                       />
                       <Typography variant="body2" style={{ marginLeft: 8 }}>
                         {feature}
@@ -170,7 +176,6 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingTop: 16,
-    paddingBottom: 40,
   },
   title: {
     marginBottom: 8,

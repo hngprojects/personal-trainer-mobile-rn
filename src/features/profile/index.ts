@@ -1,1 +1,11 @@
+export { profileApi } from './api/profile.api';
+export type { AvatarUploadResult, ProfilePayload, UpdateProfileRequest } from './api/profile.types';
+export { toApiFitnessGoals, toApiFitnessLevel } from './api/profile.types';
+export { AccountSettingsScreen } from './components/AccountSettingsScreen';
+export { PersonalInformationScreen } from './components/PersonalInformationScreen';
+export { PrivacyPolicyScreen } from './components/PrivacyPolicyScreen';
 export { ProfileScreen } from './components/ProfileScreen';
+export { usePickAndUploadAvatar } from './hooks/usePickAndUploadAvatar';
+export { PROFILE_QUERY_KEY, useProfile } from './hooks/useProfile';
+export { useUpdateProfile } from './hooks/useUpdateProfile';
+export { useUploadAvatar } from './hooks/useUploadAvatar';

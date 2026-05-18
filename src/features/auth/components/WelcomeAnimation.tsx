@@ -12,7 +12,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { Typography } from '@/shared/components';
-import { fonts, palette } from '@/shared/theme';
+import { fonts, palette, useTheme } from '@/shared/theme';
 
 interface WelcomeAnimationProps {
   isNewUser: boolean;
@@ -22,6 +22,7 @@ const ICON_SIZE = 96;
 const HALO_SIZE = 160;
 
 export function WelcomeAnimation({ isNewUser }: WelcomeAnimationProps) {
+  const { colors } = useTheme();
   const haloScale = useSharedValue(0.6);
   const haloOpacity = useSharedValue(0);
   const circleScale = useSharedValue(0);
@@ -93,8 +94,10 @@ export function WelcomeAnimation({ isNewUser }: WelcomeAnimationProps) {
         </Animated.View>
       </View>
       <Animated.View style={textStyle}>
-        <Typography style={styles.title}>{title}</Typography>
-        <Typography style={styles.subtitle}>{subtitle}</Typography>
+        <Typography style={[styles.title, { color: colors.text }]}>{title}</Typography>
+        <Typography style={[styles.subtitle, { color: colors.textSecondary }]}>
+          {subtitle}
+        </Typography>
       </Animated.View>
     </View>
   );
@@ -132,14 +135,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontFamily: fonts.bold,
-    color: palette.neutral['9'],
     textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
     fontFamily: fonts.regular,
-    color: palette.neutral['5'],
     textAlign: 'center',
   },
 });

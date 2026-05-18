@@ -10,6 +10,10 @@ function unwrap(data: RawAuthData): AuthResponse {
       name: data.user.name,
       userType: data.user.user_type,
       profileComplete: data.user.profile_complete,
+      gender: data.user.gender ?? null,
+      fitnessGoals: data.user.fitness_goals ?? null,
+      fitnessLevel: data.user.fitness_level ?? null,
+      avatarUrl: data.user.avatar_url ?? null,
     },
     tokens: {
       accessToken: data.access_token,

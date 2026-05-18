@@ -1,32 +1,37 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Image, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Typography } from '@/shared/components';
-import { palette, useTheme } from '@/shared/theme';
+import { useTheme } from '@/shared/theme';
 
 interface IntroScreenProps {
   onContinue: () => void;
   onSkip: () => void;
+  onBack: () => void;
   step: number;
   totalSteps: number;
 }
 
-export function IntroScreen({ onContinue, onSkip, step, totalSteps }: IntroScreenProps) {
+export function IntroScreen({ onContinue, onSkip, onBack, step, totalSteps }: IntroScreenProps) {
   const { colors, spacing } = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: colors.surface }]}
-      edges={['top', 'bottom']}
-    >
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.surface }]} edges={['top']}>
       <View style={[styles.header, { paddingHorizontal: spacing.md }]}>
+        <Pressable onPress={onBack} style={styles.backButton} hitSlop={8}>
+          <Ionicons name="chevron-back" size={24} color={colors.text} />
+          <Typography variant="body2" style={{ fontWeight: '500' }}>
+            Back
+          </Typography>
+        </Pressable>
         <View style={styles.stepContainer}>
           <Typography variant="body2" style={{ fontWeight: '500' }}>
             {step} of {totalSteps}
           </Typography>
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <Typography
             variant="body2"
             color={colors.primary}
@@ -38,7 +43,11 @@ export function IntroScreen({ onContinue, onSkip, step, totalSteps }: IntroScree
         </View>
       </View>
 
-      <View style={[styles.content, { paddingHorizontal: spacing.md }]}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[styles.content, { paddingHorizontal: spacing.md }]}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.imageContainer}>
           <Image
             source={{ uri: 'https://i.pravatar.cc/500?img=11' }} // Mock trainer video thumb
@@ -53,13 +62,24 @@ export function IntroScreen({ onContinue, onSkip, step, totalSteps }: IntroScree
           The ultimate keep-it-real companion
         </Typography>
 
-        <Typography variant="body1" color={palette.neutral['6']} style={styles.description}>
+        <Typography variant="body1" color={colors.textSecondary} style={styles.description}>
           My job is to help you crush it. No sugar-coating, no fluff—just real talk and real
           results. Are you ready to level up?
         </Typography>
-      </View>
+      </ScrollView>
 
-      <View style={[styles.footer, { padding: spacing.md }]}>
+      <View
+        style={[
+          styles.footer,
+          {
+            backgroundColor: colors.background,
+            borderTopColor: colors.border,
+            paddingHorizontal: spacing.md,
+            paddingTop: spacing.md,
+            paddingBottom: spacing.md + insets.bottom,
+          },
+        ]}
+      >
         <Button label="Continue" onPress={onContinue} />
       </View>
     </SafeAreaView>
@@ -72,9 +92,14 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     alignItems: 'center',
     height: 56,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: -8,
   },
   stepContainer: {
     flexDirection: 'row',
@@ -84,11 +109,13 @@ const styles = StyleSheet.create({
   divider: {
     width: 1,
     height: 12,
-    backgroundColor: palette.neutral['3'],
+  },
+  scroll: {
+    flex: 1,
   },
   content: {
-    flex: 1,
     paddingTop: 16,
+    paddingBottom: 24,
   },
   imageContainer: {
     width: '100%',
@@ -125,6 +152,5 @@ const styles = StyleSheet.create({
   },
   footer: {
     borderTopWidth: 1,
-    borderTopColor: palette.neutral['2'],
   },
 });

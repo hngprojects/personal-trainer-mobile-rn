@@ -12,6 +12,7 @@ export default function SubscriptionIntroRoute() {
       totalSteps={5}
       onContinue={() => router.push('/(main)/subscription/testimonials')}
       onSkip={() => router.push('/(main)/subscription/plans')}
+      onBack={() => router.back()}
     />
   );
 }

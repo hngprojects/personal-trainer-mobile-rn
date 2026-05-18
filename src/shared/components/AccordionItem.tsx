@@ -10,7 +10,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 
-import { palette, useTheme } from '@/shared/theme';
+import { useTheme } from '@/shared/theme';
 
 import { Typography } from './Typography';
 
@@ -57,7 +57,7 @@ export function AccordionItem({ title, content, isInitiallyExpanded = false }: A
     <View
       style={[
         styles.container,
-        { borderColor: palette.neutral['2'], backgroundColor: palette.neutral['0.5'] },
+        { borderColor: colors.border, backgroundColor: colors.surfaceMuted },
       ]}
     >
       <Pressable style={styles.header} onPress={toggle}>
@@ -68,7 +68,7 @@ export function AccordionItem({ title, content, isInitiallyExpanded = false }: A
       </Pressable>
       <Animated.View style={animatedStyle}>
         <View ref={contentRef} style={styles.contentContainer}>
-          <Typography variant="label" color={palette.neutral['7']} style={{ lineHeight: 20 }}>
+          <Typography variant="label" color={colors.textSecondary} style={{ lineHeight: 20 }}>
             {content}
           </Typography>
         </View>

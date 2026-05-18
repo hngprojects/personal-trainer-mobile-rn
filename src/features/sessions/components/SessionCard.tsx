@@ -3,7 +3,7 @@ import React from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 
 import { Typography } from '@/shared/components';
-import { fonts, palette, useTheme } from '@/shared/theme';
+import { fonts, useTheme } from '@/shared/theme';
 
 import { Session } from '../data/sessions.data';
 
@@ -24,11 +24,11 @@ export function SessionCard({ session }: SessionCardProps) {
   const getStatusColor = () => {
     switch (session.status) {
       case 'rescheduled':
-        return palette.orange['5'];
+        return colors.warning;
       case 'upcoming':
         return colors.primary; // Blue for "Reschedule" link
       default:
-        return palette.neutral['5'];
+        return colors.textSecondary;
     }
   };
 
@@ -50,10 +50,21 @@ export function SessionCard({ session }: SessionCardProps) {
   return (
     <Pressable
       onPress={handlePress}
-      style={[styles.container, { padding: spacing.md, marginBottom: spacing.sm }]}
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+          borderColor: colors.divider,
+          padding: spacing.md,
+          marginBottom: spacing.sm,
+        },
+      ]}
     >
       <View style={styles.row}>
-        <Image source={{ uri: session.trainerAvatar }} style={styles.avatar} />
+        <Image
+          source={{ uri: session.trainerAvatar }}
+          style={[styles.avatar, { backgroundColor: colors.surfaceMuted }]}
+        />
         <View style={styles.content}>
           <View style={styles.headerRow}>
             <Typography variant="body1" style={styles.type}>
@@ -87,10 +98,8 @@ export function SessionCard({ session }: SessionCardProps) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: palette.neutral['1'],
   },
   row: {
     flexDirection: 'row',
@@ -100,7 +109,6 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: palette.neutral['0.5'],
   },
   content: {
     flex: 1,

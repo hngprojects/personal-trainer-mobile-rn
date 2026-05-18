@@ -1,7 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import Animated, {
+  FadeIn,
+  FadeInDown,
+  SlideInLeft,
+  SlideInRight,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { trainers } from '@/features/trainers/data/trainers.data';
@@ -16,6 +25,8 @@ import { CallDraft } from '../types/book-a-call.types';
 
 type Step = 1 | 2 | 3 | 'success';
 
+const STEP_DURATION = 320;
+
 export function BookACallScreen() {
   const { colors, spacing } = useTheme();
   const { trainerId } = useLocalSearchParams<{ trainerId?: string }>();
@@ -23,6 +34,14 @@ export function BookACallScreen() {
 
   const [step, setStep] = useState<Step>(1);
   const [draft, setDraft] = useState<CallDraft>({ platform: null, date: null, time: null });
+  // Tracks whether the user is moving forward or backward so the step content
+  // can slide in from the correct edge.
+  const direction = useRef<'forward' | 'backward'>('forward');
+
+  const progress = useSharedValue(1 / 3);
+  const progressStyle = useAnimatedStyle(() => ({
+    width: `${progress.value * 100}%`,
+  }));
 
   function updateDraft(patch: Partial<CallDraft>) {
     setDraft((prev) => ({ ...prev, ...patch }));
@@ -32,11 +51,13 @@ export function BookACallScreen() {
     if (step === 1 || step === 'success') {
       router.back();
     } else {
+      direction.current = 'backward';
       setStep(((step as number) - 1) as Step);
     }
   }
 
   function advance() {
+    direction.current = 'forward';
     if (step === 3) {
       setStep('success');
     } else {
@@ -48,14 +69,23 @@ export function BookACallScreen() {
   const numericStep = isSuccess ? 3 : (step as number);
   const title = step === 3 || step === 'success' ? 'Call Request Summary' : 'Request a Call';
 
+  // Drive progress-bar fill whenever the step changes.
+  useEffect(() => {
+    progress.value = withTiming(numericStep / 3, { duration: 400 });
+  }, [numericStep, progress]);
+
+  const entering = direction.current === 'forward' ? SlideInRight : SlideInLeft;
+
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: colors.background }]}
       edges={['top', 'bottom']}
     >
-      {/* Header */}
       {!isSuccess && (
-        <View style={[styles.header, { paddingHorizontal: spacing.md, paddingTop: spacing.sm }]}>
+        <Animated.View
+          entering={FadeInDown.duration(360)}
+          style={[styles.header, { paddingHorizontal: spacing.md, paddingTop: spacing.sm }]}
+        >
           <Pressable onPress={handleBack} hitSlop={12} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={22} color={colors.text} />
           </Pressable>
@@ -63,26 +93,22 @@ export function BookACallScreen() {
             {title}
           </Typography>
 
-          {/* Progress bar */}
           <View style={[styles.progressTrack, { backgroundColor: colors.border }]}>
-            <View
-              style={[
-                styles.progressFill,
-                {
-                  backgroundColor: colors.primary,
-                  width: `${(numericStep / 3) * 100}%`,
-                },
-              ]}
+            <Animated.View
+              style={[styles.progressFill, { backgroundColor: colors.primary }, progressStyle]}
             />
           </View>
           <Typography variant="body2" color={colors.textSecondary} style={styles.stepLabel}>
             Step {numericStep} of 3
           </Typography>
-        </View>
+        </Animated.View>
       )}
 
-      {/* Content */}
-      <View style={styles.content}>
+      <Animated.View
+        key={String(step)}
+        entering={isSuccess ? FadeIn.duration(360) : entering.duration(STEP_DURATION)}
+        style={styles.content}
+      >
         {step === 1 && (
           <PlatformStep
             trainer={trainer}
@@ -94,14 +120,14 @@ export function BookACallScreen() {
         {step === 2 && <DateTimeStep draft={draft} onUpdate={updateDraft} onContinue={advance} />}
         {step === 3 && <SummaryStep draft={draft} onSubmit={advance} />}
         {step === 'success' && <SuccessView />}
-      </View>
+      </Animated.View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { paddingBottom: 8 },
+  header: { paddingBottom: 18 },
   backBtn: { marginBottom: 12 },
   headerTitle: { fontWeight: '700', marginBottom: 12 },
   progressTrack: {
@@ -114,6 +140,6 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 3,
   },
-  stepLabel: { marginBottom: 4 },
+  stepLabel: { marginBottom: 0 },
   content: { flex: 1 },
 });
