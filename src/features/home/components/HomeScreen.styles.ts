@@ -28,6 +28,12 @@ export function useHomeStyles() {
           height: 72,
           resizeMode: 'contain',
         },
+        inlineLoadingLogo: {
+          width: 42,
+          height: 42,
+          resizeMode: 'contain',
+          marginBottom: 10,
+        },
         refreshVeil: {
           ...StyleSheet.absoluteFillObject,
           zIndex: 8,
@@ -67,7 +73,7 @@ export function useHomeStyles() {
         },
         userName: {
           fontSize: 13,
-          fontFamily: fonts.regular,
+          fontFamily: fonts.semibold,
           color: colors.textSecondary,
           marginTop: 2,
         },
@@ -120,11 +126,13 @@ export function useHomeStyles() {
         },
         categories: {
           flexDirection: 'row',
-          justifyContent: 'space-between',
+          gap: 14,
+          paddingRight: 8,
         },
         categoryItem: {
           alignItems: 'center',
           gap: 6,
+          width: 64,
         },
         categoryCircle: {
           width: 56,
@@ -139,6 +147,10 @@ export function useHomeStyles() {
         categoryCircleSelected: {
           borderColor: palette.highlightBlue['5'],
           backgroundColor: palette.highlightBlue['1'],
+        },
+        categoryIconCircle: {
+          alignItems: 'center',
+          justifyContent: 'center',
         },
         categoryImage: {
           width: '100%',
@@ -177,6 +189,7 @@ export function useHomeStyles() {
         },
         trainerCard: {
           width: '48%',
+          minWidth: 136,
           backgroundColor: colors.background,
           borderRadius: 14,
           overflow: 'hidden',
@@ -200,6 +213,7 @@ export function useHomeStyles() {
           fontFamily: fonts.semibold,
           color: colors.text,
           flex: 1,
+          flexShrink: 1,
         },
         trainerRating: {
           fontSize: 12,

@@ -3,10 +3,8 @@ import React, { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View, ViewStyle } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
-import { Button, Typography } from '@/shared/components';
+import { Button, toast, Typography } from '@/shared/components';
 import { palette, useTheme } from '@/shared/theme';
-
-import { CallDraft } from '../types/book-a-call.types';
 
 const DAY_LABELS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 const MONTH_NAMES = [
@@ -95,31 +93,39 @@ function startOfDay(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
-function getWeekStart(date: Date): Date {
-  const d = new Date(date);
-  d.setDate(d.getDate() - d.getDay()); // back to Sunday
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
 interface DateTimeStepProps {
-  draft: CallDraft;
-  onUpdate: (patch: Partial<CallDraft>) => void;
+  draft: {
+    date: Date | null;
+    time: string | null;
+  };
+  onUpdate: (patch: { date?: Date | null; time?: string | null }) => void;
   onContinue: () => void;
+  availableSlots?: Date[];
+  isLoadingSlots?: boolean;
+  useRemoteSlots?: boolean;
 }
 
-export function DateTimeStep({ draft, onUpdate, onContinue }: DateTimeStepProps) {
+export function DateTimeStep({
+  draft,
+  onUpdate,
+  onContinue,
+  availableSlots = [],
+  isLoadingSlots = false,
+  useRemoteSlots = false,
+}: DateTimeStepProps) {
   const { colors, spacing } = useTheme();
   const today = new Date();
+  const now = new Date();
   const todayMidnight = startOfDay(today);
+  const futureAvailableSlots = useMemo(
+    () => availableSlots.filter((slot) => slot.getTime() > now.getTime()),
+    [availableSlots, now],
+  );
 
-  const [weekStart, setWeekStart] = useState(() => getWeekStart(today));
-
-  const weekDays = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(weekStart);
-    d.setDate(weekStart.getDate() + i);
-    return d;
-  });
+  const [viewMonth, setViewMonth] = useState(
+    () => new Date(today.getFullYear(), today.getMonth(), 1),
+  );
+  const calendarCells = useMemo(() => getMonthCalendarCells(viewMonth), [viewMonth]);
 
   const timezoneLabel = useMemo(() => {
     const offsetMinutes = -new Date().getTimezoneOffset();
@@ -131,39 +137,44 @@ export function DateTimeStep({ draft, onUpdate, onContinue }: DateTimeStepProps)
   }, []);
 
   // Header label — show both months if the week straddles a boundary
-  const lastDay = weekDays[6];
-  const headerLabel =
-    weekStart.getMonth() === lastDay.getMonth()
-      ? `${MONTH_NAMES[weekStart.getMonth()]} ${weekStart.getFullYear()}`
-      : `${MONTH_NAMES[weekStart.getMonth()]} / ${MONTH_NAMES[lastDay.getMonth()]} ${lastDay.getFullYear()}`;
+  const headerLabel = `${MONTH_NAMES[viewMonth.getMonth()]} ${viewMonth.getFullYear()}`;
 
-  function prevWeek() {
-    setWeekStart((prev) => {
+  function prevMonth() {
+    setViewMonth((prev) => {
       const d = new Date(prev);
-      d.setDate(d.getDate() - 7);
+      d.setMonth(d.getMonth() - 1);
       return d;
     });
   }
 
-  function nextWeek() {
-    setWeekStart((prev) => {
+  function nextMonth() {
+    setViewMonth((prev) => {
       const d = new Date(prev);
-      d.setDate(d.getDate() + 7);
+      d.setMonth(d.getMonth() + 1);
       return d;
     });
   }
 
   function onDayPress(date: Date) {
-    if (date.getDay() === 0 || date.getDay() === 6) return; // weekend
-    if (date < todayMidnight) return; // past
+    if (date < todayMidnight) {
+      toast.info('You cannot select a date in the past.');
+      return;
+    }
+    // In legacy (non-remote) mode, weekends are unavailable by default.
+    // With remote availability the data decides — including weekend slots.
+    if (!useRemoteSlots && (date.getDay() === 0 || date.getDay() === 6)) return;
+    if (useRemoteSlots && !hasAvailableSlotForDay(date)) return;
     onUpdate({ date, time: null });
   }
 
   function onTimePress(slot: string) {
-    if (UNAVAILABLE_TIMES.has(slot)) return;
+    if (isTimeUnavailable(slot)) return;
     onUpdate({ time: slot });
   }
 
+  const availableTimesForSelectedDay = useRemoteSlots
+    ? getAvailableTimesForDay(draft.date)
+    : TIME_SLOTS;
   const isValid = draft.date !== null && draft.time !== null;
 
   return (
@@ -178,7 +189,7 @@ export function DateTimeStep({ draft, onUpdate, onContinue }: DateTimeStepProps)
             Pick a date and time
           </Typography>
           <Typography variant="body2" color={colors.textSecondary} style={styles.subtitle}>
-            Only available slots are shown.
+            {isLoadingSlots ? 'Loading available slots...' : 'Only available slots are shown.'}
           </Typography>
         </Animated.View>
 
@@ -190,9 +201,9 @@ export function DateTimeStep({ draft, onUpdate, onContinue }: DateTimeStepProps)
             { backgroundColor: colors.surface, borderColor: colors.border },
           ]}
         >
-          {/* Week header */}
+          {/* Month header */}
           <View style={styles.monthHeader}>
-            <Pressable onPress={prevWeek} hitSlop={12} style={styles.chevronBtn}>
+            <Pressable onPress={prevMonth} hitSlop={12} style={styles.chevronBtn}>
               <Ionicons name="chevron-back" size={18} color={colors.text} />
             </Pressable>
             <View style={styles.monthTitleRow}>
@@ -206,7 +217,7 @@ export function DateTimeStep({ draft, onUpdate, onContinue }: DateTimeStepProps)
                 style={styles.dropChevron}
               />
             </View>
-            <Pressable onPress={nextWeek} hitSlop={12} style={styles.chevronBtn}>
+            <Pressable onPress={nextMonth} hitSlop={12} style={styles.chevronBtn}>
               <Ionicons name="chevron-forward" size={18} color={colors.text} />
             </Pressable>
           </View>
@@ -225,19 +236,25 @@ export function DateTimeStep({ draft, onUpdate, onContinue }: DateTimeStepProps)
             ))}
           </View>
 
-          {/* Single week row */}
-          <View style={styles.weekRow}>
-            {weekDays.map((date, i) => {
+          {/* Full month grid */}
+          <View style={styles.monthGrid}>
+            {calendarCells.map((date, i) => {
+              if (!date) {
+                return <View key={`empty-${i}`} style={styles.dayCell} />;
+              }
+
               const isToday = isSameDay(date, today);
               const isPast = date < todayMidnight;
               const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-              const avail = !isWeekend && !isPast;
+              const blockWeekend = !useRemoteSlots && isWeekend;
+              const avail =
+                !blockWeekend && !isPast && (!useRemoteSlots || hasAvailableSlotForDay(date));
               const selected = draft.date ? isSameDay(date, draft.date) : false;
 
               return (
                 <Pressable
                   key={i}
-                  onPress={() => avail && onDayPress(date)}
+                  onPress={() => onDayPress(date)}
                   style={[styles.dayCell, !avail && { opacity: 0.3 }]}
                 >
                   {isToday && !selected ? (
@@ -307,8 +324,27 @@ export function DateTimeStep({ draft, onUpdate, onContinue }: DateTimeStepProps)
 
         {/* Time grid */}
         <Animated.View entering={FadeInUp.delay(280).duration(360)} style={styles.timeGrid}>
-          {TIME_SLOTS.map((slot) => {
-            const unavail = UNAVAILABLE_TIMES.has(slot);
+          {useRemoteSlots && !isLoadingSlots && futureAvailableSlots.length === 0 ? (
+            <View style={styles.noSlots}>
+              <Typography variant="body2" color={colors.textSecondary} style={styles.noSlotsText}>
+                No available time slots.
+              </Typography>
+            </View>
+          ) : useRemoteSlots && !draft.date ? (
+            <View style={styles.noSlots}>
+              <Typography variant="body2" color={colors.textSecondary} style={styles.noSlotsText}>
+                Select a date to see available times.
+              </Typography>
+            </View>
+          ) : useRemoteSlots && availableTimesForSelectedDay.length === 0 ? (
+            <View style={styles.noSlots}>
+              <Typography variant="body2" color={colors.textSecondary} style={styles.noSlotsText}>
+                No times available on this day.
+              </Typography>
+            </View>
+          ) : (
+            availableTimesForSelectedDay.map((slot) => {
+            const unavail = isTimeUnavailable(slot);
             const selected = draft.time === slot;
             return (
               <Pressable
@@ -332,7 +368,8 @@ export function DateTimeStep({ draft, onUpdate, onContinue }: DateTimeStepProps)
                 </Typography>
               </Pressable>
             );
-          })}
+            })
+          )}
         </Animated.View>
 
         <View style={styles.footerSpacer} />
@@ -352,6 +389,83 @@ export function DateTimeStep({ draft, onUpdate, onContinue }: DateTimeStepProps)
       </View>
     </View>
   );
+
+  function hasAvailableSlotForDay(date: Date) {
+    return futureAvailableSlots.some((slot) => isSameDay(slot, date));
+  }
+
+  function hasAvailableSlotForTime(date: Date, time: string) {
+    return futureAvailableSlots.some(
+      (slot) => isSameDay(slot, date) && formatSlotTime(slot) === time,
+    );
+  }
+
+  function isTimeUnavailable(slot: string) {
+    if (useRemoteSlots) {
+      return !draft.date || !hasAvailableSlotForTime(draft.date, slot);
+    }
+    return UNAVAILABLE_TIMES.has(slot) || isPastTimeForSelectedDay(slot);
+  }
+
+  function getAvailableTimesForDay(date: Date | null) {
+    if (!date) return [];
+
+    return Array.from(
+      new Set(
+        futureAvailableSlots
+          .filter((slot) => isSameDay(slot, date))
+          .map(formatSlotTime),
+      ),
+    );
+  }
+
+  function isPastTimeForSelectedDay(slot: string) {
+    if (!draft.date) return false;
+    return buildDateFromSlot(draft.date, slot).getTime() <= now.getTime();
+  }
+}
+
+function buildDateFromSlot(date: Date, time: string): Date {
+  const [rawTime, period] = time.split(' ');
+  const [rawHour, rawMinute] = rawTime.split(':').map(Number);
+  let hour = rawHour;
+
+  if (period === 'PM' && hour !== 12) hour += 12;
+  if (period === 'AM' && hour === 12) hour = 0;
+
+  const selected = new Date(date);
+  selected.setHours(hour, rawMinute ?? 0, 0, 0);
+  return selected;
+}
+
+function formatSlotTime(date: Date) {
+  return date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+}
+
+function getMonthCalendarCells(month: Date): Array<Date | null> {
+  const year = month.getFullYear();
+  const monthIndex = month.getMonth();
+  const leadingEmpty = new Date(year, monthIndex, 1).getDay();
+  const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+  const cells: Array<Date | null> = [];
+
+  for (let i = 0; i < leadingEmpty; i += 1) {
+    cells.push(null);
+  }
+
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    cells.push(new Date(year, monthIndex, day));
+  }
+
+  while (cells.length % 7 !== 0) {
+    cells.push(null);
+  }
+
+  return cells;
 }
 
 const styles = StyleSheet.create({
@@ -378,9 +492,13 @@ const styles = StyleSheet.create({
   dropChevron: { marginLeft: 4 },
   dowRow: { flexDirection: 'row', marginBottom: 8 },
   dowLabel: { flex: 1, textAlign: 'center', fontSize: 11, fontWeight: '600' },
-  weekRow: { flexDirection: 'row' },
+  monthGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    rowGap: 8,
+  },
   dayCell: {
-    flex: 1,
+    width: `${100 / 7}%`,
     alignItems: 'center',
     paddingVertical: 4,
   },
@@ -422,6 +540,19 @@ const styles = StyleSheet.create({
   },
   timeSlotUnavail: { opacity: 0.4 },
   timeText: { fontSize: 13 },
+  noSlots: {
+    width: '100%',
+    minHeight: 104,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 18,
+  },
+  noSlotsText: {
+    textAlign: 'center',
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '700',
+  },
   footerSpacer: { height: 8 },
   footer: { paddingTop: 12 },
 });

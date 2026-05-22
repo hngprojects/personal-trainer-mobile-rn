@@ -5,7 +5,7 @@ import {
   statusCodes,
 } from '@react-native-google-signin/google-signin';
 import { router } from 'expo-router';
-import React from 'react';
+import React, { useState } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 
 import { ApiError } from '@/shared/api/types';
@@ -44,6 +44,7 @@ interface AuthFormProps {
 export function AuthForm({ variant }: AuthFormProps) {
   const { spacing, colors } = useTheme();
   const googleAuth = useGoogleAuth();
+  const [isGoogleFlowPending, setIsGoogleFlowPending] = useState(false);
 
   const verb = variant === 'signup' ? 'Sign Up' : 'Sign In';
   const footerText = variant === 'signup' ? 'Already have an account? ' : "Don't have an account? ";
@@ -51,8 +52,12 @@ export function AuthForm({ variant }: AuthFormProps) {
   const footerHref = variant === 'signup' ? '/(auth)/login' : '/(auth)/register';
 
   const handleGoogle = async () => {
+    if (isGoogleFlowPending || googleAuth.isPending) return;
+
+    setIsGoogleFlowPending(true);
     try {
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      await GoogleSignin.signOut().catch(() => undefined);
       const response = await GoogleSignin.signIn();
       if (!isSuccessResponse(response)) return;
       const idToken = response.data.idToken;
@@ -61,14 +66,17 @@ export function AuthForm({ variant }: AuthFormProps) {
         return;
       }
       googleAuth.mutate(idToken, {
-        onError: (error) => toast.error(friendlyApiMessage(error)),
+        onError: (error) => {
+          toast.error(friendlyApiMessage(error));
+        },
       });
     } catch (error) {
       if (isErrorWithCode(error)) {
-        if (
-          error.code === statusCodes.SIGN_IN_CANCELLED ||
-          error.code === statusCodes.IN_PROGRESS
-        ) {
+        if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+          return;
+        }
+        if (error.code === statusCodes.IN_PROGRESS) {
+          toast.info('Google sign-in is already open. Please finish or try again.');
           return;
         }
         if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
@@ -77,6 +85,8 @@ export function AuthForm({ variant }: AuthFormProps) {
         }
       }
       toast.error(MESSAGES.googleGeneric);
+    } finally {
+      setIsGoogleFlowPending(false);
     }
   };
 
@@ -86,7 +96,7 @@ export function AuthForm({ variant }: AuthFormProps) {
         icon={<Image source={GOOGLE_ICON} style={styles.icon} resizeMode="contain" />}
         label={`${verb} with Google`}
         onPress={handleGoogle}
-        disabled={googleAuth.isPending}
+        disabled={googleAuth.isPending || isGoogleFlowPending}
       />
 
       <View style={[styles.footer, { marginTop: spacing.md }]}>
@@ -98,6 +108,24 @@ export function AuthForm({ variant }: AuthFormProps) {
         </Pressable>
       </View>
     </View>
+  );
+}
+
+export function AuthLegalNotice({ variant }: AuthFormProps) {
+  const { colors } = useTheme();
+  const verb = variant === 'signup' ? 'Sign Up' : 'Sign In';
+
+  return (
+    <Typography style={[styles.legalText, { color: colors.textSecondary }]}>
+      By clicking &quot;{verb}&quot;, I have read and agree with the{' '}
+      <Typography style={styles.legalLink} onPress={() => router.push('/terms-of-service' as never)}>
+        Terms of Service
+      </Typography>{' '}
+      and{' '}
+      <Typography style={styles.legalLink} onPress={() => router.push('/privacy-policy' as never)}>
+        Privacy Policy
+      </Typography>
+    </Typography>
   );
 }
 
@@ -116,6 +144,19 @@ const styles = StyleSheet.create({
   link: {
     fontSize: 13,
     fontFamily: fonts.semibold,
+    color: palette.highlightBlue['5'],
+  },
+  legalText: {
+    fontSize: 13,
+    fontFamily: fonts.regular,
+    lineHeight: 20,
+    textAlign: 'center',
+    paddingHorizontal: 4,
+  },
+  legalLink: {
+    fontSize: 13,
+    fontFamily: fonts.semibold,
+    lineHeight: 20,
     color: palette.highlightBlue['5'],
   },
 });

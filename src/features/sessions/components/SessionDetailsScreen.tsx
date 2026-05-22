@@ -2,24 +2,48 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, Screen, Typography } from '@/shared/components';
+import { Avatar, Button, Screen, Typography } from '@/shared/components';
 import { useStatusBarStyle } from '@/shared/hooks/useStatusBarStyle';
 import { fonts, useTheme } from '@/shared/theme';
 
-import { mockSessions } from '../data/sessions.data';
+import { useSessionDetails } from '../hooks/useSessionDetails';
 
 export function SessionDetailsScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  // `id` is the session_id (from booking.session_id) and drives GET /sessions/{id}.
+  // `bookingId` is the booking row's id, used for PUT /bookings/{id}/reschedule.
+  const { id, bookingId, bookingType, trainerId, trainerName, trainerAvatar, platform, date, time, duration } =
+    useLocalSearchParams<{
+    id: string;
+    bookingId?: string;
+    bookingType?: string;
+    trainerId?: string;
+    trainerName?: string;
+    trainerAvatar?: string;
+    platform?: string;
+    date?: string;
+    time?: string;
+    duration?: string;
+  }>();
   const { spacing, colors } = useTheme();
   const insets = useSafeAreaInsets();
   const statusBarStyle = useStatusBarStyle();
+  const { data: apiSession, isLoading } = useSessionDetails(id);
 
-  const session = mockSessions.find((s) => s.id === id);
+  if (isLoading) {
+    return (
+      <Screen padding={false} edges={['top']}>
+        <StatusBar style={statusBarStyle} />
+        <View style={[styles.loading, { backgroundColor: colors.background }]}>
+          <ActivityIndicator color={colors.primary} />
+        </View>
+      </Screen>
+    );
+  }
 
-  if (!session) {
+  if (!apiSession) {
     return (
       <Screen padding={false} edges={['top']}>
         <StatusBar style={statusBarStyle} />
@@ -50,12 +74,31 @@ export function SessionDetailsScreen() {
     );
   }
 
+  // Reschedule operates on the booking, not the session.
+  const rescheduleId = bookingId;
   const handleReschedule = () => {
+    if (!rescheduleId) return;
     router.push({
       pathname: '/reschedule-session' as any,
-      params: { id: session.id },
+      params: { id: rescheduleId, bookingType, trainerId },
     });
   };
+  const startDate = parseValidDate(apiSession.actualStart);
+  const endDate = parseValidDate(apiSession.actualEnd);
+  const displayDate = startDate
+    ? startDate.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    : date;
+  const displayTime =
+    startDate && endDate ? `${formatTime(startDate)} - ${formatTime(endDate)}` : time;
+  const displayDuration =
+    startDate && endDate
+      ? `${Math.max(1, Math.round((endDate.getTime() - startDate.getTime()) / 60000))} mins`
+      : duration;
 
   return (
     <Screen padding={false} edges={['top']}>
@@ -86,10 +129,12 @@ export function SessionDetailsScreen() {
             { backgroundColor: colors.background, borderColor: colors.divider },
           ]}
         >
-          <Image source={{ uri: session.trainerAvatar }} style={styles.trainerAvatar} />
+          <Avatar name={trainerName ?? 'FitCall Trainer'} uri={trainerAvatar || null} size={56} />
           <View style={styles.trainerInfo}>
             <View style={styles.trainerHeader}>
-              <Typography style={styles.trainerName}>{session.trainerName}</Typography>
+              <Typography style={styles.trainerName}>
+                {trainerName ?? 'FitCall Trainer'}
+              </Typography>
               <Ionicons name="checkmark-circle" size={16} color={colors.success} />
             </View>
             <Typography variant="label" color={colors.textSecondary}>
@@ -108,15 +153,18 @@ export function SessionDetailsScreen() {
             { backgroundColor: colors.background, borderColor: colors.divider },
           ]}
         >
-          <InfoItem icon="calendar-outline" label="Date" value={session.date} />
-          <InfoItem icon="time-outline" label="Time" value={session.time} />
-          <InfoItem icon="hourglass-outline" label="Duration" value={session.duration} />
+          <InfoItem icon="calendar-outline" label="Date" value={displayDate ?? 'Pending'} />
+          <InfoItem icon="time-outline" label="Time" value={displayTime ?? 'Pending'} />
+          <InfoItem icon="hourglass-outline" label="Duration" value={displayDuration ?? '60 mins'} />
           <InfoItem
             icon="videocam-outline"
             label="Platform"
-            value={session.platform || 'Zoom'}
+            value={platform || 'Zoom'}
             isPlatform
           />
+          {apiSession?.trainerNote ? (
+            <InfoItem icon="document-text-outline" label="Trainer Note" value={apiSession.trainerNote} />
+          ) : null}
         </View>
 
         <Typography variant="body2" color={colors.textSecondary} style={styles.sectionLabel}>
@@ -124,7 +172,7 @@ export function SessionDetailsScreen() {
         </Typography>
 
         <View style={styles.goalsContainer}>
-          {(session.goals || ['Cardio', 'Core Strength', 'Weight Loss', 'Mobility']).map((goal) => (
+          {['Cardio', 'Core Strength', 'Weight Loss', 'Mobility'].map((goal) => (
             <View
               key={goal}
               style={[
@@ -152,7 +200,7 @@ export function SessionDetailsScreen() {
           },
         ]}
       >
-        <Button label="Reschedule" onPress={handleReschedule} />
+        <Button label="Reschedule" onPress={handleReschedule} disabled={!rescheduleId} />
       </View>
     </Screen>
   );
@@ -287,4 +335,23 @@ const styles = StyleSheet.create({
     right: 0,
     borderTopWidth: 1,
   },
+  loading: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });
+
+function formatTime(date: Date) {
+  return date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+}
+
+function parseValidDate(value: string | null | undefined) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) ? date : null;
+}

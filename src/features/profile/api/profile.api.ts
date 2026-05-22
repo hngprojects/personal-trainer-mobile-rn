@@ -1,4 +1,4 @@
-import { useAuthStore } from '@/features/auth';
+import { useAuthStore } from '@/features/auth/store/auth.store';
 import { client } from '@/shared/api/client';
 import type { ApiEnvelope } from '@/shared/api/types';
 import { ApiError } from '@/shared/api/types';
@@ -14,6 +14,8 @@ import type {
 
 const PROFILE_ENDPOINT = '/users/me/profile';
 const AVATAR_ENDPOINT = '/users/me/profile/picture';
+const LEGACY_AVATAR_ENDPOINT = '/users/me/profile/picture';
+const AVATAR_METHOD = 'POST';
 
 function unwrapProfile(raw: RawProfile): ProfilePayload {
   return {
@@ -30,9 +32,6 @@ function unwrapProfile(raw: RawProfile): ProfilePayload {
 
 async function getProfile(): Promise<ProfilePayload> {
   const res = await client.get<ApiEnvelope<RawProfile>>(PROFILE_ENDPOINT);
-  if (__DEV__) {
-    console.log('[profile] GET /users/me/profile →', JSON.stringify(res.data, null, 2));
-  }
   return unwrapProfile(res.data.data);
 }
 
@@ -47,51 +46,90 @@ interface AvatarFile {
   fileName?: string;
 }
 
+interface ApiErrorBody {
+  message?: string;
+  code?: string;
+  errors?: { field?: string; message?: string }[];
+}
+
 /**
- * Avatar upload uses `fetch` rather than the axios client because RN's
- * multipart boundary handling is unreliable through axios — the global
- * `Content-Type: application/json` header on the client interferes with the
- * boundary, leading to silent server-side parse failures. fetch produces a
- * correct multipart body with the boundary auto-set as long as no
- * Content-Type header is provided explicitly.
+ * Avatar upload uses fetch rather than the axios client because RN's multipart
+ * boundary handling is unreliable through axios. fetch produces a correct
+ * multipart body with the boundary auto-set as long as no Content-Type header
+ * is provided explicitly.
  */
 async function uploadAvatar(file: AvatarFile): Promise<AvatarUploadResult> {
-  const formData = new FormData();
-  formData.append('picture', {
-    uri: file.uri,
-    type: file.mimeType ?? 'image/jpeg',
-    name: file.fileName ?? 'avatar.jpg',
-  } as unknown as Blob);
-
   const accessToken = useAuthStore.getState().accessToken;
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
 
-  const response = await fetch(`${env.API_BASE_URL}${AVATAR_ENDPOINT}`, {
-    method: 'POST',
-    body: formData,
-    headers,
-  });
+  const uploadUrls = getAvatarUploadUrls();
 
-  let parsed: ApiEnvelope<RawAvatarUploadResponse> | { message?: string } | null = null;
-  try {
-    parsed = await response.json();
-  } catch {
-    // No JSON body — leave parsed null.
-  }
+  for (const [index, requestUrl] of uploadUrls.entries()) {
+    const formData = new FormData();
+    formData.append('picture', {
+      uri: file.uri,
+      type: file.mimeType ?? 'image/jpeg',
+      name: file.fileName ?? 'avatar.jpg',
+    } as unknown as Blob);
 
-  if (!response.ok) {
+    const response = await fetch(requestUrl, {
+      method: AVATAR_METHOD,
+      body: formData,
+      headers,
+    });
+
+    let parsed: ApiEnvelope<RawAvatarUploadResponse> | ApiErrorBody | null = null;
+    let responseText: string | null = null;
+    try {
+      responseText = await response.text();
+      parsed = responseText ? JSON.parse(responseText) : null;
+    } catch {
+      // No JSON body - leave parsed null.
+    }
+
+    if (response.ok) {
+      const data = (parsed as ApiEnvelope<RawAvatarUploadResponse>).data;
+      return {
+        avatarUrl: data.avatar_url,
+        status: data.status,
+      };
+    }
+
+    const shouldTryNextUrl =
+      response.status === 404 &&
+      responseText?.toLowerCase().includes('page not found') &&
+      index < uploadUrls.length - 1;
+
+    if (shouldTryNextUrl) {
+      continue;
+    }
+
+    const errorBody = parsed as ApiErrorBody | null;
     const message =
-      (parsed as { message?: string } | null)?.message ??
+      errorBody?.message ??
+      errorBody?.errors
+        ?.map((item) => item.message)
+        .filter(Boolean)
+        .join(', ') ??
       `Avatar upload failed (${response.status})`;
-    throw new ApiError(message, response.status);
+
+    throw new ApiError(message, response.status, errorBody?.code);
   }
 
-  const data = (parsed as ApiEnvelope<RawAvatarUploadResponse>).data;
-  return {
-    avatarUrl: data.avatar_url,
-    status: data.status,
-  };
+  throw new ApiError('Avatar upload failed', 0);
+}
+
+function getAvatarUploadUrls() {
+  const baseUrl = env.API_BASE_URL.replace(/\/$/, '');
+  const rootUrl = baseUrl.replace(/\/api\/v\d+$/, '');
+  const urls = [
+    `${baseUrl}${AVATAR_ENDPOINT}`,
+    `${rootUrl}${AVATAR_ENDPOINT}`,
+    `${baseUrl}${LEGACY_AVATAR_ENDPOINT}`,
+  ];
+
+  return Array.from(new Set(urls));
 }
 
 export const profileApi = { getProfile, updateProfile, uploadAvatar };

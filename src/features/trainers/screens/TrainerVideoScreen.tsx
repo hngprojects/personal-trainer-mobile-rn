@@ -1,19 +1,41 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useVideoPlayer, VideoView } from 'expo-video';
+import { useVideoPlayer, VideoView, type VideoSource } from 'expo-video';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useAuthStore } from '@/features/auth/store/auth.store';
+import { env } from '@/shared/constants/env';
+
 const VIDEO_SOURCE =
-  'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_5MB.mp4';
+  'https://videos.pexels.com/video-files/5528012/5528012-hd_1080_1920_25fps.mp4';
 
 export function TrainerVideoScreen() {
   const insets = useSafeAreaInsets();
-  const player = useVideoPlayer(VIDEO_SOURCE, (instance) => {
+  const { returnTo, trainerId, videoUrl } = useLocalSearchParams<{
+    returnTo?: string;
+    trainerId?: string;
+    videoUrl?: string;
+  }>();
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const source = buildVideoSource(videoUrl ?? VIDEO_SOURCE, accessToken);
+  const player = useVideoPlayer(source, (instance) => {
     instance.loop = false;
     instance.play();
   });
+
+  const handleBack = () => {
+    if (returnTo === 'trainer-profile') {
+      router.dismissTo({
+        pathname: '/(main)/trainer-profile',
+        params: trainerId ? { trainerId } : undefined,
+      } as never);
+      return;
+    }
+
+    router.dismissTo('/(main)/(tabs)/profile');
+  };
 
   return (
     <View style={styles.container}>
@@ -23,7 +45,7 @@ export function TrainerVideoScreen() {
           with the notch / Dynamic Island / Android status bar. */}
       <Pressable
         style={[styles.backButton, { top: insets.top + 12, left: insets.left + 16 }]}
-        onPress={() => router.back()}
+        onPress={handleBack}
         hitSlop={12}
       >
         <Ionicons name="arrow-back" size={24} color="#fff" />
@@ -61,3 +83,17 @@ const styles = StyleSheet.create({
     height: 260,
   },
 });
+
+function buildVideoSource(uri: string, accessToken: string | null): VideoSource {
+  if (!accessToken || !uri.startsWith(env.API_BASE_URL)) {
+    return uri;
+  }
+
+  return {
+    uri,
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    contentType: 'progressive',
+  };
+}

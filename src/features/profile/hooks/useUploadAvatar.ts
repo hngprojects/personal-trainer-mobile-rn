@@ -1,11 +1,11 @@
 import { useQueryClient } from '@tanstack/react-query';
 
-import { useAuthStore } from '@/features/auth';
+import { useAuthStore } from '@/features/auth/store/auth.store';
 import { useApiMutation } from '@/shared/api/hooks';
 
 import { profileApi } from '../api/profile.api';
 import type { ProfilePayload } from '../api/profile.types';
-import { PROFILE_QUERY_KEY } from './useProfile';
+import { getProfileQueryKey } from './useProfile';
 
 export interface UploadAvatarInput {
   uri: string;
@@ -14,7 +14,7 @@ export interface UploadAvatarInput {
 }
 
 /**
- * POSTs a profile picture to /users/me/profile/picture.
+ * Uploads a profile picture to /users/me/profile-picture.
  *
  * The endpoint returns 202 with the URL the avatar will eventually be served
  * from; the actual S3 upload + user-record update happens asynchronously in
@@ -47,7 +47,7 @@ export function useUploadAvatar() {
       onSuccess: ({ avatarUrl }) => {
         updateUser({ avatarUrl });
         queryClient.setQueryData<ProfilePayload | undefined>(
-          PROFILE_QUERY_KEY as unknown as unknown[],
+          getProfileQueryKey(useAuthStore.getState().user?.id) as unknown as unknown[],
           (old) => (old ? { ...old, avatarUrl } : old),
         );
       },

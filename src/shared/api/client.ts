@@ -2,6 +2,7 @@ import { create, isAxiosError } from 'axios';
 
 import { env } from '@/shared/constants/env';
 
+import { getJwtType, hasJwtExp, isJwtExpired } from './jwt';
 import { ApiError } from './types';
 
 export const client = create({
@@ -19,6 +20,8 @@ type AuthStateAccessor = () => {
 };
 
 let getAuthState: AuthStateAccessor | null = null;
+let refreshPromise: Promise<{ accessToken: string; refreshToken: string }> | null = null;
+let rejectedRefreshToken: string | null = null;
 
 export function registerAuthStore(store: AuthStateAccessor) {
   getAuthState = store;
@@ -46,20 +49,40 @@ client.interceptors.response.use(
 
     if (error.response?.status === 401 && !original._retry && getAuthState) {
       original._retry = true;
-      const { refreshToken, clearSession } = getAuthState();
+      const { accessToken, refreshToken, clearSession } = getAuthState();
 
-      if (!refreshToken) {
+      if (!accessToken || !refreshToken) {
+        clearSession();
+        return Promise.reject(toApiError(error));
+      }
+
+      const hasValidTokenShape =
+        hasJwtExp(accessToken) && hasJwtExp(refreshToken) && getJwtType(refreshToken) === 'refresh';
+
+      if (
+        !hasValidTokenShape ||
+        refreshToken === rejectedRefreshToken ||
+        isJwtExpired(refreshToken)
+      ) {
+        rejectedRefreshToken = refreshToken;
         clearSession();
         return Promise.reject(toApiError(error));
       }
 
       try {
         const { authApi } = await import('@/features/auth/api/auth.api');
-        const newTokens = await authApi.refreshTokens(refreshToken);
+        refreshPromise ??= authApi
+          .refreshTokens(refreshToken, accessToken)
+          .finally(() => {
+            refreshPromise = null;
+          });
+        const newTokens = await refreshPromise;
+        rejectedRefreshToken = null;
         getAuthState().setTokens(newTokens);
         original.headers.Authorization = `Bearer ${newTokens.accessToken}`;
         return client(original);
       } catch {
+        rejectedRefreshToken = refreshToken;
         getAuthState().clearSession();
         return Promise.reject(toApiError(error));
       }

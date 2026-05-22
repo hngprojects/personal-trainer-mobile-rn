@@ -1,13 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Image, ImageSourcePropType, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, ImageSourcePropType, Pressable, StyleSheet, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 import { Trainer } from '@/features/trainers/types/trainer.types';
-import { Button, Typography } from '@/shared/components';
+import { Button, TextInput, Typography } from '@/shared/components';
 import { palette, useTheme } from '@/shared/theme';
 
 import { PLATFORM_LOGOS } from '../data/platform-logos';
-import { CallDraft, CallPlatform } from '../types/book-a-call.types';
+import { CallContactMode, CallDraft } from '../types/book-a-call.types';
 
 const AGENT_BULLETS = [
   'Answer any questions you have about FitCall',
@@ -15,9 +16,25 @@ const AGENT_BULLETS = [
   "Guide you through getting started if you're ready",
 ];
 
-const PLATFORMS: { id: CallPlatform; name: string; logo: ImageSourcePropType }[] = [
-  { id: 'zoom', name: 'Zoom', logo: PLATFORM_LOGOS.zoom },
-  { id: 'google-meet', name: 'Google Meet', logo: PLATFORM_LOGOS['google-meet'] },
+const CONTACT_OPTIONS: {
+  id: CallContactMode;
+  name: string;
+  description: string;
+  logo?: ImageSourcePropType;
+  icon?: keyof typeof Ionicons.glyphMap;
+}[] = [
+  {
+    id: 'zoom_meeting',
+    name: 'Zoom Meeting',
+    description: 'We will send a Zoom link for your discovery call.',
+    logo: PLATFORM_LOGOS.zoom,
+  },
+  {
+    id: 'phone_callback',
+    name: 'Phone Call',
+    description: 'A FitCall rep will call the phone number you provide.',
+    icon: 'call-outline',
+  },
 ];
 
 interface PlatformStepProps {
@@ -29,13 +46,18 @@ interface PlatformStepProps {
 
 export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformStepProps) {
   const { colors, spacing } = useTheme();
+  const requiresPhone = draft.contactMode === 'phone_callback';
+  const phoneProvided = draft.phoneNumber.trim().length > 0;
+  const canContinue = draft.contactMode !== null && (!requiresPhone || phoneProvided);
 
   return (
     <View style={styles.container}>
-      <ScrollView
+      <KeyboardAwareScrollView
         style={styles.scroll}
         contentContainerStyle={[styles.content, { paddingHorizontal: spacing.md }]}
         showsVerticalScrollIndicator={false}
+        bottomOffset={112}
+        keyboardShouldPersistTaps="handled"
       >
         {/* Heading */}
         <Animated.View entering={FadeInDown.duration(360)}>
@@ -43,7 +65,7 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
             Got questions? Let&apos;s answer them.
           </Typography>
           <Typography variant="body2" color={colors.textSecondary} style={styles.subtitle}>
-            One of our agents will reach out to you on your chosen platform.
+            One of our agents will reach out to you by Zoom or phone.
           </Typography>
         </Animated.View>
 
@@ -94,19 +116,19 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
           </View>
         </Animated.View>
 
-        {/* Platform selection */}
+        {/* Contact mode selection */}
         <Animated.View entering={FadeInUp.delay(220).duration(360)}>
           <Typography variant="body1" style={styles.sectionHeader}>
-            Choose your preferred platform
+            How should we contact you?
           </Typography>
         </Animated.View>
 
-        {PLATFORMS.map((p, i) => {
-          const selected = draft.platform === p.id;
+        {CONTACT_OPTIONS.map((p, i) => {
+          const selected = draft.contactMode === p.id;
           return (
-            <Animated.View key={p.id} entering={FadeInUp.delay(260 + i * 80).duration(360)}>
+            <Animated.View key={p.id} entering={FadeInUp.delay(300 + i * 80).duration(360)}>
               <Pressable
-                onPress={() => onUpdate({ platform: p.id })}
+                onPress={() => onUpdate({ contactMode: p.id })}
                 style={[
                   styles.platformCard,
                   {
@@ -117,14 +139,18 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
                 ]}
               >
                 <View style={styles.platformLogoBox}>
-                  <Image source={p.logo} style={styles.platformLogo} />
+                  {p.logo ? (
+                    <Image source={p.logo} style={styles.platformLogo} />
+                  ) : (
+                    <Ionicons name={p.icon} size={24} color={colors.primary} />
+                  )}
                 </View>
                 <View style={styles.platformText}>
                   <Typography variant="body1" style={styles.platformName}>
                     {p.name}
                   </Typography>
                   <Typography variant="body2" color={colors.textSecondary}>
-                    Video call platform
+                    {p.description}
                   </Typography>
                 </View>
                 <View
@@ -142,9 +168,26 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
           );
         })}
 
+        {requiresPhone && (
+          <Animated.View entering={FadeInUp.duration(260)}>
+            <Typography variant="body1" style={styles.sectionHeader}>
+              Your phone number
+            </Typography>
+            <TextInput
+              value={draft.phoneNumber}
+              onChangeText={(phoneNumber) => onUpdate({ phoneNumber })}
+              placeholder="+1 555 123 4567"
+              keyboardType="phone-pad"
+              textContentType="telephoneNumber"
+              autoComplete="tel"
+              style={styles.phoneInput}
+            />
+          </Animated.View>
+        )}
+
         {/* Info banner */}
         <Animated.View
-          entering={FadeInUp.delay(440).duration(360)}
+          entering={FadeInUp.delay(480).duration(360)}
           style={[styles.infoBanner, { backgroundColor: colors.primarySubtle }]}
         >
           <Ionicons
@@ -154,12 +197,14 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
             style={styles.infoIcon}
           />
           <Typography variant="body2" color={colors.primary} style={styles.infoText}>
-            Make sure you have the selected app installed before your call.
+            {requiresPhone
+              ? 'Use a US or UK number where you can receive calls or quick scheduling updates.'
+              : 'Make sure you have Zoom installed before your discovery call.'}
           </Typography>
         </Animated.View>
 
         <View style={styles.footerSpacer} />
-      </ScrollView>
+      </KeyboardAwareScrollView>
 
       <View
         style={[
@@ -171,7 +216,7 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
           },
         ]}
       >
-        <Button label="Continue" disabled={draft.platform === null} onPress={onContinue} />
+        <Button label="Continue" disabled={!canContinue} onPress={onContinue} />
       </View>
     </View>
   );
@@ -200,6 +245,7 @@ const styles = StyleSheet.create({
   trainerName: { fontWeight: '700', marginRight: 6 },
   verifiedIcon: {},
   sectionHeader: { fontWeight: '700', marginTop: 8, marginBottom: 12 },
+  phoneInput: { fontSize: 15 },
   platformCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -240,6 +286,6 @@ const styles = StyleSheet.create({
   },
   infoIcon: { marginRight: 8, marginTop: 1 },
   infoText: { flex: 1, lineHeight: 20 },
-  footerSpacer: { height: 8 },
+  footerSpacer: { height: 128 },
   footer: { paddingTop: 12 },
 });

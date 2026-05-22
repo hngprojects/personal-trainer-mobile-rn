@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useColorScheme as useSystemColorScheme } from 'react-native';
+import * as SystemUI from 'expo-system-ui';
 
 import { STORAGE_KEYS } from '@/shared/constants/keys';
 import { asyncStorage } from '@/shared/storage/asyncStorage';
@@ -43,6 +44,10 @@ export function ThemeProvider({ children, initialMode = 'system' }: ThemeProvide
 
   const isDark = mode === 'dark' || (mode === 'system' && systemScheme === 'dark');
   const colors = isDark ? darkColors : lightColors;
+
+  useEffect(() => {
+    SystemUI.setBackgroundColorAsync(colors.background).catch(() => undefined);
+  }, [colors.background]);
 
   const value = useMemo(
     () => ({ mode, setMode, colors, typography, spacing, isDark }),

@@ -26,7 +26,7 @@ const MONTH_NAMES = [
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 function platformLabel(p: SessionPlatform): string {
-  return p === 'google-meet' ? 'Google Meet' : 'Zoom';
+  return p === 'phone_call' ? 'Phone Call' : 'Zoom';
 }
 
 function formatDate(d: Date): string {
@@ -48,9 +48,17 @@ interface SummaryStepProps {
   trainer: Trainer;
   draft: SessionDraft;
   onSubmit: () => void;
+  isSubmitting?: boolean;
+  errorMessage?: string | null;
 }
 
-export function SummaryStep({ trainer, draft, onSubmit }: SummaryStepProps) {
+export function SummaryStep({
+  trainer,
+  draft,
+  onSubmit,
+  isSubmitting = false,
+  errorMessage,
+}: SummaryStepProps) {
   const { colors, spacing } = useTheme();
 
   const platform = draft.platform!;
@@ -129,22 +137,36 @@ export function SummaryStep({ trainer, draft, onSubmit }: SummaryStepProps) {
               valueNode: null,
             },
             {
-              icon: 'videocam-outline' as const,
+              icon: platform === 'phone_call' ? ('call-outline' as const) : ('videocam-outline' as const),
               label: 'Platform',
               value: null,
               valueNode: (
                 <View style={styles.platformValueRow}>
-                  <Image
-                    source={PLATFORM_LOGOS[platform]}
-                    style={styles.platformValueLogo}
-                    resizeMode="contain"
-                  />
+                  {platform === 'phone_call' ? (
+                    <Ionicons name="call-outline" size={18} color={colors.primary} />
+                  ) : (
+                    <Image
+                      source={PLATFORM_LOGOS.zoom}
+                      style={styles.platformValueLogo}
+                      resizeMode="contain"
+                    />
+                  )}
                   <Typography variant="body2" color={colors.textSecondary}>
                     {platformLabel(platform)}
                   </Typography>
                 </View>
               ),
             },
+            ...(platform === 'phone_call' && draft.phoneNumber.trim()
+              ? [
+                  {
+                    icon: 'call-outline' as const,
+                    label: 'Phone',
+                    value: draft.phoneNumber.trim(),
+                    valueNode: null,
+                  },
+                ]
+              : []),
           ].map(({ icon, label, value, valueNode }, idx, arr) => (
             <View
               key={label}
@@ -173,6 +195,18 @@ export function SummaryStep({ trainer, draft, onSubmit }: SummaryStepProps) {
           ))}
         </Animated.View>
 
+        {errorMessage ? (
+          <Animated.View
+            entering={FadeInUp.duration(260)}
+            style={[styles.errorBanner, { backgroundColor: colors.error + '14' }]}
+          >
+            <Ionicons name="alert-circle-outline" size={18} color={colors.error} />
+            <Typography variant="body2" color={colors.error} style={styles.errorText}>
+              {errorMessage}
+            </Typography>
+          </Animated.View>
+        ) : null}
+
         <View style={styles.footerSpacer} />
       </ScrollView>
 
@@ -186,7 +220,7 @@ export function SummaryStep({ trainer, draft, onSubmit }: SummaryStepProps) {
           },
         ]}
       >
-        <Button label="Confirm Booking" onPress={onSubmit} />
+        <Button label="Confirm Booking" isLoading={isSubmitting} onPress={onSubmit} />
       </View>
     </View>
   );
@@ -229,6 +263,15 @@ const styles = StyleSheet.create({
   detailIcon: { marginRight: 10 },
   platformValueRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   platformValueLogo: { width: 20, height: 20 },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    borderRadius: 12,
+    padding: 14,
+    marginTop: 12,
+  },
+  errorText: { flex: 1, lineHeight: 20 },
   footerSpacer: { height: 8 },
   footer: { paddingTop: 12 },
 });

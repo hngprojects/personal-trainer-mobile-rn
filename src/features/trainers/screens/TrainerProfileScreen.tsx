@@ -1,20 +1,65 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp, ZoomIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ImagePreviewModal } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
-import { trainers } from '../data/trainers.data';
+import { useTrainer } from '../hooks/useTrainer';
+import { useTrainerImages } from '../hooks/useTrainerImages';
 
 export function TrainerProfileScreen() {
   const insets = useSafeAreaInsets();
-  const trainer = trainers[0];
+  const { trainerId } = useLocalSearchParams<{ trainerId?: string }>();
+  const { data: trainer, isLoading, isError, refetch } = useTrainer(trainerId);
+  const { data: galleryImages = [] } = useTrainerImages(trainerId);
   const [tab, setTab] = useState('Coach');
+  const [expandedImageIndex, setExpandedImageIndex] = useState<number | null>(null);
   const { colors } = useTheme();
+
+  if (isLoading) {
+    return (
+      <View style={[styles.centered, { backgroundColor: colors.background }]}>
+        <StatusBar style="light" />
+        <ActivityIndicator color="#005F86" />
+      </View>
+    );
+  }
+
+  if (!trainer) {
+    return (
+      <View style={[styles.centered, { backgroundColor: colors.background, padding: 24 }]}>
+        <StatusBar style="light" />
+        <Text style={[styles.emptyTitle, { color: colors.text }]}>
+          {isError ? 'Unable to load trainer' : 'Trainer not found'}
+        </Text>
+        <Pressable style={styles.secondaryBtn} onPress={() => (isError ? refetch() : router.back())}>
+          <Text style={styles.secondaryText}>{isError ? 'Try Again' : 'Go Back'}</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  const visibleGalleryImages =
+    galleryImages.length > 0
+      ? galleryImages
+      : [
+          { id: 'trainer-image', imageUrl: trainer.image, position: 0 },
+          { id: 'trainer-cover', imageUrl: trainer.coverImage, position: 1 },
+          { id: 'trainer-image-repeat', imageUrl: trainer.image, position: 2 },
+        ];
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -41,11 +86,19 @@ export function TrainerProfileScreen() {
             source={{ uri: trainer.coverImage }}
             style={styles.cover}
           />
-          <Animated.Image
+          <Animated.View
             entering={ZoomIn.delay(180).duration(380)}
-            source={{ uri: trainer.image }}
             style={[styles.avatar, { borderColor: colors.background }]}
-          />
+          >
+            <Pressable
+              onPress={() => setExpandedImageIndex(0)}
+              style={styles.avatarPressable}
+              accessibilityRole="imagebutton"
+              accessibilityLabel="View trainer display picture"
+            >
+              <Image source={{ uri: trainer.image }} style={styles.avatarImage} />
+            </Pressable>
+          </Animated.View>
         </Animated.View>
 
         {/* CONTENT */}
@@ -64,15 +117,15 @@ export function TrainerProfileScreen() {
           >
             <View style={styles.statItem}>
               <Text style={[styles.statValue, { color: colors.textSecondary }]}>Exp</Text>
-              <Text style={[styles.statNumber, { color: colors.text }]}>5+</Text>
+              <Text style={[styles.statNumber, { color: colors.text }]}>{trainer.experience}</Text>
             </View>
             <View style={styles.statItem}>
               <Text style={[styles.statValue, { color: colors.textSecondary }]}>Clients</Text>
-              <Text style={[styles.statNumber, { color: colors.text }]}>37</Text>
+              <Text style={[styles.statNumber, { color: colors.text }]}>{trainer.clients}</Text>
             </View>
             <View style={styles.statItem}>
               <Text style={[styles.statValue, { color: colors.textSecondary }]}>Rating</Text>
-              <Text style={[styles.statNumber, { color: colors.text }]}>4.8</Text>
+              <Text style={[styles.statNumber, { color: colors.text }]}>{trainer.rating}</Text>
             </View>
           </Animated.View>
 
@@ -104,24 +157,58 @@ export function TrainerProfileScreen() {
           {tab === 'Coach' && (
             <Animated.View key="Coach" entering={FadeInUp.duration(360)}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                About Charles Effiong
+                About {trainer.name}
               </Text>
               <Text style={[styles.description, { color: colors.textSecondary }]}>
-                I help busy clients build stronger bodies through custom fitness coaching, nutrition
-                planning and consistency.
+                {trainer.bio}
               </Text>
 
               <Text style={[styles.sectionTitle, { color: colors.text }]}>Training Style</Text>
+              <View style={styles.trainingStyles}>
+                {(trainer.trainingStyles.length > 0 ? trainer.trainingStyles : trainer.tags).map(
+                  (style) => (
+                    <View
+                      key={style}
+                      style={[
+                        styles.trainingStylePill,
+                        { backgroundColor: colors.surfaceMuted, borderColor: colors.border },
+                      ]}
+                    >
+                      <Text style={[styles.trainingStyleText, { color: colors.textSecondary }]}>
+                        {style}
+                      </Text>
+                    </View>
+                  ),
+                )}
+              </View>
               <View style={styles.gallery}>
-                <Image source={{ uri: trainer.image }} style={styles.galleryImage} />
-                <Image source={{ uri: trainer.coverImage }} style={styles.galleryImage} />
-                <Image source={{ uri: trainer.image }} style={styles.galleryImage} />
+                {visibleGalleryImages.slice(0, 5).map((image, index) => (
+                  <Pressable
+                    key={image.id}
+                    style={styles.galleryImage}
+                    onPress={() => setExpandedImageIndex(index + 1)}
+                  >
+                    <Image source={{ uri: image.imageUrl }} style={styles.galleryImageInner} />
+                  </Pressable>
+                ))}
               </View>
 
               <Text style={[styles.sectionTitle, { color: colors.text }]}>
                 See Trainer In Action
               </Text>
-              <Pressable onPress={() => router.push('/trainer-video')} style={styles.videoWrap}>
+              <Pressable
+                onPress={() =>
+                  router.push({
+                    pathname: '/(main)/trainer-video',
+                    params: {
+                      returnTo: 'trainer-profile',
+                      trainerId: trainer.id,
+                      videoUrl: trainer.videoUrl,
+                    },
+                  } as never)
+                }
+                style={styles.videoWrap}
+              >
                 <Image source={{ uri: trainer.image }} style={styles.video} />
                 <View style={styles.videoOverlay} />
                 <View style={styles.playButton}>
@@ -134,17 +221,9 @@ export function TrainerProfileScreen() {
           {/* BENEFITS TAB */}
           {tab === 'Benefits' && (
             <Animated.View key="Benefits" entering={FadeInUp.duration(360)}>
-              {[
-                {
-                  title: 'Personalized Training Plans',
-                  text: 'Custom coaching designed for your goals.',
-                },
-                { title: 'Real Accountability', text: 'Weekly check-ins and consistent support.' },
-                { title: 'Proven Results', text: 'Track measurable transformation progress.' },
-                { title: 'Structured Progression', text: 'Clear systems that help you improve.' },
-              ].map((item) => (
+              {trainer.benefits.map((item) => (
                 <View
-                  key={item.title}
+                  key={item.id}
                   style={[styles.benefitCard, { backgroundColor: colors.surface }]}
                 >
                   <View style={styles.iconWrapper}>
@@ -218,12 +297,23 @@ export function TrainerProfileScreen() {
           </Animated.View>
         </View>
       </ScrollView>
+      <ImagePreviewModal
+        images={[
+          { id: 'trainer-display-picture', imageUrl: trainer.image },
+          ...visibleGalleryImages.slice(0, 5),
+        ]}
+        index={expandedImageIndex}
+        onClose={() => setExpandedImageIndex(null)}
+        onChangeIndex={setExpandedImageIndex}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  emptyTitle: { fontSize: 15, fontWeight: '700', marginBottom: 16, textAlign: 'center' },
   scroll: { flex: 1 },
   backButton: {
     position: 'absolute',
@@ -246,6 +336,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     alignSelf: 'center',
     bottom: 8,
+    overflow: 'hidden',
+    backgroundColor: '#DCE7FF',
+  },
+  avatarPressable: {
+    flex: 1,
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
   },
   info: { paddingHorizontal: 16 },
   name: { textAlign: 'center', fontWeight: '700', fontSize: 18 },
@@ -272,8 +371,22 @@ const styles = StyleSheet.create({
   activeText: { color: '#fff' },
   sectionTitle: { marginTop: 18, marginBottom: 10, fontWeight: '700', fontSize: 13 },
   description: { fontSize: 11, lineHeight: 18 },
-  gallery: { flexDirection: 'row', justifyContent: 'space-between' },
-  galleryImage: { width: '31%', height: 70, borderRadius: 10 },
+  trainingStyles: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 12,
+  },
+  trainingStylePill: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  trainingStyleText: { fontSize: 11, fontWeight: '700' },
+  gallery: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  galleryImage: { width: '31%', height: 70, borderRadius: 10, overflow: 'hidden' },
+  galleryImageInner: { width: '100%', height: '100%' },
   videoWrap: {
     width: '100%',
     height: 180,

@@ -1,17 +1,36 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Image, ImageSourcePropType, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, ImageSourcePropType, Pressable, StyleSheet, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 import { PLATFORM_LOGOS } from '@/features/book-a-call/data/platform-logos';
 import { Trainer } from '@/features/trainers/types/trainer.types';
-import { Button, Typography } from '@/shared/components';
+import { Button, TextInput, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 import { SessionDraft, SessionPlatform } from '../types/book-a-session.types';
 
-const PLATFORMS: { id: SessionPlatform; name: string; logo: ImageSourcePropType }[] = [
-  { id: 'zoom', name: 'Zoom', logo: PLATFORM_LOGOS.zoom },
-  { id: 'google-meet', name: 'Google Meet', logo: PLATFORM_LOGOS['google-meet'] },
+interface PlatformOption {
+  id: SessionPlatform;
+  name: string;
+  description: string;
+  logo?: ImageSourcePropType;
+  icon?: keyof typeof Ionicons.glyphMap;
+}
+
+const PLATFORMS: PlatformOption[] = [
+  {
+    id: 'zoom',
+    name: 'Zoom',
+    description: 'Your trainer will send a Zoom link before the session.',
+    logo: PLATFORM_LOGOS.zoom,
+  },
+  {
+    id: 'phone_call',
+    name: 'Phone Call',
+    description: 'Your trainer will call the phone number you provide.',
+    icon: 'call-outline',
+  },
 ];
 
 interface PlatformStepProps {
@@ -24,19 +43,25 @@ interface PlatformStepProps {
 export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformStepProps) {
   const { colors, spacing } = useTheme();
 
+  const requiresPhone = draft.platform === 'phone_call';
+  const phoneProvided = draft.phoneNumber.trim().length > 0;
+  const canContinue = draft.platform !== null && (!requiresPhone || phoneProvided);
+
   return (
     <View style={styles.container}>
-      <ScrollView
+      <KeyboardAwareScrollView
         style={styles.scroll}
         contentContainerStyle={[styles.content, { paddingHorizontal: spacing.md }]}
         showsVerticalScrollIndicator={false}
+        bottomOffset={112}
+        keyboardShouldPersistTaps="handled"
       >
         <Animated.View entering={FadeInDown.duration(360)}>
           <Typography variant="h2" style={styles.heading}>
-            Where should the session happen?
+            How should the session happen?
           </Typography>
           <Typography variant="body2" color={colors.textSecondary} style={styles.subtitle}>
-            Choose your preferred video platform.
+            Choose a video meeting or a direct phone call.
           </Typography>
         </Animated.View>
 
@@ -80,14 +105,18 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
                 ]}
               >
                 <View style={styles.platformLogoBox}>
-                  <Image source={p.logo} style={styles.platformLogo} />
+                  {p.logo ? (
+                    <Image source={p.logo} style={styles.platformLogo} />
+                  ) : (
+                    <Ionicons name={p.icon} size={24} color={colors.primary} />
+                  )}
                 </View>
                 <View style={styles.platformText}>
                   <Typography variant="body1" style={styles.platformName}>
                     {p.name}
                   </Typography>
                   <Typography variant="body2" color={colors.textSecondary}>
-                    Video call platform
+                    {p.description}
                   </Typography>
                 </View>
                 <View
@@ -105,6 +134,23 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
           );
         })}
 
+        {requiresPhone && (
+          <Animated.View entering={FadeInUp.duration(260)}>
+            <Typography variant="body1" style={styles.phoneLabel}>
+              Your phone number
+            </Typography>
+            <TextInput
+              value={draft.phoneNumber}
+              onChangeText={(phoneNumber) => onUpdate({ phoneNumber })}
+              placeholder="+1 555 123 4567"
+              keyboardType="phone-pad"
+              textContentType="telephoneNumber"
+              autoComplete="tel"
+              style={styles.phoneInput}
+            />
+          </Animated.View>
+        )}
+
         <Animated.View
           entering={FadeInUp.delay(340).duration(360)}
           style={[styles.infoBanner, { backgroundColor: colors.primarySubtle }]}
@@ -116,12 +162,14 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
             style={styles.infoIcon}
           />
           <Typography variant="body2" color={colors.primary} style={styles.infoText}>
-            Make sure you have the selected app installed before your session.
+            {requiresPhone
+              ? 'Use a number where you can take the trainer’s call at the booked time.'
+              : 'Make sure you have Zoom installed before your session.'}
           </Typography>
         </Animated.View>
 
         <View style={styles.footerSpacer} />
-      </ScrollView>
+      </KeyboardAwareScrollView>
 
       <View
         style={[
@@ -133,7 +181,7 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
           },
         ]}
       >
-        <Button label="Continue" disabled={draft.platform === null} onPress={onContinue} />
+        <Button label="Continue" disabled={!canContinue} onPress={onContinue} />
       </View>
     </View>
   );
@@ -187,6 +235,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   radioInner: { width: 10, height: 10, borderRadius: 5 },
+  phoneLabel: { fontWeight: '700', marginTop: 4, marginBottom: 12 },
+  phoneInput: { fontSize: 15, marginBottom: 12 },
   infoBanner: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -197,6 +247,6 @@ const styles = StyleSheet.create({
   },
   infoIcon: { marginRight: 8, marginTop: 1 },
   infoText: { flex: 1, lineHeight: 20 },
-  footerSpacer: { height: 8 },
+  footerSpacer: { height: 128 },
   footer: { paddingTop: 12 },
 });

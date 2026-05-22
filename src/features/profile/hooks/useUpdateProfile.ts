@@ -1,11 +1,11 @@
 import { useQueryClient } from '@tanstack/react-query';
 
-import { useAuthStore } from '@/features/auth';
+import { useAuthStore } from '@/features/auth/store/auth.store';
 import { useApiMutation } from '@/shared/api/hooks';
 
 import { profileApi } from '../api/profile.api';
 import type { UpdateProfileRequest } from '../api/profile.types';
-import { PROFILE_QUERY_KEY } from './useProfile';
+import { getProfileQueryKey } from './useProfile';
 
 /**
  * PATCHes /users/me/profile with the given fields (snake_case body matching
@@ -28,7 +28,10 @@ export function useUpdateProfile() {
         avatarUrl: profile.avatarUrl,
         profileComplete: profile.profileComplete,
       });
-      queryClient.setQueryData(PROFILE_QUERY_KEY as unknown as unknown[], profile);
+      queryClient.setQueryData(
+        getProfileQueryKey(useAuthStore.getState().user?.id) as unknown as unknown[],
+        profile,
+      );
     },
   });
 }

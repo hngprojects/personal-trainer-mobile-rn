@@ -1,8 +1,9 @@
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React from 'react';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Typography } from '@/shared/components';
+import { Avatar, Typography } from '@/shared/components';
 import { fonts, useTheme } from '@/shared/theme';
 
 import { Session } from '../data/sessions.data';
@@ -14,10 +15,27 @@ interface SessionCardProps {
 export function SessionCard({ session }: SessionCardProps) {
   const { spacing, colors } = useTheme();
 
+  // Only paid sessions that have a linked session row open the details page.
+  // Discovery calls have no /sessions/{id} record, and paid sessions before
+  // they start (sessionId === null) don't either — both stay non-tappable.
+  const canOpenDetails = session.bookingType === 'session' && Boolean(session.sessionId);
+
   const handlePress = () => {
+    if (!canOpenDetails) return;
     router.push({
       pathname: '/session-details' as any,
-      params: { id: session.id },
+      params: {
+        id: session.sessionId!,
+        bookingId: session.id,
+        bookingType: session.bookingType,
+        trainerId: session.trainerId ?? '',
+        trainerName: session.trainerName,
+        trainerAvatar: session.trainerAvatar ?? '',
+        platform: session.platform ?? '',
+        date: session.date,
+        time: session.time,
+        duration: session.duration,
+      },
     });
   };
 
@@ -42,7 +60,11 @@ export function SessionCard({ session }: SessionCardProps) {
       e.stopPropagation();
       router.push({
         pathname: '/reschedule-session' as any,
-        params: { id: session.id },
+        params: {
+          id: session.id,
+          bookingType: session.bookingType,
+          trainerId: session.trainerId ?? '',
+        },
       });
     }
   };
@@ -50,6 +72,7 @@ export function SessionCard({ session }: SessionCardProps) {
   return (
     <Pressable
       onPress={handlePress}
+      disabled={!canOpenDetails}
       style={[
         styles.container,
         {
@@ -61,21 +84,40 @@ export function SessionCard({ session }: SessionCardProps) {
       ]}
     >
       <View style={styles.row}>
-        <Image
-          source={{ uri: session.trainerAvatar }}
-          style={[styles.avatar, { backgroundColor: colors.surfaceMuted }]}
-        />
+        {session.bookingType === 'discovery' ? (
+          <View
+            style={[
+              styles.avatar,
+              styles.discoveryAvatar,
+              { backgroundColor: colors.primarySubtle },
+            ]}
+          >
+            <Ionicons name="call" size={22} color={colors.primary} />
+          </View>
+        ) : (
+          <Avatar name={session.trainerName} uri={session.trainerAvatar} size={48} />
+        )}
         <View style={styles.content}>
           <View style={styles.headerRow}>
             <Typography variant="body1" style={styles.type}>
               {session.type}
             </Typography>
-            <Typography variant="label" color={colors.textSecondary} style={styles.duration}>
+            <Typography
+              variant="label"
+              color={colors.textSecondary}
+              style={styles.duration}
+              numberOfLines={1}
+            >
               {session.duration}
             </Typography>
           </View>
           <View style={styles.footerRow}>
-            <Typography variant="label" color={colors.textSecondary} style={styles.trainer}>
+            <Typography
+              variant="label"
+              color={colors.textSecondary}
+              style={styles.trainer}
+              numberOfLines={1}
+            >
               {session.trainerName} · {session.date.split(',')[1]?.trim() || session.date}
             </Typography>
             <Pressable onPress={handleStatusPress}>
@@ -110,6 +152,10 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
   },
+  discoveryAvatar: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   content: {
     flex: 1,
     marginLeft: 12,
@@ -128,6 +174,9 @@ const styles = StyleSheet.create({
   type: {
     fontFamily: fonts.semibold,
     fontSize: 14,
+    flex: 1,
+    flexShrink: 1,
+    marginRight: 8,
   },
   status: {
     fontSize: 10,
@@ -138,8 +187,12 @@ const styles = StyleSheet.create({
   },
   trainer: {
     fontSize: 11,
+    flex: 1,
+    flexShrink: 1,
+    marginRight: 8,
   },
   duration: {
     fontSize: 11,
+    flexShrink: 0,
   },
 });

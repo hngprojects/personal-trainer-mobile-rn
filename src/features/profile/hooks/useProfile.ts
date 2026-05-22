@@ -1,9 +1,11 @@
-import { useAuthStore } from '@/features/auth';
+import { useAuthStore } from '@/features/auth/store/auth.store';
 import { useApiQuery } from '@/shared/api/hooks';
 
 import { profileApi } from '../api/profile.api';
 
 export const PROFILE_QUERY_KEY = ['profile', 'me'] as const;
+export const getProfileQueryKey = (userId?: string | null) =>
+  [...PROFILE_QUERY_KEY, userId ?? 'anonymous'] as const;
 
 /**
  * Fetches the authenticated user's profile from /users/me/profile and keeps
@@ -17,10 +19,11 @@ export const PROFILE_QUERY_KEY = ['profile', 'me'] as const;
  */
 export function useProfile() {
   const accessToken = useAuthStore((s) => s.accessToken);
+  const userId = useAuthStore((s) => s.user?.id);
   const updateUser = useAuthStore((s) => s.updateUser);
 
   return useApiQuery(
-    PROFILE_QUERY_KEY as unknown as unknown[],
+    getProfileQueryKey(userId) as unknown as unknown[],
     async () => {
       const profile = await profileApi.getProfile();
       const currentAvatar = useAuthStore.getState().user?.avatarUrl ?? null;
@@ -35,6 +38,6 @@ export function useProfile() {
       });
       return profile;
     },
-    { enabled: !!accessToken },
+    { enabled: !!accessToken && !!userId },
   );
 }

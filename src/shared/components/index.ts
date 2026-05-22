@@ -4,6 +4,7 @@ export { ErrorBoundary } from './ErrorBoundary';
 export { FormField } from './FormField';
 export { GradientBackground } from './GradientBackground';
 export { LoadingOverlay } from './LoadingOverlay';
+export { ImagePreviewModal } from './ImagePreviewModal';
 export { LogoRefreshScrollView } from './LogoRefreshScrollView';
 export { OrDivider } from './OrDivider';
 export { Screen } from './Screen';
