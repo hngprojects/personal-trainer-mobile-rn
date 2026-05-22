@@ -203,36 +203,35 @@ function mapUpcomingBooking(raw: unknown): UpcomingBooking | null {
       (trainer ? pickString(trainer, ['name', 'display_name', 'full_name']) : null) ??
       (trainerUser ? pickString(trainerUser, ['name', 'display_name', 'full_name']) : null) ??
       'FitCall Rep',
-    trainerAvatar:
-      normalizeBookingMediaUrl(
-        pickString(raw, [
-          'trainer_avatar',
-          'trainerAvatar',
-          'trainer_display_picture',
-          'display_picture',
-          'avatar_url',
-        ]) ??
-          (trainer
-            ? pickString(trainer, [
-                'display_picture',
-                'displayPicture',
-                'avatar_url',
-                'avatarUrl',
-                'profile_picture',
-                'profilePicture',
-              ])
-            : null) ??
-          (trainerUser
-            ? pickString(trainerUser, [
-                'avatar_url',
-                'avatarUrl',
-                'display_picture',
-                'displayPicture',
-                'profile_picture',
-                'profilePicture',
-              ])
-            : null),
-      ),
+    trainerAvatar: normalizeBookingMediaUrl(
+      pickString(raw, [
+        'trainer_avatar',
+        'trainerAvatar',
+        'trainer_display_picture',
+        'display_picture',
+        'avatar_url',
+      ]) ??
+        (trainer
+          ? pickString(trainer, [
+              'display_picture',
+              'displayPicture',
+              'avatar_url',
+              'avatarUrl',
+              'profile_picture',
+              'profilePicture',
+            ])
+          : null) ??
+        (trainerUser
+          ? pickString(trainerUser, [
+              'avatar_url',
+              'avatarUrl',
+              'display_picture',
+              'displayPicture',
+              'profile_picture',
+              'profilePicture',
+            ])
+          : null),
+    ),
     platform: pickString(raw, ['platform', 'contact_mode']) ?? null,
   };
 }

@@ -66,13 +66,6 @@ interface RawTrainerGalleryImage {
   position: number;
 }
 
-interface RawTrainerAvailability {
-  day_of_week: number | string;
-  start_time: string;
-  end_time: string;
-  timezone: string;
-}
-
 export interface TrainersPage {
   trainers: Trainer[];
   page: number;

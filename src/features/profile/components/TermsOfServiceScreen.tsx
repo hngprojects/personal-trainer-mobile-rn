@@ -67,7 +67,7 @@ export function TermsOfServiceScreen() {
           <Body>
             You are responsible for keeping your account information accurate and your login details
             secure. You agree not to misuse the platform, impersonate another person, or interfere
-            with other users' access to the service.
+            with other users&apos; access to the service.
           </Body>
         </Section>
 
@@ -81,8 +81,8 @@ export function TermsOfServiceScreen() {
 
         <Section title="5. Changes to the Service">
           <Body>
-            We may update, suspend, or discontinue parts of FitCall as we improve the product. We may
-            also update these terms and will make the latest version available in the app.
+            We may update, suspend, or discontinue parts of FitCall as we improve the product. We
+            may also update these terms and will make the latest version available in the app.
           </Body>
         </Section>
       </Animated.ScrollView>

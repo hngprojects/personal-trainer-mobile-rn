@@ -30,8 +30,7 @@ export const trainers: Trainer[] = [
     clients: 12,
     experience: '4 yrs',
     bio: 'Strength and conditioning specialist with a focus on hypertrophy and powerlifting fundamentals.',
-    videoUrl:
-      'https://videos.pexels.com/video-files/5528012/5528012-hd_1080_1920_25fps.mp4',
+    videoUrl: 'https://videos.pexels.com/video-files/5528012/5528012-hd_1080_1920_25fps.mp4',
     tags: ['Yoga', 'Strength', 'Mobility'],
     trainingStyles: ['Strength', 'Conditioning'],
     benefits: DEFAULT_BENEFITS,
@@ -47,8 +46,7 @@ export const trainers: Trainer[] = [
     clients: 12,
     experience: '5 yrs',
     bio: 'I help busy professionals lose weight, gain strength and improve confidence through personalized training.',
-    videoUrl:
-      'https://videos.pexels.com/video-files/5528012/5528012-hd_1080_1920_25fps.mp4',
+    videoUrl: 'https://videos.pexels.com/video-files/5528012/5528012-hd_1080_1920_25fps.mp4',
     tags: ['Yoga', 'Strength', 'Mobility'],
     trainingStyles: ['Mobility', 'Functional Movement'],
     benefits: DEFAULT_BENEFITS,
@@ -64,8 +62,7 @@ export const trainers: Trainer[] = [
     clients: 12,
     experience: '6 yrs',
     bio: 'Distance running coach helping athletes break their personal records through smart programming.',
-    videoUrl:
-      'https://videos.pexels.com/video-files/5528012/5528012-hd_1080_1920_25fps.mp4',
+    videoUrl: 'https://videos.pexels.com/video-files/5528012/5528012-hd_1080_1920_25fps.mp4',
     tags: ['Yoga', 'Strength', 'Mobility'],
     trainingStyles: ['Endurance', 'Running'],
     benefits: DEFAULT_BENEFITS,
@@ -81,8 +78,7 @@ export const trainers: Trainer[] = [
     clients: 12,
     experience: '7 yrs',
     bio: 'Bringing mindful movement and flexibility to people who think they could never touch their toes.',
-    videoUrl:
-      'https://videos.pexels.com/video-files/5528012/5528012-hd_1080_1920_25fps.mp4',
+    videoUrl: 'https://videos.pexels.com/video-files/5528012/5528012-hd_1080_1920_25fps.mp4',
     tags: ['Yoga', 'Strength', 'Mobility'],
     trainingStyles: ['Yoga', 'Breathwork'],
     benefits: DEFAULT_BENEFITS,

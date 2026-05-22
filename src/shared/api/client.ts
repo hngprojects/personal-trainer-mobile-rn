@@ -71,11 +71,9 @@ client.interceptors.response.use(
 
       try {
         const { authApi } = await import('@/features/auth/api/auth.api');
-        refreshPromise ??= authApi
-          .refreshTokens(refreshToken, accessToken)
-          .finally(() => {
-            refreshPromise = null;
-          });
+        refreshPromise ??= authApi.refreshTokens(refreshToken, accessToken).finally(() => {
+          refreshPromise = null;
+        });
         const newTokens = await refreshPromise;
         rejectedRefreshToken = null;
         getAuthState().setTokens(newTokens);

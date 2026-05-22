@@ -45,7 +45,10 @@ export function TrainerProfileScreen() {
         <Text style={[styles.emptyTitle, { color: colors.text }]}>
           {isError ? 'Unable to load trainer' : 'Trainer not found'}
         </Text>
-        <Pressable style={styles.secondaryBtn} onPress={() => (isError ? refetch() : router.back())}>
+        <Pressable
+          style={styles.secondaryBtn}
+          onPress={() => (isError ? refetch() : router.back())}
+        >
           <Text style={styles.secondaryText}>{isError ? 'Try Again' : 'Go Back'}</Text>
         </Pressable>
       </View>

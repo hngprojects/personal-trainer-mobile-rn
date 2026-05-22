@@ -49,7 +49,12 @@ interface SummaryStepProps {
   errorMessage?: string | null;
 }
 
-export function SummaryStep({ draft, onSubmit, isSubmitting = false, errorMessage }: SummaryStepProps) {
+export function SummaryStep({
+  draft,
+  onSubmit,
+  isSubmitting = false,
+  errorMessage,
+}: SummaryStepProps) {
   const { colors, spacing } = useTheme();
 
   const contactMode = draft.contactMode!;
@@ -113,7 +118,10 @@ export function SummaryStep({ draft, onSubmit, isSubmitting = false, errorMessag
               valueNode: null,
             },
             {
-              icon: contactMode === 'phone_callback' ? ('call-outline' as const) : ('videocam-outline' as const),
+              icon:
+                contactMode === 'phone_callback'
+                  ? ('call-outline' as const)
+                  : ('videocam-outline' as const),
               label: 'Contact',
               value: contactModeLabel(contactMode),
               valueNode: null,

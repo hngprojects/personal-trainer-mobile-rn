@@ -32,7 +32,12 @@ export function SessionsScreen() {
   const statusBarStyle = useStatusBarStyle();
   const [activeTab, setActiveTab] = useState<'Upcoming' | 'History'>('Upcoming');
   const timezone = getTimezone();
-  const { data: upcomingBookings = [], isLoading, isError, refetch } = useUpcomingBookings({
+  const {
+    data: upcomingBookings = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useUpcomingBookings({
     timezone,
     page: 1,
     limit: 50,

@@ -63,7 +63,11 @@ async function refreshTokens(refreshToken: string, accessToken: string): Promise
     }
 
     if (!hasJwtExp(parsed.data.access_token)) {
-      throw new ApiError('Invalid access token returned from refresh', response.status, parsed.code);
+      throw new ApiError(
+        'Invalid access token returned from refresh',
+        response.status,
+        parsed.code,
+      );
     }
 
     return {

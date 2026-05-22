@@ -8,8 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/features/auth/store/auth.store';
 import { env } from '@/shared/constants/env';
 
-const VIDEO_SOURCE =
-  'https://videos.pexels.com/video-files/5528012/5528012-hd_1080_1920_25fps.mp4';
+const VIDEO_SOURCE = 'https://videos.pexels.com/video-files/5528012/5528012-hd_1080_1920_25fps.mp4';
 
 export function TrainerVideoScreen() {
   const insets = useSafeAreaInsets();

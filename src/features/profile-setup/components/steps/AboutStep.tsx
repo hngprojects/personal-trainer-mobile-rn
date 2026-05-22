@@ -21,8 +21,7 @@ const HIGHLIGHTS = [
   { title: 'Flexible Workouts' },
 ];
 
-const VIDEO_SOURCE =
-  'https://videos.pexels.com/video-files/5528012/5528012-hd_1080_1920_25fps.mp4';
+const VIDEO_SOURCE = 'https://videos.pexels.com/video-files/5528012/5528012-hd_1080_1920_25fps.mp4';
 
 export function AboutStep({ index, scrollX, slideWidth }: AboutStepProps) {
   const { colors } = useTheme();

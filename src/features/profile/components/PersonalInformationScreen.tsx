@@ -276,7 +276,9 @@ export function PersonalInformationScreen() {
         {locationStatus === 'ready' && location ? (
           <>
             <View style={styles.locationRow}>
-              <Typography style={[styles.locationLabel, { color: colors.text }]}>Country</Typography>
+              <Typography style={[styles.locationLabel, { color: colors.text }]}>
+                Country
+              </Typography>
               <Typography style={[styles.locationValue, { color: colors.textMuted }]}>
                 {location.country || '-'}
               </Typography>

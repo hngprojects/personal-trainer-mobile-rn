@@ -46,11 +46,13 @@ export function BookACallScreen() {
   const bookDiscoveryCall = useBookDiscoveryCall();
   const timezone = getTimezone();
   const { data: discoverySlots = [], isLoading: isLoadingSlots } = useDiscoverySlots(timezone);
-  const { data: upcomingBookings = [], isLoading: isLoadingUpcomingBookings } = useUpcomingBookings({
-    timezone,
-    type: 'discovery',
-    limit: 50,
-  });
+  const { data: upcomingBookings = [], isLoading: isLoadingUpcomingBookings } = useUpcomingBookings(
+    {
+      timezone,
+      type: 'discovery',
+      limit: 50,
+    },
+  );
   const areSlotsReady = !isLoadingSlots && !isLoadingUpcomingBookings;
   const availableSlotDates = getDiscoverySlotDates(discoverySlots, upcomingBookings);
 

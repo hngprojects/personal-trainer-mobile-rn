@@ -24,7 +24,10 @@ export function ComingSoonScreen({
   const statusBarStyle = useStatusBarStyle();
 
   return (
-    <SafeAreaView edges={['top', 'bottom']} style={[styles.safe, { backgroundColor: colors.background }]}>
+    <SafeAreaView
+      edges={['top', 'bottom']}
+      style={[styles.safe, { backgroundColor: colors.background }]}
+    >
       <StatusBar style={statusBarStyle} />
       <ScreenHeader title={title} />
 

@@ -137,7 +137,10 @@ export function SummaryStep({
               valueNode: null,
             },
             {
-              icon: platform === 'phone_call' ? ('call-outline' as const) : ('videocam-outline' as const),
+              icon:
+                platform === 'phone_call'
+                  ? ('call-outline' as const)
+                  : ('videocam-outline' as const),
               label: 'Platform',
               value: null,
               valueNode: (

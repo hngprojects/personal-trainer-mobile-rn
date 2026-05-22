@@ -115,12 +115,11 @@ export function DateTimeStep({
 }: DateTimeStepProps) {
   const { colors, spacing } = useTheme();
   const today = new Date();
-  const now = new Date();
   const todayMidnight = startOfDay(today);
-  const futureAvailableSlots = useMemo(
-    () => availableSlots.filter((slot) => slot.getTime() > now.getTime()),
-    [availableSlots, now],
-  );
+  const futureAvailableSlots = useMemo(() => {
+    const now = Date.now();
+    return availableSlots.filter((slot) => slot.getTime() > now);
+  }, [availableSlots]);
 
   const [viewMonth, setViewMonth] = useState(
     () => new Date(today.getFullYear(), today.getMonth(), 1),
@@ -344,30 +343,30 @@ export function DateTimeStep({
             </View>
           ) : (
             availableTimesForSelectedDay.map((slot) => {
-            const unavail = isTimeUnavailable(slot);
-            const selected = draft.time === slot;
-            return (
-              <Pressable
-                key={slot}
-                onPress={() => onTimePress(slot)}
-                style={[
-                  styles.timeSlot,
-                  unavail && styles.timeSlotUnavail,
-                  !unavail &&
-                    !selected && { borderWidth: 1, borderColor: colors.border, borderRadius: 10 },
-                  selected && { backgroundColor: colors.primary, borderRadius: 10 },
-                ]}
-                disabled={unavail}
-              >
-                <Typography
-                  variant="body2"
-                  color={selected ? '#fff' : unavail ? colors.textSecondary : colors.text}
-                  style={[styles.timeText, selected && { fontWeight: '600' }]}
+              const unavail = isTimeUnavailable(slot);
+              const selected = draft.time === slot;
+              return (
+                <Pressable
+                  key={slot}
+                  onPress={() => onTimePress(slot)}
+                  style={[
+                    styles.timeSlot,
+                    unavail && styles.timeSlotUnavail,
+                    !unavail &&
+                      !selected && { borderWidth: 1, borderColor: colors.border, borderRadius: 10 },
+                    selected && { backgroundColor: colors.primary, borderRadius: 10 },
+                  ]}
+                  disabled={unavail}
                 >
-                  {selected ? `✓ ${slot}` : slot}
-                </Typography>
-              </Pressable>
-            );
+                  <Typography
+                    variant="body2"
+                    color={selected ? '#fff' : unavail ? colors.textSecondary : colors.text}
+                    style={[styles.timeText, selected && { fontWeight: '600' }]}
+                  >
+                    {selected ? `✓ ${slot}` : slot}
+                  </Typography>
+                </Pressable>
+              );
             })
           )}
         </Animated.View>
@@ -411,17 +410,13 @@ export function DateTimeStep({
     if (!date) return [];
 
     return Array.from(
-      new Set(
-        futureAvailableSlots
-          .filter((slot) => isSameDay(slot, date))
-          .map(formatSlotTime),
-      ),
+      new Set(futureAvailableSlots.filter((slot) => isSameDay(slot, date)).map(formatSlotTime)),
     );
   }
 
   function isPastTimeForSelectedDay(slot: string) {
     if (!draft.date) return false;
-    return buildDateFromSlot(draft.date, slot).getTime() <= now.getTime();
+    return buildDateFromSlot(draft.date, slot).getTime() <= Date.now();
   }
 }
 
@@ -446,12 +441,12 @@ function formatSlotTime(date: Date) {
   });
 }
 
-function getMonthCalendarCells(month: Date): Array<Date | null> {
+function getMonthCalendarCells(month: Date): (Date | null)[] {
   const year = month.getFullYear();
   const monthIndex = month.getMonth();
   const leadingEmpty = new Date(year, monthIndex, 1).getDay();
   const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
-  const cells: Array<Date | null> = [];
+  const cells: (Date | null)[] = [];
 
   for (let i = 0; i < leadingEmpty; i += 1) {
     cells.push(null);

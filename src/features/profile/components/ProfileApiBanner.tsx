@@ -18,10 +18,7 @@ export function ProfileApiBanner({
 
   return (
     <View
-      style={[
-        styles.banner,
-        { backgroundColor: colors.primarySubtle, borderColor: colors.border },
-      ]}
+      style={[styles.banner, { backgroundColor: colors.primarySubtle, borderColor: colors.border }]}
     >
       <Ionicons name="cloud-offline-outline" size={18} color={colors.primary} />
       <Typography style={[styles.message, { color: colors.text }]}>{message}</Typography>

@@ -57,14 +57,15 @@ export function RescheduleSessionScreen() {
   const isDiscovery = bookingType === 'discovery';
   const { data: trainerAvailability = [], isLoading: isLoadingTrainerAvailability } =
     useTrainerAvailability(!isDiscovery ? trainerId : undefined);
-  const { data: discoverySlots = [], isLoading: isLoadingDiscoverySlots } = useDiscoverySlots(
-    timezone,
+  const { data: discoverySlots = [], isLoading: isLoadingDiscoverySlots } =
+    useDiscoverySlots(timezone);
+  const { data: upcomingBookings = [], isLoading: isLoadingUpcomingBookings } = useUpcomingBookings(
+    {
+      timezone,
+      type: isDiscovery ? 'discovery' : 'session',
+      limit: 50,
+    },
   );
-  const { data: upcomingBookings = [], isLoading: isLoadingUpcomingBookings } = useUpcomingBookings({
-    timezone,
-    type: isDiscovery ? 'discovery' : 'session',
-    limit: 50,
-  });
   const availableSlots = isDiscovery
     ? getDiscoverySlotDates(discoverySlots, upcomingBookings)
     : trainerId
@@ -209,7 +210,9 @@ export function RescheduleSessionScreen() {
           label={step === 1 ? 'Continue' : 'Confirm Reschedule'}
           onPress={handleContinue}
           isLoading={reschedule.isPending}
-          disabled={step === 1 ? !selectedReason : !selectedDate || !selectedTime || isLoadingAvailability}
+          disabled={
+            step === 1 ? !selectedReason : !selectedDate || !selectedTime || isLoadingAvailability
+          }
         />
       </View>
     </Screen>
@@ -320,7 +323,10 @@ function DateTimeStep({
   const { colors } = useTheme();
   const availableDates = getAvailableDatesForMonth(viewDate, availableSlots);
   const availableTimes = selectedDate
-    ? getAvailableTimesForDate(new Date(viewDate.getFullYear(), viewDate.getMonth(), selectedDate), availableSlots)
+    ? getAvailableTimesForDate(
+        new Date(viewDate.getFullYear(), viewDate.getMonth(), selectedDate),
+        availableSlots,
+      )
     : [];
   const calendarCells = getCalendarCells(viewDate);
 
@@ -440,28 +446,28 @@ function DateTimeStep({
           </View>
         ) : (
           availableTimes.map((time) => {
-          const isSelected = selectedTime === time;
-          return (
-            <Pressable
-              key={time}
-              onPress={() => onSelectTime(time)}
-              style={[
-                styles.timeSlot,
-                {
-                  backgroundColor: isSelected ? colors.primary : colors.background,
-                  borderColor: isSelected ? colors.primary : colors.divider,
-                },
-              ]}
-            >
-              <Typography
-                variant="label"
-                color={isSelected ? '#FFFFFF' : colors.text}
-                style={[styles.timeText, isSelected && styles.activeTimeText]}
+            const isSelected = selectedTime === time;
+            return (
+              <Pressable
+                key={time}
+                onPress={() => onSelectTime(time)}
+                style={[
+                  styles.timeSlot,
+                  {
+                    backgroundColor: isSelected ? colors.primary : colors.background,
+                    borderColor: isSelected ? colors.primary : colors.divider,
+                  },
+                ]}
               >
-                {time}
-              </Typography>
-            </Pressable>
-          );
+                <Typography
+                  variant="label"
+                  color={isSelected ? '#FFFFFF' : colors.text}
+                  style={[styles.timeText, isSelected && styles.activeTimeText]}
+                >
+                  {time}
+                </Typography>
+              </Pressable>
+            );
           })
         )}
       </View>
@@ -653,15 +659,7 @@ function buildRescheduleDateTime(viewDate: Date, day: number, time: string): str
   if (period === 'PM' && hour !== 12) hour += 12;
   if (period === 'AM' && hour === 12) hour = 0;
 
-  const dt = new Date(
-    viewDate.getFullYear(),
-    viewDate.getMonth(),
-    day,
-    hour,
-    rawMinute ?? 0,
-    0,
-    0,
-  );
+  const dt = new Date(viewDate.getFullYear(), viewDate.getMonth(), day, hour, rawMinute ?? 0, 0, 0);
   return dt.toISOString();
 }
 

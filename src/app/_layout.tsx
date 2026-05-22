@@ -38,7 +38,9 @@ function RootLayoutNav() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
+    <Stack
+      screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}
+    >
       {!hasCompleted && <Stack.Screen name="(onboarding)" options={{ animation: 'fade' }} />}
       {hasCompleted && !isLoggedIn && (
         <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />

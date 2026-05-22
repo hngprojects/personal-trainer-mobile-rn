@@ -14,8 +14,18 @@ import { useSessionDetails } from '../hooks/useSessionDetails';
 export function SessionDetailsScreen() {
   // `id` is the session_id (from booking.session_id) and drives GET /sessions/{id}.
   // `bookingId` is the booking row's id, used for PUT /bookings/{id}/reschedule.
-  const { id, bookingId, bookingType, trainerId, trainerName, trainerAvatar, platform, date, time, duration } =
-    useLocalSearchParams<{
+  const {
+    id,
+    bookingId,
+    bookingType,
+    trainerId,
+    trainerName,
+    trainerAvatar,
+    platform,
+    date,
+    time,
+    duration,
+  } = useLocalSearchParams<{
     id: string;
     bookingId?: string;
     bookingType?: string;
@@ -132,9 +142,7 @@ export function SessionDetailsScreen() {
           <Avatar name={trainerName ?? 'FitCall Trainer'} uri={trainerAvatar || null} size={56} />
           <View style={styles.trainerInfo}>
             <View style={styles.trainerHeader}>
-              <Typography style={styles.trainerName}>
-                {trainerName ?? 'FitCall Trainer'}
-              </Typography>
+              <Typography style={styles.trainerName}>{trainerName ?? 'FitCall Trainer'}</Typography>
               <Ionicons name="checkmark-circle" size={16} color={colors.success} />
             </View>
             <Typography variant="label" color={colors.textSecondary}>
@@ -155,7 +163,11 @@ export function SessionDetailsScreen() {
         >
           <InfoItem icon="calendar-outline" label="Date" value={displayDate ?? 'Pending'} />
           <InfoItem icon="time-outline" label="Time" value={displayTime ?? 'Pending'} />
-          <InfoItem icon="hourglass-outline" label="Duration" value={displayDuration ?? '60 mins'} />
+          <InfoItem
+            icon="hourglass-outline"
+            label="Duration"
+            value={displayDuration ?? '60 mins'}
+          />
           <InfoItem
             icon="videocam-outline"
             label="Platform"
@@ -163,7 +175,11 @@ export function SessionDetailsScreen() {
             isPlatform
           />
           {apiSession?.trainerNote ? (
-            <InfoItem icon="document-text-outline" label="Trainer Note" value={apiSession.trainerNote} />
+            <InfoItem
+              icon="document-text-outline"
+              label="Trainer Note"
+              value={apiSession.trainerNote}
+            />
           ) : null}
         </View>
 

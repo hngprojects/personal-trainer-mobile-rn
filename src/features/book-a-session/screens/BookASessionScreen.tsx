@@ -47,11 +47,13 @@ export function BookASessionScreen() {
     useTrainerAvailability(trainerId);
   const trainer = fetchedTrainer ?? (!trainerId ? trainers[0] : undefined);
   const timezone = getTimezone();
-  const { data: upcomingBookings = [], isLoading: isLoadingUpcomingBookings } = useUpcomingBookings({
-    timezone,
-    type: 'session',
-    limit: 50,
-  });
+  const { data: upcomingBookings = [], isLoading: isLoadingUpcomingBookings } = useUpcomingBookings(
+    {
+      timezone,
+      type: 'session',
+      limit: 50,
+    },
+  );
   const areSlotsReady = !isLoadingUpcomingBookings && !isLoadingAvailability;
   const availableSlotDates = getTrainerAvailabilityDates(trainerAvailability, upcomingBookings);
   const createSessionBooking = useCreateSessionBooking();
