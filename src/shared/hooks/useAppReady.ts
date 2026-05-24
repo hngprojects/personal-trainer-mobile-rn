@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { configureGoogleSignin } from '@/shared/api/googleSignin';
+import { getJwtType, hasJwtExp, isJwtExpired } from '@/shared/api/jwt';
 import { STORAGE_KEYS } from '@/shared/constants/keys';
 import { asyncStorage } from '@/shared/storage/asyncStorage';
 import { secureStorage } from '@/shared/storage/secureStorage';
@@ -25,9 +26,30 @@ export function useAppReady() {
           loadAppFonts(),
         ]);
 
-        useAuthStore.getState().hydrate({ tokens, user });
-      } catch (e) {
-        console.warn('App init error:', e);
+        const validTokens =
+          tokens &&
+          hasJwtExp(tokens.accessToken) &&
+          hasJwtExp(tokens.refreshToken) &&
+          getJwtType(tokens.refreshToken) === 'refresh' &&
+          !isJwtExpired(tokens.refreshToken)
+            ? tokens
+            : null;
+
+        if (tokens && !validTokens) {
+          await secureStorage.clearTokens();
+        }
+
+        useAuthStore.getState().hydrate({
+          tokens: validTokens,
+          user: validTokens ? user : null,
+        });
+      } catch (error) {
+        // Allow the app shell to render even if persisted startup state is
+        // unavailable. Surface the failure in dev so a real bug doesn't get
+        // silently swallowed during a cold boot.
+        if (__DEV__) {
+          console.warn('[useAppReady] failed to hydrate startup state', error);
+        }
       } finally {
         setIsReady(true);
       }

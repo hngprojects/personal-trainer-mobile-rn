@@ -1,7 +1,13 @@
 export interface Session {
+  // Booking ID — use for /bookings/{id}/reschedule.
   id: string;
+  trainerId: string | null;
+  // Linked session row ID, when the booking has actually started. Discovery
+  // calls and not-yet-started paid sessions have null here.
+  sessionId: string | null;
+  bookingType: 'session' | 'discovery';
   trainerName: string;
-  trainerAvatar: string;
+  trainerAvatar: string | null;
   type: string;
   date: string;
   time: string;
@@ -14,6 +20,9 @@ export interface Session {
 export const mockSessions: Session[] = [
   {
     id: '1',
+    trainerId: null,
+    sessionId: null,
+    bookingType: 'session',
     trainerName: 'Charles Effiong',
     trainerAvatar: 'https://images.unsplash.com/photo-1540206276207-3af25c08abbb?w=400',
     type: 'Strength Training',
@@ -26,6 +35,9 @@ export const mockSessions: Session[] = [
   },
   {
     id: '2',
+    trainerId: null,
+    sessionId: null,
+    bookingType: 'session',
     trainerName: 'Jane Doe',
     trainerAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400',
     type: 'Yoga',
@@ -36,6 +48,9 @@ export const mockSessions: Session[] = [
   },
   {
     id: '3',
+    trainerId: null,
+    sessionId: null,
+    bookingType: 'discovery',
     trainerName: 'John Smith',
     trainerAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400',
     type: 'Weight Loss',
@@ -46,6 +61,9 @@ export const mockSessions: Session[] = [
   },
   {
     id: '4',
+    trainerId: null,
+    sessionId: null,
+    bookingType: 'session',
     trainerName: 'Alice Johnson',
     trainerAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400',
     type: 'Mobility',
@@ -56,6 +74,9 @@ export const mockSessions: Session[] = [
   },
   {
     id: '5',
+    trainerId: null,
+    sessionId: null,
+    bookingType: 'session',
     trainerName: 'Charles Effiong',
     trainerAvatar: 'https://images.unsplash.com/photo-1540206276207-3af25c08abbb?w=400',
     type: 'Strength Training',

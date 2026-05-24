@@ -14,7 +14,12 @@ export function TrainerCard({ trainer }: Props) {
   return (
     <Pressable
       style={[styles.card, { backgroundColor: colors.background }]}
-      onPress={() => router.push('/trainer-profile')}
+      onPress={() =>
+        router.push({
+          pathname: '/(main)/trainer-profile',
+          params: { trainerId: trainer.id },
+        } as never)
+      }
     >
       <Image source={{ uri: trainer.image }} style={styles.image} />
 

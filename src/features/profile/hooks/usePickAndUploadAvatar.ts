@@ -1,7 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback } from 'react';
 
-import { useAuthStore } from '@/features/auth';
+import { useAuthStore } from '@/features/auth/store/auth.store';
 import { toast } from '@/shared/components';
 
 import { useUploadAvatar } from './useUploadAvatar';

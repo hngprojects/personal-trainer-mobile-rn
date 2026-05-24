@@ -11,7 +11,9 @@
       "Bash(git restore *)",
       "Bash(git ls-tree *)",
       "Bash(git add *)",
-      "Bash(git commit --no-verify -m 'Merge origin/dev into feat/onbaording-homescreen *)"
+      "Bash(git commit --no-verify -m 'Merge origin/dev into feat/onboarding-homescreen' *)",
+      "Bash(npx tsc *)",
+      "Bash(npx eslint *)"
     ]
   }
 }

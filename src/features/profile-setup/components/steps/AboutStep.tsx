@@ -21,8 +21,7 @@ const HIGHLIGHTS = [
   { title: 'Flexible Workouts' },
 ];
 
-const VIDEO_SOURCE =
-  'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_5MB.mp4';
+const VIDEO_SOURCE = 'https://videos.pexels.com/video-files/5528012/5528012-hd_1080_1920_25fps.mp4';
 
 export function AboutStep({ index, scrollX, slideWidth }: AboutStepProps) {
   const { colors } = useTheme();

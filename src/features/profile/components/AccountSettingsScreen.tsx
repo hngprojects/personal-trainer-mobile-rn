@@ -1,14 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useLogout } from '@/features/auth';
+import { useLogout } from '@/features/auth/hooks/useLogout';
 import { Button, toast, Typography } from '@/shared/components';
 import { useStatusBarStyle } from '@/shared/hooks/useStatusBarStyle';
-import { fonts, palette, useTheme } from '@/shared/theme';
+import { fonts, useTheme } from '@/shared/theme';
 
 import { CenterModal } from './CenterModal';
 import { ScreenHeader } from './ScreenHeader';
@@ -17,8 +17,9 @@ import { SettingsRow } from './SettingsRow';
 const GOOGLE_ICON = require('../../../../assets/images/google.png');
 
 export function AccountSettingsScreen() {
-  const [twoFactor, setTwoFactor] = useState(false);
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+  const [deactivateModalVisible, setDeactivateModalVisible] = useState(false);
+  const [finalDeactivateModalVisible, setFinalDeactivateModalVisible] = useState(false);
   const { colors } = useTheme();
   const statusBarStyle = useStatusBarStyle();
   const logoutMutation = useLogout();
@@ -28,6 +29,21 @@ export function AccountSettingsScreen() {
     logoutMutation.mutate(undefined, {
       onError: () => toast.error("We couldn't reach the server, but you've been signed out."),
     });
+  };
+
+  // TODO: wire to a real delete-account API. For now we just log the user out so
+  // the flow is testable end-to-end without backend support.
+  const confirmDeactivate = () => {
+    setDeactivateModalVisible(false);
+    setFinalDeactivateModalVisible(false);
+    logoutMutation.mutate(undefined, {
+      onError: () => toast.error("We couldn't reach the server, but you've been signed out."),
+    });
+  };
+
+  const askFinalDeactivateConfirmation = () => {
+    setDeactivateModalVisible(false);
+    setFinalDeactivateModalVisible(true);
   };
 
   return (
@@ -57,20 +73,6 @@ export function AccountSettingsScreen() {
         <Animated.View entering={FadeInUp.delay(140).duration(360)} style={styles.section}>
           <Typography style={[styles.sectionTitle, { color: colors.text }]}>Security</Typography>
           <SettingsRow
-            icon={<Ionicons name="shield-checkmark-outline" size={18} color={colors.icon} />}
-            label="Two-Factor Authentication"
-            subtitle="Add an extra layer of security"
-            rightSlot={
-              <Switch
-                value={twoFactor}
-                onValueChange={setTwoFactor}
-                trackColor={{ false: palette.neutral['2'], true: palette.highlightBlue['5'] }}
-                thumbColor="#FFFFFF"
-                ios_backgroundColor={palette.neutral['2']}
-              />
-            }
-          />
-          <SettingsRow
             icon={<Ionicons name="phone-portrait-outline" size={18} color={colors.icon} />}
             label="Active Sessions & Devices"
             subtitle="1 device currently logged in"
@@ -87,7 +89,11 @@ export function AccountSettingsScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInUp.delay(260).duration(360)} style={styles.deactivateWrap}>
-          <Pressable hitSlop={10}>
+          <Pressable
+            hitSlop={10}
+            onPress={() => setDeactivateModalVisible(true)}
+            disabled={logoutMutation.isPending}
+          >
             <Typography style={[styles.deactivate, { color: colors.error }]}>
               Deactivate Account
             </Typography>
@@ -114,6 +120,61 @@ export function AccountSettingsScreen() {
             style={styles.modalBtn}
           />
           <Button label="Log Out" onPress={confirmLogout} style={styles.modalBtn} />
+        </View>
+      </CenterModal>
+
+      <CenterModal
+        visible={deactivateModalVisible}
+        onClose={() => setDeactivateModalVisible(false)}
+        title="Deactivate account?"
+      >
+        <Typography
+          style={[styles.modalBody, { color: colors.textSecondary }]}
+          accessibilityRole="text"
+        >
+          Your account will be deactivated and you&apos;ll be signed out. Contact support if you
+          change your mind.
+        </Typography>
+        <View style={styles.modalActions}>
+          <Button
+            label="Cancel"
+            variant="outline"
+            onPress={() => setDeactivateModalVisible(false)}
+            style={styles.modalBtn}
+          />
+          <Button
+            label="Continue"
+            onPress={askFinalDeactivateConfirmation}
+            style={styles.modalBtn}
+          />
+        </View>
+      </CenterModal>
+
+      <CenterModal
+        visible={finalDeactivateModalVisible}
+        onClose={() => setFinalDeactivateModalVisible(false)}
+        title="Final confirmation"
+      >
+        <Typography
+          style={[styles.modalBody, { color: colors.textSecondary }]}
+          accessibilityRole="text"
+        >
+          This action will deactivate your account and sign you out. Are you sure you want to
+          continue?
+        </Typography>
+        <View style={styles.modalActions}>
+          <Button
+            label="Go Back"
+            variant="outline"
+            onPress={() => setFinalDeactivateModalVisible(false)}
+            style={styles.modalBtn}
+          />
+          <Button
+            label="Yes, Deactivate"
+            onPress={confirmDeactivate}
+            isLoading={logoutMutation.isPending}
+            style={styles.modalBtn}
+          />
         </View>
       </CenterModal>
     </SafeAreaView>
@@ -165,10 +226,12 @@ const styles = StyleSheet.create({
   },
   modalActions: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 10,
     marginTop: 4,
   },
   modalBtn: {
     flex: 1,
+    minWidth: 120,
   },
 });

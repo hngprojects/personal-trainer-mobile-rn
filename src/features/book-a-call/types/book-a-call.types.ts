@@ -1,7 +1,11 @@
-export type CallPlatform = 'zoom' | 'google-meet';
+import type { PhoneCountry } from '@/shared/components';
+
+export type CallContactMode = 'zoom_meeting' | 'phone_callback';
 
 export interface CallDraft {
-  platform: CallPlatform | null;
+  contactMode: CallContactMode | null;
+  phoneNumber: string;
+  phoneCountry: PhoneCountry;
   date: Date | null;
   time: string | null;
 }

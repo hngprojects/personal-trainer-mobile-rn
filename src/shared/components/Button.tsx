@@ -64,7 +64,14 @@ export function Button({
         {isLoading ? (
           <ActivityIndicator color={text} size="small" />
         ) : (
-          <Typography variant="body1" color={text} style={styles.label}>
+          <Typography
+            variant="body1"
+            color={text}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.82}
+            style={styles.label}
+          >
             {label}
           </Typography>
         )}
@@ -110,8 +117,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    maxWidth: '100%',
+    minWidth: 0,
   },
   label: {
     fontWeight: '600',
+    flexShrink: 1,
+    textAlign: 'center',
   },
 });

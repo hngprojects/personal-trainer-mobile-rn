@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Dimensions, ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 
 import { useProfileSetupStore } from '../store/profile-setup.store';
@@ -8,10 +8,9 @@ import { BasicInfoStep } from './steps/BasicInfoStep';
 import { FitnessLevelStep } from './steps/FitnessLevelStep';
 import { GoalsStep } from './steps/GoalsStep';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 export function ProfileSetupPager() {
   const step = useProfileSetupStore((s) => s.step);
+  const { width } = useWindowDimensions();
   const scrollRef = useRef<ScrollView>(null);
   const scrollX = useSharedValue(0);
 
@@ -22,10 +21,10 @@ export function ProfileSetupPager() {
   });
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ x: step * SCREEN_WIDTH, animated: true });
-  }, [step]);
+    scrollRef.current?.scrollTo({ x: step * width, animated: true });
+  }, [step, width]);
 
-  const sharedProps = { scrollX, slideWidth: SCREEN_WIDTH };
+  const sharedProps = { scrollX, slideWidth: width };
 
   return (
     <Animated.ScrollView

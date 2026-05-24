@@ -30,9 +30,9 @@ interface AuthActions {
 
 const persistUser = (user: UserProfile | null) => {
   if (user) {
-    asyncStorage.setItem(STORAGE_KEYS.USER_PROFILE, user).catch(console.warn);
+    asyncStorage.setItem(STORAGE_KEYS.USER_PROFILE, user).catch(() => undefined);
   } else {
-    asyncStorage.removeItem(STORAGE_KEYS.USER_PROFILE).catch(console.warn);
+    asyncStorage.removeItem(STORAGE_KEYS.USER_PROFILE).catch(() => undefined);
   }
 };
 
@@ -50,13 +50,13 @@ export const useAuthStore = createStore<AuthState & AuthActions>((set) => ({
       isNewUser: opts?.isNewUser ?? false,
       showWelcome: opts?.withWelcome ?? false,
     });
-    secureStorage.saveTokens(tokens).catch(console.warn);
+    secureStorage.saveTokens(tokens).catch(() => undefined);
     persistUser(user);
   },
 
   setTokens: (tokens) => {
     set({ ...tokens });
-    secureStorage.saveTokens(tokens).catch(console.warn);
+    secureStorage.saveTokens(tokens).catch(() => undefined);
   },
 
   hydrate: ({ tokens, user }) => {
@@ -82,8 +82,8 @@ export const useAuthStore = createStore<AuthState & AuthActions>((set) => ({
       isNewUser: false,
       showWelcome: false,
     });
-    secureStorage.clearTokens().catch(console.warn);
-    asyncStorage.removeItem(STORAGE_KEYS.USER_PROFILE).catch(console.warn);
+    secureStorage.clearTokens().catch(() => undefined);
+    asyncStorage.removeItem(STORAGE_KEYS.USER_PROFILE).catch(() => undefined);
   },
 
   dismissWelcome: () => set({ showWelcome: false }),

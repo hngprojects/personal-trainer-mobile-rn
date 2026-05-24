@@ -21,8 +21,10 @@ export function useProfileSetupSubmit() {
 
     updateProfile.mutate(payload, {
       onSuccess: () => {
-        reset();
         router.replace('/');
+        setTimeout(() => {
+          reset();
+        }, 0);
       },
       onError: () => {
         toast.error("We couldn't save your profile. Please try again.");

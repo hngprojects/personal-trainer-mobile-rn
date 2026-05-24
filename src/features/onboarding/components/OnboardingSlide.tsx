@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Dimensions, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
   Extrapolation,
@@ -16,11 +16,6 @@ import { useTheme } from '@/shared/theme';
 import { OnboardingSlideData } from '../data/slides';
 import { OnboardingCallout } from './OnboardingCallout';
 import { OnboardingDots } from './OnboardingDots';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
-const PHONE_WIDTH = Math.min(SCREEN_WIDTH * 0.72, 380);
-const IMAGE_HEIGHT = PHONE_WIDTH / 0.494;
 
 interface OnboardingSlideProps {
   slide: OnboardingSlideData;
@@ -43,6 +38,8 @@ export function OnboardingSlide({
 }: OnboardingSlideProps) {
   const { spacing, colors } = useTheme();
   const mounted = useSharedValue(0);
+  const phoneWidth = Math.min(slideWidth * 0.72, 380);
+  const imageHeight = phoneWidth / 0.494;
 
   useEffect(() => {
     mounted.value = withTiming(1, { duration: 700, easing: Easing.out(Easing.cubic) });
@@ -105,11 +102,11 @@ export function OnboardingSlide({
 
   return (
     <View style={[styles.container, { width: slideWidth, paddingHorizontal: spacing.lg }]}>
-      <View style={styles.phoneAnchor}>
+      <View style={[styles.phoneAnchor, { width: phoneWidth }]}>
         <View style={styles.phoneClip}>
           <Animated.Image
             source={slide.image}
-            style={[styles.phoneImage, phoneStyle]}
+            style={[styles.phoneImage, { width: phoneWidth, height: imageHeight }, phoneStyle]}
             resizeMode="contain"
           />
         </View>
@@ -157,7 +154,6 @@ const styles = StyleSheet.create({
   container: { flex: 1, alignItems: 'center' },
   phoneAnchor: {
     flex: 1,
-    width: PHONE_WIDTH,
     position: 'relative',
     zIndex: 0,
   },
@@ -168,8 +164,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   phoneImage: {
-    width: PHONE_WIDTH,
-    height: IMAGE_HEIGHT,
+    maxWidth: '100%',
   },
   card: {
     width: '100%',

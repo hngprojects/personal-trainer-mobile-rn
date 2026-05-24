@@ -1,23 +1,56 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
-import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useAuthStore } from '@/features/auth';
-import { Avatar, Typography } from '@/shared/components';
+import { useAuthStore } from '@/features/auth/store/auth.store';
+import {
+  Avatar,
+  Button,
+  ImagePreviewModal,
+  LogoRefreshScrollView,
+  TextInput,
+  toast,
+  Typography,
+} from '@/shared/components';
 import { useStatusBarStyle } from '@/shared/hooks/useStatusBarStyle';
 import { fonts, palette, useTheme } from '@/shared/theme';
 
 import { useDeviceLocation } from '../hooks/useDeviceLocation';
 import { usePickAndUploadAvatar } from '../hooks/usePickAndUploadAvatar';
 import { useProfile } from '../hooks/useProfile';
+import { useUpdateProfile } from '../hooks/useUpdateProfile';
+import { toApiFitnessGoals } from '../api/profile.types';
 import { CenterModal } from './CenterModal';
 import { InfoRow } from './InfoRow';
+import { ProfileApiBanner } from './ProfileApiBanner';
 import { ScreenHeader } from './ScreenHeader';
 
+const MAX_GOALS = 4;
+
 type Newsletter = 'yes' | 'no';
+
+const GENDER_OPTIONS = [
+  { value: 'male', label: 'Male' },
+  { value: 'female', label: 'Female' },
+] as const;
+
+const FITNESS_GOAL_OPTIONS = [
+  { value: 'lose_weight', label: 'Lose Weight' },
+  { value: 'build_muscle', label: 'Build Muscle' },
+  { value: 'improve_flexibility', legacyValue: 'flexibility', label: 'Improve Flexibility' },
+  { value: 'boost_energy', legacyValue: 'endurance', label: 'Boost Energy & Endurance' },
+  { value: 'build_healthy_habits', legacyValue: 'habits', label: 'Build Healthy Habits' },
+  { value: 'build_strength', legacyValue: 'strength', label: 'Build Strength' },
+] as const;
+
+const FITNESS_LEVEL_OPTIONS = [
+  { value: 'beginner', legacyValue: 'easy', label: 'Beginner' },
+  { value: 'intermediate', label: 'Intermediate' },
+  { value: 'advanced', legacyValue: 'challenging', label: 'Advanced' },
+] as const;
 
 function titleCase(value: string) {
   return value.replace(
@@ -26,57 +59,110 @@ function titleCase(value: string) {
   );
 }
 
-function formatGender(gender: string | null | undefined): string {
-  if (!gender) return '—';
-  return titleCase(gender);
-}
-
-function formatPrimaryGoal(goals: string[] | null | undefined): string {
-  if (!goals?.length) return '—';
-  return titleCase(goals[0].replace(/_/g, ' '));
-}
-
 export function PersonalInformationScreen() {
   const user = useAuthStore((s) => s.user);
   const { data: location, status: locationStatus, refresh: refreshLocation } = useDeviceLocation();
   const { colors } = useTheme();
   const statusBarStyle = useStatusBarStyle();
   const { pick: pickAvatar, isUploading } = usePickAndUploadAvatar();
-
-  // Refresh profile data on mount; useProfile syncs back into the auth store.
-  useProfile();
+  const { refetch, isError, isRefetching } = useProfile();
+  const updateProfile = useUpdateProfile();
 
   const [newsletter, setNewsletter] = useState<Newsletter>('yes');
   const [showNewsletter, setShowNewsletter] = useState(false);
   const [showLocation, setShowLocation] = useState(false);
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [draftName, setDraftName] = useState(user?.name ?? '');
+  const [draftGender, setDraftGender] = useState<string | null>(user?.gender ?? null);
+  const [draftGoals, setDraftGoals] = useState<string[]>(normalizeGoals(user?.fitnessGoals ?? []));
+  const [draftFitnessLevel, setDraftFitnessLevel] = useState<string | null>(
+    normalizeFitnessLevel(user?.fitnessLevel),
+  );
+
+  useEffect(() => {
+    if (isEditing) return;
+    setDraftName(user?.name ?? '');
+    setDraftGender(user?.gender ?? null);
+    setDraftGoals(normalizeGoals(user?.fitnessGoals ?? []));
+    setDraftFitnessLevel(normalizeFitnessLevel(user?.fitnessLevel));
+  }, [isEditing, user?.fitnessGoals, user?.fitnessLevel, user?.gender, user?.name]);
 
   const locationLabel =
     location?.country ||
     (locationStatus === 'loading'
-      ? 'Locating…'
+      ? 'Locating...'
       : locationStatus === 'denied'
         ? 'Off'
         : locationStatus === 'error'
-          ? '—'
-          : '—');
+          ? '-'
+          : '-');
+  const goals = user?.fitnessGoals?.filter(Boolean) ?? [];
 
-  const info = {
-    name: user?.name ?? '—',
-    gender: formatGender(user?.gender),
-    // Backend doesn't store DoB / phone yet — leaving placeholders.
-    dateOfBirth: '—',
-    phoneNumber: '—',
-    goal: formatPrimaryGoal(user?.fitnessGoals),
+  const cancelEdit = () => {
+    setDraftName(user?.name ?? '');
+    setDraftGender(user?.gender ?? null);
+    setDraftGoals(normalizeGoals(user?.fitnessGoals ?? []));
+    setDraftFitnessLevel(normalizeFitnessLevel(user?.fitnessLevel));
+    setIsEditing(false);
+  };
+
+  const toggleGoal = (goal: string) => {
+    setDraftGoals((current) => {
+      if (current.includes(goal)) return current.filter((item) => item !== goal);
+      if (current.length >= MAX_GOALS) {
+        toast.error(`Pick up to ${MAX_GOALS} goals.`);
+        return current;
+      }
+      return [...current, goal];
+    });
+  };
+
+  const saveProfile = () => {
+    const name = draftName.trim();
+    if (name.length < 2) {
+      toast.error('Enter your full name before saving.');
+      return;
+    }
+
+    updateProfile.mutate(
+      {
+        name,
+        gender: draftGender,
+        fitness_goals: toApiFitnessGoals(draftGoals),
+        ...(draftFitnessLevel ? { fitness_level: draftFitnessLevel } : {}),
+      },
+      {
+        onSuccess: () => {
+          setIsEditing(false);
+          toast.success('Profile updated.');
+        },
+        onError: () => {
+          toast.error("We couldn't update your profile. Please try again.");
+        },
+      },
+    );
   };
 
   return (
     <SafeAreaView edges={['top']} style={[styles.safe, { backgroundColor: colors.background }]}>
       <StatusBar style={statusBarStyle} />
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <LogoRefreshScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        refreshing={isRefetching}
+        onRefresh={refetch}
+      >
         <Animated.View entering={FadeIn.duration(280)}>
           <ScreenHeader title="Personal Information" />
         </Animated.View>
+
+        {isError ? (
+          <Animated.View entering={FadeIn.duration(240)} style={styles.bannerWrap}>
+            <ProfileApiBanner onRetry={refetch} />
+          </Animated.View>
+        ) : null}
 
         <Animated.View entering={FadeIn.delay(80).duration(360)} style={styles.avatarBlock}>
           <Avatar
@@ -84,18 +170,76 @@ export function PersonalInformationScreen() {
             uri={user?.avatarUrl}
             size={76}
             loading={isUploading}
-            onPress={pickAvatar}
-            accessibilityLabel="Change profile picture"
+            onPress={() => (user?.avatarUrl ? setPreviewIndex(0) : pickAvatar())}
+            onBadgePress={pickAvatar}
+            accessibilityLabel="View profile picture"
             badgeIcon={<Ionicons name="camera" size={11} color="#FFFFFF" />}
           />
         </Animated.View>
 
         <Animated.View entering={FadeInUp.delay(140).duration(360)} style={styles.list}>
-          <InfoRow label="Name" value={info.name} />
-          <InfoRow label="Gender" value={info.gender} />
-          <InfoRow label="Date Of Birth" value={info.dateOfBirth} />
-          <InfoRow label="Phone Number" value={info.phoneNumber} />
-          <InfoRow label="Goal" value={info.goal} />
+          <View style={styles.editHeader}>
+            <Typography style={[styles.sectionTitle, { color: colors.text }]}>Profile</Typography>
+            <Pressable
+              onPress={isEditing ? cancelEdit : () => setIsEditing(true)}
+              hitSlop={8}
+              disabled={updateProfile.isPending}
+            >
+              <Typography style={styles.editText}>{isEditing ? 'Cancel' : 'Edit'}</Typography>
+            </Pressable>
+          </View>
+
+          {isEditing ? (
+            <View style={styles.editForm}>
+              <TextInput
+                label="Name"
+                value={draftName}
+                onChangeText={setDraftName}
+                placeholder="Your name"
+                textContentType="name"
+                autoCapitalize="words"
+              />
+              {user?.email ? <InfoRow label="Email" value={user.email} /> : null}
+
+              <EditableOptions
+                label="Gender"
+                options={GENDER_OPTIONS}
+                selected={draftGender ? [draftGender] : []}
+                onPress={(value) => setDraftGender(value)}
+              />
+              <EditableOptions
+                label="Goals"
+                options={FITNESS_GOAL_OPTIONS}
+                selected={draftGoals}
+                onPress={toggleGoal}
+                multi
+              />
+              <EditableOptions
+                label="Fitness Level"
+                options={FITNESS_LEVEL_OPTIONS}
+                selected={draftFitnessLevel ? [draftFitnessLevel] : []}
+                onPress={(value) => setDraftFitnessLevel(value)}
+              />
+              <Button
+                label="Save Changes"
+                onPress={saveProfile}
+                isLoading={updateProfile.isPending}
+                disabled={updateProfile.isPending}
+              />
+            </View>
+          ) : (
+            <>
+              {user?.name ? <InfoRow label="Name" value={user.name} /> : null}
+              {user?.email ? <InfoRow label="Email" value={user.email} /> : null}
+              {user?.gender ? <InfoRow label="Gender" value={titleCase(user.gender)} /> : null}
+              {goals.length ? (
+                <InfoRow label="Goals" value={goals.map((goal) => titleCase(goal)).join(', ')} />
+              ) : null}
+              {user?.fitnessLevel ? (
+                <InfoRow label="Fitness Level" value={titleCase(user.fitnessLevel)} />
+              ) : null}
+            </>
+          )}
           <InfoRow
             label="Newsletter"
             value={newsletter === 'yes' ? 'Yes' : 'No'}
@@ -103,7 +247,7 @@ export function PersonalInformationScreen() {
           />
           <InfoRow label="Location" value={locationLabel} onPress={() => setShowLocation(true)} />
         </Animated.View>
-      </ScrollView>
+      </LogoRefreshScrollView>
 
       <CenterModal
         visible={showNewsletter}
@@ -136,7 +280,7 @@ export function PersonalInformationScreen() {
                 Country
               </Typography>
               <Typography style={[styles.locationValue, { color: colors.textMuted }]}>
-                {location.country || '—'}
+                {location.country || '-'}
               </Typography>
             </View>
             <View style={styles.locationRow}>
@@ -144,7 +288,7 @@ export function PersonalInformationScreen() {
                 City/State
               </Typography>
               <Typography style={[styles.locationValue, { color: colors.textMuted }]}>
-                {location.cityState || '—'}
+                {location.cityState || '-'}
               </Typography>
             </View>
             <View style={styles.locationRow}>
@@ -160,7 +304,7 @@ export function PersonalInformationScreen() {
           <View style={styles.locationFallback}>
             {locationStatus === 'loading' ? (
               <Typography style={[styles.locationHelp, { color: colors.textMuted }]}>
-                Reading device location…
+                Reading device location...
               </Typography>
             ) : locationStatus === 'denied' ? (
               <>
@@ -185,8 +329,86 @@ export function PersonalInformationScreen() {
           </View>
         )}
       </CenterModal>
+      <ImagePreviewModal
+        images={user?.avatarUrl ? [{ id: 'profile-picture', imageUrl: user.avatarUrl }] : []}
+        index={previewIndex}
+        onClose={() => setPreviewIndex(null)}
+      />
     </SafeAreaView>
   );
+}
+
+function EditableOptions({
+  label,
+  options,
+  selected,
+  onPress,
+  multi = false,
+}: {
+  label: string;
+  options: readonly { value: string; legacyValue?: string; label: string }[];
+  selected: string[];
+  onPress: (value: string) => void;
+  multi?: boolean;
+}) {
+  const { colors } = useTheme();
+  return (
+    <View style={styles.editGroup}>
+      <Typography style={[styles.editLabel, { color: colors.text }]}>{label}</Typography>
+      <View style={styles.chipGrid}>
+        {options.map((option) => {
+          const isSelected = selected.includes(option.value);
+          return (
+            <Pressable
+              key={option.value}
+              onPress={() => onPress(option.value)}
+              accessibilityRole={multi ? 'checkbox' : 'radio'}
+              accessibilityState={{ selected: isSelected, checked: isSelected }}
+              style={({ pressed }) => [
+                styles.optionChip,
+                {
+                  backgroundColor: isSelected ? palette.highlightBlue['0.5'] : colors.background,
+                  borderColor: isSelected ? palette.highlightBlue['5'] : colors.divider,
+                },
+                pressed && { opacity: 0.82 },
+              ]}
+            >
+              <Typography
+                style={[
+                  styles.optionText,
+                  { color: isSelected ? palette.highlightBlue['7'] : colors.textMuted },
+                ]}
+              >
+                {option.label}
+              </Typography>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+function normalizeGoals(goals: string[]) {
+  return goals
+    .map((goal) => {
+      const option = FITNESS_GOAL_OPTIONS.find(
+        (item) =>
+          item.value === goal ||
+          ('legacyValue' in item && item.legacyValue === goal) ||
+          (item.value === 'boost_energy' && goal === 'boost_endurance'),
+      );
+      return option?.value ?? goal;
+    })
+    .filter(Boolean);
+}
+
+function normalizeFitnessLevel(level: string | null | undefined) {
+  if (!level) return null;
+  const option = FITNESS_LEVEL_OPTIONS.find(
+    (item) => item.value === level || ('legacyValue' in item && item.legacyValue === level),
+  );
+  return option?.value ?? level;
 }
 
 interface RadioOptionProps {
@@ -219,6 +441,11 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 32,
   },
+  bannerWrap: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 8,
+  },
   avatarBlock: {
     alignItems: 'center',
     paddingTop: 4,
@@ -227,6 +454,48 @@ const styles = StyleSheet.create({
   list: {
     paddingHorizontal: 20,
     paddingTop: 8,
+  },
+  editHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: 4,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontFamily: fonts.semibold,
+  },
+  editText: {
+    fontSize: 13,
+    fontFamily: fonts.semibold,
+    color: palette.highlightBlue['5'],
+  },
+  editForm: {
+    gap: 16,
+    paddingTop: 10,
+    paddingBottom: 16,
+  },
+  editGroup: {
+    gap: 8,
+  },
+  editLabel: {
+    fontSize: 14,
+    fontFamily: fonts.medium,
+  },
+  chipGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  optionChip: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  optionText: {
+    fontSize: 12,
+    fontFamily: fonts.medium,
   },
   radioRow: {
     flexDirection: 'row',

@@ -6,53 +6,83 @@ import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import {
+  getDiscoverySlotDates,
+  getTimezone,
+  getTrainerAvailabilityDates,
+  RescheduleReason,
+  useDiscoverySlots,
+  useRescheduleBooking,
+  useUpcomingBookings,
+} from '@/features/bookings';
+import { useTrainerAvailability } from '@/features/trainers/hooks/useTrainerAvailability';
+import { ApiError } from '@/shared/api/types';
 import { Button, Screen, Typography } from '@/shared/components';
 import { useStatusBarStyle } from '@/shared/hooks/useStatusBarStyle';
 import { fonts, useTheme } from '@/shared/theme';
 
-const REASONS = [
-  'Something came up',
-  'Feeling unwell',
-  'Work conflict',
-  'Personal emergency',
-  'Travel',
-  'Other',
-];
-
-const TIME_SLOTS = [
-  '7:00 AM',
-  '8:00 AM',
-  '9:00 AM',
-  '10:00 AM',
-  '11:00 AM',
-  '12:00 PM',
-  '1:00 PM',
-  '2:00 PM',
-  '3:00 PM',
-  '4:00 PM',
-  '5:00 PM',
-  '6:00 PM',
+const REASONS: { label: string; code: RescheduleReason }[] = [
+  { label: 'Something came up', code: 'something_came_up' },
+  { label: 'Feeling unwell', code: 'feeling_unwell' },
+  { label: 'Work conflict', code: 'work_conflict' },
+  { label: 'Personal emergency', code: 'personal_emergency' },
+  { label: 'Travel', code: 'travel' },
+  { label: 'Other', code: 'other' },
 ];
 
 export function RescheduleSessionScreen() {
-  useLocalSearchParams<{ id: string }>();
+  const { id, bookingType, trainerId } = useLocalSearchParams<{
+    id: string;
+    bookingType?: string;
+    trainerId?: string;
+  }>();
   const { spacing, colors } = useTheme();
   const insets = useSafeAreaInsets();
   const statusBarStyle = useStatusBarStyle();
+  const reschedule = useRescheduleBooking();
   const [step, setStep] = useState(1);
-  const [selectedReason, setSelectedReason] = useState('');
+  const [selectedReason, setSelectedReason] = useState<RescheduleReason | ''>('');
+  const [notes, setNotes] = useState('');
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Real Date-based state for calendar
-  const [viewDate, setViewDate] = useState(new Date(2026, 4, 1)); // Starting with May 2026 as per design
+  const [viewDate, setViewDate] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
   const [selectedDate, setSelectedDate] = useState<number | null>(null);
   const [selectedTime, setSelectedTime] = useState('');
 
+  const timezone = getTimezone();
+  const isDiscovery = bookingType === 'discovery';
+  const { data: trainerAvailability = [], isLoading: isLoadingTrainerAvailability } =
+    useTrainerAvailability(!isDiscovery ? trainerId : undefined);
+  const { data: discoverySlots = [], isLoading: isLoadingDiscoverySlots } =
+    useDiscoverySlots(timezone);
+  const { data: upcomingBookings = [], isLoading: isLoadingUpcomingBookings } = useUpcomingBookings(
+    {
+      timezone,
+      type: isDiscovery ? 'discovery' : 'session',
+      limit: 50,
+    },
+  );
+  const availableSlots = isDiscovery
+    ? getDiscoverySlotDates(discoverySlots, upcomingBookings)
+    : trainerId
+      ? getTrainerAvailabilityDates(trainerAvailability, upcomingBookings)
+      : [];
+  const isLoadingAvailability =
+    isLoadingUpcomingBookings ||
+    (isDiscovery ? isLoadingDiscoverySlots : Boolean(trainerId) && isLoadingTrainerAvailability);
+
   const today = new Date();
-  const currentDay = today.getDate();
-  const isCurrentMonth =
-    today.getMonth() === viewDate.getMonth() && today.getFullYear() === viewDate.getFullYear();
+  const todayStart = startOfDay(today);
+  const isCurrentOrPastMonth =
+    viewDate.getFullYear() < today.getFullYear() ||
+    (viewDate.getFullYear() === today.getFullYear() && viewDate.getMonth() <= today.getMonth());
 
   const handlePrevMonth = () => {
+    if (isCurrentOrPastMonth) return;
     setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
   };
 
@@ -63,12 +93,31 @@ export function RescheduleSessionScreen() {
   const timezoneOffset = -new Date().getTimezoneOffset() / 60;
   const timezoneStr = `GMT${timezoneOffset >= 0 ? '+' : ''}${timezoneOffset}`;
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (step < 2) {
       setStep(step + 1);
-    } else {
-      // Complete flow
+      return;
+    }
+
+    if (!id || !selectedReason || selectedDate === null || !selectedTime) return;
+
+    setSubmitError(null);
+
+    try {
+      await reschedule.mutateAsync({
+        id,
+        new_datetime: buildRescheduleDateTime(viewDate, selectedDate, selectedTime),
+        timezone: getTimezone(),
+        reason: selectedReason,
+        ...(notes.trim() ? { notes: notes.trim() } : {}),
+      });
       router.back();
+    } catch (error) {
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : 'We could not reschedule this session. Please try again.';
+      setSubmitError(message);
     }
   };
 
@@ -109,21 +158,40 @@ export function RescheduleSessionScreen() {
         </Typography>
 
         {step === 1 ? (
-          <ReasonStep selectedReason={selectedReason} onSelectReason={setSelectedReason} />
+          <ReasonStep
+            selectedReason={selectedReason}
+            onSelectReason={setSelectedReason}
+            notes={notes}
+            onNotesChange={setNotes}
+          />
         ) : (
           <DateTimeStep
             selectedDate={selectedDate}
-            onSelectDate={setSelectedDate}
+            onSelectDate={(date) => {
+              setSelectedDate(date);
+              setSelectedTime('');
+            }}
             selectedTime={selectedTime}
             onSelectTime={setSelectedTime}
             viewDate={viewDate}
             onPrevMonth={handlePrevMonth}
             onNextMonth={handleNextMonth}
             timezoneStr={timezoneStr}
-            isCurrentMonth={isCurrentMonth}
-            currentDay={currentDay}
+            todayStart={todayStart}
+            isCurrentOrPastMonth={isCurrentOrPastMonth}
+            availableSlots={availableSlots}
+            isLoadingAvailability={isLoadingAvailability}
           />
         )}
+
+        {submitError ? (
+          <View style={[styles.errorBanner, { backgroundColor: colors.error + '14' }]}>
+            <Ionicons name="alert-circle-outline" size={18} color={colors.error} />
+            <Typography variant="body2" color={colors.error} style={styles.errorText}>
+              {submitError}
+            </Typography>
+          </View>
+        ) : null}
       </KeyboardAwareScrollView>
 
       <View
@@ -139,9 +207,12 @@ export function RescheduleSessionScreen() {
         ]}
       >
         <Button
-          label={step === 1 ? 'Continue' : 'Continue to Confirm'}
+          label={step === 1 ? 'Continue' : 'Confirm Reschedule'}
           onPress={handleContinue}
-          disabled={step === 1 ? !selectedReason : !selectedDate || !selectedTime}
+          isLoading={reschedule.isPending}
+          disabled={
+            step === 1 ? !selectedReason : !selectedDate || !selectedTime || isLoadingAvailability
+          }
         />
       </View>
     </Screen>
@@ -151,9 +222,13 @@ export function RescheduleSessionScreen() {
 function ReasonStep({
   selectedReason,
   onSelectReason,
+  notes,
+  onNotesChange,
 }: {
-  selectedReason: string;
-  onSelectReason: (reason: string) => void;
+  selectedReason: RescheduleReason | '';
+  onSelectReason: (reason: RescheduleReason) => void;
+  notes: string;
+  onNotesChange: (notes: string) => void;
 }) {
   const { colors } = useTheme();
   return (
@@ -169,12 +244,12 @@ function ReasonStep({
         Select a reason
       </Typography>
       <View style={styles.reasonsGrid}>
-        {REASONS.map((reason) => {
-          const isActive = selectedReason === reason;
+        {REASONS.map(({ label, code }) => {
+          const isActive = selectedReason === code;
           return (
             <Pressable
-              key={reason}
-              onPress={() => onSelectReason(reason)}
+              key={code}
+              onPress={() => onSelectReason(code)}
               style={[
                 styles.reasonChip,
                 {
@@ -188,7 +263,7 @@ function ReasonStep({
                 color={isActive ? colors.primary : colors.textSecondary}
                 style={[styles.reasonText, isActive && styles.activeReasonText]}
               >
-                {reason}
+                {label}
               </Typography>
             </Pressable>
           );
@@ -199,6 +274,8 @@ function ReasonStep({
         Additional details
       </Typography>
       <TextInput
+        value={notes}
+        onChangeText={onNotesChange}
         placeholder="Tell us a bit more about why you're rescheduling..."
         placeholderTextColor={colors.iconMuted}
         multiline
@@ -225,8 +302,10 @@ function DateTimeStep({
   onPrevMonth,
   onNextMonth,
   timezoneStr,
-  isCurrentMonth,
-  currentDay,
+  todayStart,
+  isCurrentOrPastMonth,
+  availableSlots,
+  isLoadingAvailability,
 }: {
   selectedDate: number | null;
   onSelectDate: (date: number) => void;
@@ -236,10 +315,20 @@ function DateTimeStep({
   onPrevMonth: () => void;
   onNextMonth: () => void;
   timezoneStr: string;
-  isCurrentMonth: boolean;
-  currentDay: number;
+  todayStart: Date;
+  isCurrentOrPastMonth: boolean;
+  availableSlots: Date[];
+  isLoadingAvailability: boolean;
 }) {
   const { colors } = useTheme();
+  const availableDates = getAvailableDatesForMonth(viewDate, availableSlots);
+  const availableTimes = selectedDate
+    ? getAvailableTimesForDate(
+        new Date(viewDate.getFullYear(), viewDate.getMonth(), selectedDate),
+        availableSlots,
+      )
+    : [];
+  const calendarCells = getCalendarCells(viewDate);
 
   return (
     <View>
@@ -247,7 +336,9 @@ function DateTimeStep({
         Pick a new date and time
       </Typography>
       <Typography variant="body2" color={colors.textSecondary} style={styles.stepSubtitle}>
-        Choose a slot that fits your schedule. All times are shown in your local timezone.
+        {isLoadingAvailability
+          ? 'Loading available slots...'
+          : 'Only available reschedule slots are shown. All times are in your local timezone.'}
       </Typography>
 
       <View
@@ -257,8 +348,12 @@ function DateTimeStep({
         ]}
       >
         <View style={styles.calendarHeader}>
-          <Pressable onPress={onPrevMonth}>
-            <Ionicons name="chevron-back" size={20} color={colors.icon} />
+          <Pressable onPress={onPrevMonth} disabled={isCurrentOrPastMonth}>
+            <Ionicons
+              name="chevron-back"
+              size={20}
+              color={isCurrentOrPastMonth ? colors.iconMuted : colors.icon}
+            />
           </Pressable>
           <Typography style={styles.calendarMonth}>
             {viewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
@@ -277,13 +372,19 @@ function DateTimeStep({
         </View>
 
         <View style={styles.datesGrid}>
-          {/* Empty spaces for the first few days if month doesn't start on Sunday */}
-          {Array.from({ length: 4 }).map((_, i) => (
+          {Array.from({ length: calendarCells.leadingEmpty }).map((_, i) => (
             <View key={`empty-${i}`} style={styles.dateCircle} />
           ))}
-          {Array.from({ length: 28 }, (_, i) => i + 1).map((date) => {
-            const isPast = isCurrentMonth && date < currentDay;
+          {Array.from({ length: calendarCells.daysInMonth }, (_, i) => i + 1).map((date) => {
+            const cellDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), date);
+            const isPast = cellDate < todayStart;
+            if (isPast) {
+              return <View key={date} style={styles.dateCircle} />;
+            }
+
             const isSelected = selectedDate === date;
+            const isAvailable = availableDates.has(date);
+            const disabled = !isAvailable;
             return (
               <Pressable
                 key={date}
@@ -291,12 +392,12 @@ function DateTimeStep({
                 style={[
                   styles.dateCircle,
                   isSelected && { backgroundColor: colors.primary },
-                  isPast && { backgroundColor: colors.surfaceMuted },
+                  disabled && { backgroundColor: colors.surfaceMuted },
                 ]}
-                disabled={isPast}
+                disabled={disabled}
               >
                 <Typography
-                  color={isSelected ? '#FFFFFF' : isPast ? colors.textMuted : colors.text}
+                  color={isSelected ? '#FFFFFF' : disabled ? colors.textMuted : colors.text}
                   style={styles.dateText}
                 >
                   {date}
@@ -319,30 +420,56 @@ function DateTimeStep({
       </Typography>
 
       <View style={styles.timesGrid}>
-        {TIME_SLOTS.map((time) => {
-          const isSelected = selectedTime === time;
-          return (
-            <Pressable
-              key={time}
-              onPress={() => onSelectTime(time)}
-              style={[
-                styles.timeSlot,
-                {
-                  backgroundColor: isSelected ? colors.primary : colors.background,
-                  borderColor: isSelected ? colors.primary : colors.divider,
-                },
-              ]}
-            >
-              <Typography
-                variant="label"
-                color={isSelected ? '#FFFFFF' : colors.text}
-                style={[styles.timeText, isSelected && styles.activeTimeText]}
+        {isLoadingAvailability ? (
+          <View style={styles.noSlots}>
+            <Typography variant="body2" color={colors.textSecondary} style={styles.noSlotsText}>
+              Loading available times...
+            </Typography>
+          </View>
+        ) : availableSlots.length === 0 ? (
+          <View style={styles.noSlots}>
+            <Typography variant="body2" color={colors.textSecondary} style={styles.noSlotsText}>
+              No available reschedule slots.
+            </Typography>
+          </View>
+        ) : selectedDate === null ? (
+          <View style={styles.noSlots}>
+            <Typography variant="body2" color={colors.textSecondary} style={styles.noSlotsText}>
+              Select an available day to see times.
+            </Typography>
+          </View>
+        ) : availableTimes.length === 0 ? (
+          <View style={styles.noSlots}>
+            <Typography variant="body2" color={colors.textSecondary} style={styles.noSlotsText}>
+              No times available on this day.
+            </Typography>
+          </View>
+        ) : (
+          availableTimes.map((time) => {
+            const isSelected = selectedTime === time;
+            return (
+              <Pressable
+                key={time}
+                onPress={() => onSelectTime(time)}
+                style={[
+                  styles.timeSlot,
+                  {
+                    backgroundColor: isSelected ? colors.primary : colors.background,
+                    borderColor: isSelected ? colors.primary : colors.divider,
+                  },
+                ]}
               >
-                {time}
-              </Typography>
-            </Pressable>
-          );
-        })}
+                <Typography
+                  variant="label"
+                  color={isSelected ? '#FFFFFF' : colors.text}
+                  style={[styles.timeText, isSelected && styles.activeTimeText]}
+                >
+                  {time}
+                </Typography>
+              </Pressable>
+            );
+          })
+        )}
       </View>
     </View>
   );
@@ -485,6 +612,15 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 8,
   },
+  noSlots: {
+    width: '100%',
+    minHeight: 76,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  noSlotsText: {
+    textAlign: 'center',
+  },
   timeSlot: {
     width: '31%',
     paddingVertical: 10,
@@ -505,4 +641,72 @@ const styles = StyleSheet.create({
     right: 0,
     borderTopWidth: 1,
   },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    borderRadius: 12,
+    padding: 14,
+    marginTop: 16,
+  },
+  errorText: { flex: 1, lineHeight: 20 },
 });
+
+function buildRescheduleDateTime(viewDate: Date, day: number, time: string): string {
+  const [rawTime, period] = time.split(' ');
+  const [rawHour, rawMinute] = rawTime.split(':').map(Number);
+  let hour = rawHour;
+  if (period === 'PM' && hour !== 12) hour += 12;
+  if (period === 'AM' && hour === 12) hour = 0;
+
+  const dt = new Date(viewDate.getFullYear(), viewDate.getMonth(), day, hour, rawMinute ?? 0, 0, 0);
+  return dt.toISOString();
+}
+
+function startOfDay(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function getCalendarCells(viewDate: Date) {
+  return {
+    leadingEmpty: new Date(viewDate.getFullYear(), viewDate.getMonth(), 1).getDay(),
+    daysInMonth: new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0).getDate(),
+  };
+}
+
+function getAvailableDatesForMonth(viewDate: Date, availableSlots: Date[]) {
+  const month = viewDate.getMonth();
+  const year = viewDate.getFullYear();
+  const now = new Date();
+  return new Set(
+    availableSlots
+      .filter((slot) => slot.getTime() > now.getTime())
+      .filter((slot) => slot.getFullYear() === year && slot.getMonth() === month)
+      .map((slot) => slot.getDate()),
+  );
+}
+
+function getAvailableTimesForDate(date: Date, availableSlots: Date[]) {
+  const now = new Date();
+  return Array.from(
+    new Set(
+      availableSlots
+        .filter((slot) => slot.getTime() > now.getTime())
+        .filter(
+          (slot) =>
+            slot.getFullYear() === date.getFullYear() &&
+            slot.getMonth() === date.getMonth() &&
+            slot.getDate() === date.getDate(),
+        )
+        .map(formatTime),
+    ),
+  );
+}
+
+function formatTime(date: Date) {
+  return date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+}

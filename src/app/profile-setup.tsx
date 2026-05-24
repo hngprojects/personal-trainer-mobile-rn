@@ -10,11 +10,15 @@ export default function ProfileSetupRoute() {
 
   // Guard: if somehow opened while logged out, render nothing — the root layout
   // will reroute to (auth) on the next render.
-  if (!isLoggedIn) return null;
+  if (!isLoggedIn) {
+    return null;
+  }
 
   // Guard: once the user's profile is complete the onboarding flow is one-shot.
   // Direct-nav / refresh / deep-link to /profile-setup bounces straight to main.
-  if (profileComplete) return <Redirect href="/" />;
+  if (profileComplete) {
+    return <Redirect href="/" />;
+  }
 
   return (
     <>
