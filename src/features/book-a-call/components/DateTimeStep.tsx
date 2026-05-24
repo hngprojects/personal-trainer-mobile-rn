@@ -1,9 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, View, ViewStyle } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View, ViewStyle } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
-import { Button, toast, Typography } from '@/shared/components';
+import { Button, LogoRefreshScrollView, toast, Typography } from '@/shared/components';
 import { palette, useTheme } from '@/shared/theme';
 
 const DAY_LABELS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
@@ -180,23 +180,33 @@ export function DateTimeStep({
     : TIME_SLOTS;
   const isValid = draft.date !== null && draft.time !== null;
 
-  return (
-    <View style={styles.container}>
+  // When the parent wires up onRefresh, render the spinning-logo refresh used
+  // by HomeScreen so the booking flow matches the rest of the app. Otherwise
+  // fall back to a plain ScrollView (no pull-to-refresh affordance).
+  const ScrollContainer: React.FC<{ children: React.ReactNode }> = ({ children }) =>
+    onRefresh ? (
+      <LogoRefreshScrollView
+        refreshing={isRefreshing}
+        onRefresh={() => onRefresh()}
+        style={styles.scroll}
+        contentContainerStyle={[styles.content, { paddingHorizontal: spacing.md }]}
+        showsVerticalScrollIndicator={false}
+      >
+        {children}
+      </LogoRefreshScrollView>
+    ) : (
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={[styles.content, { paddingHorizontal: spacing.md }]}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          onRefresh ? (
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={onRefresh}
-              tintColor={colors.primary}
-              colors={[colors.primary]}
-            />
-          ) : undefined
-        }
       >
+        {children}
+      </ScrollView>
+    );
+
+  return (
+    <View style={styles.container}>
+      <ScrollContainer>
         <Animated.View entering={FadeInDown.duration(360)}>
           <Typography variant="h2" style={styles.heading}>
             Pick a date and time
@@ -386,7 +396,7 @@ export function DateTimeStep({
         </Animated.View>
 
         <View style={styles.footerSpacer} />
-      </ScrollView>
+      </ScrollContainer>
 
       <View
         style={[

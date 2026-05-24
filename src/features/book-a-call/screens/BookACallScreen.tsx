@@ -48,12 +48,14 @@ export function BookACallScreen() {
   const {
     data: discoverySlots = [],
     isLoading: isLoadingSlots,
+    isError: isErrorSlots,
     isRefetching: isRefetchingSlots,
     refetch: refetchSlots,
   } = useDiscoverySlots(timezone);
   const {
     data: upcomingBookings = [],
     isLoading: isLoadingUpcomingBookings,
+    isError: isErrorUpcoming,
     isRefetching: isRefetchingUpcoming,
     refetch: refetchUpcoming,
   } = useUpcomingBookings({
@@ -61,7 +63,12 @@ export function BookACallScreen() {
     type: 'discovery',
     limit: 50,
   });
-  const areSlotsReady = !isLoadingSlots && !isLoadingUpcomingBookings;
+  // "Ready" must require BOTH queries to have settled WITHOUT error. Otherwise
+  // a failed fetch would flip the flag to true and the time grid would render
+  // an empty "remote" state — looking like the trainer has no availability
+  // when it's really a backend failure.
+  const areSlotsReady =
+    !isLoadingSlots && !isLoadingUpcomingBookings && !isErrorSlots && !isErrorUpcoming;
   const availableSlotDates = getDiscoverySlotDates(discoverySlots, upcomingBookings);
   const isRefreshingSlots = isRefetchingSlots || isRefetchingUpcoming;
   const refreshSlots = useCallback(async () => {

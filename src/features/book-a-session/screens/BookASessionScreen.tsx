@@ -46,6 +46,7 @@ export function BookASessionScreen() {
   const {
     data: trainerAvailability = [],
     isLoading: isLoadingAvailability,
+    isError: isErrorAvailability,
     isRefetching: isRefetchingAvailability,
     refetch: refetchAvailability,
   } = useTrainerAvailability(trainerId);
@@ -54,6 +55,7 @@ export function BookASessionScreen() {
   const {
     data: upcomingBookings = [],
     isLoading: isLoadingUpcomingBookings,
+    isError: isErrorUpcoming,
     isRefetching: isRefetchingUpcoming,
     refetch: refetchUpcoming,
   } = useUpcomingBookings({
@@ -61,7 +63,13 @@ export function BookASessionScreen() {
     type: 'session',
     limit: 50,
   });
-  const areSlotsReady = !isLoadingUpcomingBookings && !isLoadingAvailability;
+  // Require both queries to have settled WITHOUT error so a failed fetch
+  // doesn't masquerade as "no remote availability" in the time grid.
+  const areSlotsReady =
+    !isLoadingUpcomingBookings &&
+    !isLoadingAvailability &&
+    !isErrorAvailability &&
+    !isErrorUpcoming;
   const availableSlotDates = getTrainerAvailabilityDates(trainerAvailability, upcomingBookings);
   const createSessionBooking = useCreateSessionBooking();
   const isRefreshingSlots = isRefetchingAvailability || isRefetchingUpcoming;

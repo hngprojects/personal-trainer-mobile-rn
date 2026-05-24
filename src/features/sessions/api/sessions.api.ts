@@ -26,7 +26,12 @@ interface RawSessionDetails {
 }
 
 export async function fetchSessionById(id: string): Promise<SessionDetails> {
-  const response = await client.get<ApiEnvelope<RawSessionDetails>>(`/sessions/${id}`);
+  // Encode the id even though we expect UUIDs — guards against reserved chars
+  // (`/`, `?`, `#`) ever sneaking in from a malformed caller and silently
+  // hitting a different endpoint or breaking the route.
+  const response = await client.get<ApiEnvelope<RawSessionDetails>>(
+    `/sessions/${encodeURIComponent(id)}`,
+  );
   const session = response.data.data;
 
   return {

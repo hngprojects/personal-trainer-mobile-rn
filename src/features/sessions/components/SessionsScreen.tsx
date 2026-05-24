@@ -400,10 +400,20 @@ function normalizeName(value: string) {
 }
 
 function normalizeStatus(status: string): Session['status'] {
-  if (status === 'completed') return 'completed';
-  if (status === 'cancelled' || status === 'canceled') return 'cancelled';
-  if (status === 'rescheduled') return 'rescheduled';
-  return 'upcoming';
+  // Lower-case + trim so backend variants like "Completed", "CANCELLED",
+  // " rescheduled " don't fall through to the default 'upcoming' and land
+  // under the wrong tab.
+  switch (status.trim().toLowerCase()) {
+    case 'completed':
+      return 'completed';
+    case 'cancelled':
+    case 'canceled':
+      return 'cancelled';
+    case 'rescheduled':
+      return 'rescheduled';
+    default:
+      return 'upcoming';
+  }
 }
 
 function formatTime(date: Date) {

@@ -4,13 +4,17 @@ import { useAuthStore } from '@/features/auth/store/auth.store';
 import { useApiMutation } from '@/shared/api/hooks';
 
 import { profileApi } from '../api/profile.api';
-import type { ProfilePayload } from '../api/profile.types';
+import type { AvatarUploadResult, ProfilePayload } from '../api/profile.types';
 import { getProfileQueryKey } from './useProfile';
 
 export interface UploadAvatarInput {
   uri: string;
   mimeType?: string;
   fileName?: string;
+}
+
+interface MutationContext {
+  userId: string | undefined;
 }
 
 /**
@@ -36,18 +40,25 @@ export function useUploadAvatar() {
   const updateUser = useAuthStore((s) => s.updateUser);
   const queryClient = useQueryClient();
 
-  return useApiMutation(
-    async (input: UploadAvatarInput) =>
+  return useApiMutation<AvatarUploadResult, UploadAvatarInput, MutationContext>(
+    async (input) =>
       profileApi.uploadAvatar({
         uri: input.uri,
         mimeType: input.mimeType,
         fileName: input.fileName,
       }),
     {
-      onSuccess: ({ avatarUrl }) => {
+      // Capture the user at upload-start time so an account switch mid-upload
+      // can't land the new avatar on the wrong user's cache.
+      onMutate: () => ({ userId: useAuthStore.getState().user?.id }),
+      onSuccess: ({ avatarUrl }, _input, context) => {
+        const currentUserId = useAuthStore.getState().user?.id;
+        if (context?.userId && currentUserId !== context.userId) {
+          return;
+        }
         updateUser({ avatarUrl });
         queryClient.setQueryData<ProfilePayload | undefined>(
-          getProfileQueryKey(useAuthStore.getState().user?.id) as unknown as unknown[],
+          getProfileQueryKey(context?.userId) as unknown as unknown[],
           (old) => (old ? { ...old, avatarUrl } : old),
         );
       },

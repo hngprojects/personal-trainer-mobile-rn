@@ -43,8 +43,13 @@ export function useAppReady() {
           tokens: validTokens,
           user: validTokens ? user : null,
         });
-      } catch {
-        // Allow the app shell to render even if persisted startup state is unavailable.
+      } catch (error) {
+        // Allow the app shell to render even if persisted startup state is
+        // unavailable. Surface the failure in dev so a real bug doesn't get
+        // silently swallowed during a cold boot.
+        if (__DEV__) {
+          console.warn('[useAppReady] failed to hydrate startup state', error);
+        }
       } finally {
         setIsReady(true);
       }

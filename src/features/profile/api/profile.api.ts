@@ -96,12 +96,11 @@ async function uploadAvatar(file: AvatarFile): Promise<AvatarUploadResult> {
       };
     }
 
-    const shouldTryNextUrl =
-      response.status === 404 &&
-      responseText?.toLowerCase().includes('page not found') &&
-      index < uploadUrls.length - 1;
-
-    if (shouldTryNextUrl) {
+    // Try the next URL on any 404 — different servers return different bodies
+    // ("page not found", "route not found", a generic Nginx page, even no
+    // body at all). Matching a specific phrase was making the fallback skip
+    // legitimately-missing endpoints.
+    if (response.status === 404 && index < uploadUrls.length - 1) {
       continue;
     }
 

@@ -133,6 +133,11 @@ function normalizeTime(value: string): string | null {
   if (typeof value !== 'string') return null;
   const match = value.match(/^(\d{1,2}):(\d{2})/);
   if (!match) return null;
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  // Reject impossible clock values so unparseable availability records can't
+  // produce time grids the user can never actually book.
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
   return `${match[1].padStart(2, '0')}:${match[2]}`;
 }
 
