@@ -6,6 +6,9 @@ export function useDiscoverySlots(timezone?: string) {
   return useQuery({
     queryKey: ['discovery-slots', timezone ?? 'local'],
     queryFn: () => fetchDiscoverySlots(timezone),
-    staleTime: 60_000,
+    // Slots can be added or removed at any time — refetch every time the
+    // booking screen mounts so users don't see a stale calendar.
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 }

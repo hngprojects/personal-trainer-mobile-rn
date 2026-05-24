@@ -1,6 +1,5 @@
 import { client } from '@/shared/api/client';
 import type { ApiEnvelope } from '@/shared/api/types';
-import { env } from '@/shared/constants/env';
 
 import type {
   Trainer,
@@ -266,6 +265,11 @@ function mapTrainer(raw: RawTrainer): Trainer {
   const trainingStyles = raw.training_styles ?? [];
   const primarySpecialization = specializations[0] ?? trainingStyles[0] ?? 'fitness';
   const displayPicture = normalizeMediaUrl(raw.display_picture, FALLBACK_TRAINER_IMAGE);
+  // `displayPicture` already falls back to the avatar image, so a `||` chain
+  // there would never reach the cover fallback. Resolve cover separately
+  // against the raw source so trainers without a display_picture get the
+  // dedicated cover fallback instead of the avatar fallback.
+  const coverImage = normalizeMediaUrl(raw.display_picture, FALLBACK_TRAINER_COVER);
   const name =
     raw.name ??
     raw.user?.name ??
@@ -278,14 +282,14 @@ function mapTrainer(raw: RawTrainer): Trainer {
     name,
     specialty: `${formatLabel(primarySpecialization)} Coach`,
     image: displayPicture,
-    coverImage: displayPicture || FALLBACK_TRAINER_COVER,
+    coverImage,
     rating: parseRating(raw.average_rating),
     clients: raw.total_reviews ?? 0,
     experience: `${raw.years_of_experience ?? 0} yrs`,
     bio:
       raw.bio ??
       `Work with ${name} for coaching built around your goals, routine, and current fitness level.`,
-    videoUrl: raw.intro_video_url ? getTrainerIntroVideoStreamUrl(raw.id) : FALLBACK_VIDEO,
+    videoUrl: normalizeMediaUrl(raw.intro_video_url, FALLBACK_VIDEO),
     tags: specializations.map(formatLabel),
     trainingStyles: trainingStyles.map(formatLabel),
     benefits: mapBenefits(raw.benefits),
@@ -332,10 +336,6 @@ function normalizeMediaUrl(value: string | null | undefined, fallback: string) {
   }
 
   return value;
-}
-
-function getTrainerIntroVideoStreamUrl(id: string) {
-  return `${env.API_BASE_URL}/trainers/${id}/intro-video/stream`;
 }
 
 function parseRating(value: NullableRating) {

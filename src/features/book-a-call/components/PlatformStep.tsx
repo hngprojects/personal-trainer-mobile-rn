@@ -4,7 +4,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 import { Trainer } from '@/features/trainers/types/trainer.types';
-import { Button, TextInput, Typography } from '@/shared/components';
+import { Button, isPhoneComplete, PhoneInput, Typography } from '@/shared/components';
 import { palette, useTheme } from '@/shared/theme';
 
 import { PLATFORM_LOGOS } from '../data/platform-logos';
@@ -47,8 +47,8 @@ interface PlatformStepProps {
 export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformStepProps) {
   const { colors, spacing } = useTheme();
   const requiresPhone = draft.contactMode === 'phone_callback';
-  const phoneProvided = draft.phoneNumber.trim().length > 0;
-  const canContinue = draft.contactMode !== null && (!requiresPhone || phoneProvided);
+  const phoneValid = isPhoneComplete(draft.phoneNumber, draft.phoneCountry);
+  const canContinue = draft.contactMode !== null && (!requiresPhone || phoneValid);
 
   return (
     <View style={styles.container}>
@@ -173,13 +173,12 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
             <Typography variant="body1" style={styles.sectionHeader}>
               Your phone number
             </Typography>
-            <TextInput
+            <PhoneInput
               value={draft.phoneNumber}
               onChangeText={(phoneNumber) => onUpdate({ phoneNumber })}
-              placeholder="+1 555 123 4567"
-              keyboardType="phone-pad"
-              textContentType="telephoneNumber"
-              autoComplete="tel"
+              country={draft.phoneCountry}
+              onCountryChange={(phoneCountry) => onUpdate({ phoneCountry, phoneNumber: '' })}
+              placeholder="555 123 4567"
               style={styles.phoneInput}
             />
           </Animated.View>

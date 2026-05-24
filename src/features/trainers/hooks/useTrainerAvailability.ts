@@ -7,5 +7,9 @@ export function useTrainerAvailability(id?: string | null) {
     queryKey: ['trainer-availability', id],
     queryFn: () => fetchTrainerAvailability(id as string),
     enabled: Boolean(id),
+    // Availability changes when a trainer edits their schedule — refetch on
+    // mount so the booking screen never shows a stale calendar.
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 }

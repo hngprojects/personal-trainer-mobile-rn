@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View, ViewStyle } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, View, ViewStyle } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 import { Button, toast, Typography } from '@/shared/components';
@@ -103,6 +103,8 @@ interface DateTimeStepProps {
   availableSlots?: Date[];
   isLoadingSlots?: boolean;
   useRemoteSlots?: boolean;
+  onRefresh?: () => void | Promise<unknown>;
+  isRefreshing?: boolean;
 }
 
 export function DateTimeStep({
@@ -112,6 +114,8 @@ export function DateTimeStep({
   availableSlots = [],
   isLoadingSlots = false,
   useRemoteSlots = false,
+  onRefresh,
+  isRefreshing = false,
 }: DateTimeStepProps) {
   const { colors, spacing } = useTheme();
   const today = new Date();
@@ -182,6 +186,16 @@ export function DateTimeStep({
         style={styles.scroll}
         contentContainerStyle={[styles.content, { paddingHorizontal: spacing.md }]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          onRefresh ? (
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          ) : undefined
+        }
       >
         <Animated.View entering={FadeInDown.duration(360)}>
           <Typography variant="h2" style={styles.heading}>

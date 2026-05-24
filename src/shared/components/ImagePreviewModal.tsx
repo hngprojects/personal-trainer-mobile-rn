@@ -42,19 +42,19 @@ export function ImagePreviewModal({
           <Image source={{ uri: image.imageUrl }} style={styles.image} resizeMode="contain" />
         ) : null}
 
-        {canGoPrevious ? (
+        {canGoPrevious && index !== null ? (
           <Pressable
             hitSlop={12}
-            onPress={() => onChangeIndex((index as number) - 1)}
+            onPress={() => onChangeIndex(index - 1)}
             style={styles.previousButton}
           >
             <Ionicons name="chevron-back" size={28} color="#FFFFFF" />
           </Pressable>
         ) : null}
-        {canGoNext ? (
+        {canGoNext && index !== null ? (
           <Pressable
             hitSlop={12}
-            onPress={() => onChangeIndex((index as number) + 1)}
+            onPress={() => onChangeIndex(index + 1)}
             style={styles.nextButton}
           >
             <Ionicons name="chevron-forward" size={28} color="#FFFFFF" />

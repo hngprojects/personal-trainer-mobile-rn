@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   FadeIn,
@@ -43,25 +43,37 @@ export function BookASessionScreen() {
   const { colors, spacing } = useTheme();
   const { trainerId } = useLocalSearchParams<{ trainerId?: string }>();
   const { data: fetchedTrainer, isLoading: isTrainerLoading } = useTrainer(trainerId);
-  const { data: trainerAvailability = [], isLoading: isLoadingAvailability } =
-    useTrainerAvailability(trainerId);
+  const {
+    data: trainerAvailability = [],
+    isLoading: isLoadingAvailability,
+    isRefetching: isRefetchingAvailability,
+    refetch: refetchAvailability,
+  } = useTrainerAvailability(trainerId);
   const trainer = fetchedTrainer ?? (!trainerId ? trainers[0] : undefined);
   const timezone = getTimezone();
-  const { data: upcomingBookings = [], isLoading: isLoadingUpcomingBookings } = useUpcomingBookings(
-    {
-      timezone,
-      type: 'session',
-      limit: 50,
-    },
-  );
+  const {
+    data: upcomingBookings = [],
+    isLoading: isLoadingUpcomingBookings,
+    isRefetching: isRefetchingUpcoming,
+    refetch: refetchUpcoming,
+  } = useUpcomingBookings({
+    timezone,
+    type: 'session',
+    limit: 50,
+  });
   const areSlotsReady = !isLoadingUpcomingBookings && !isLoadingAvailability;
   const availableSlotDates = getTrainerAvailabilityDates(trainerAvailability, upcomingBookings);
   const createSessionBooking = useCreateSessionBooking();
+  const isRefreshingSlots = isRefetchingAvailability || isRefetchingUpcoming;
+  const refreshSlots = useCallback(async () => {
+    await Promise.all([refetchAvailability(), refetchUpcoming()]);
+  }, [refetchAvailability, refetchUpcoming]);
 
   const [step, setStep] = useState<Step>(1);
   const [draft, setDraft] = useState<SessionDraft>({
     platform: null,
     phoneNumber: '',
+    phoneCountry: 'US',
     date: null,
     time: null,
   });
@@ -193,6 +205,8 @@ export function BookASessionScreen() {
             availableSlots={availableSlotDates}
             isLoadingSlots={!areSlotsReady}
             useRemoteSlots={areSlotsReady}
+            onRefresh={refreshSlots}
+            isRefreshing={isRefreshingSlots}
           />
         )}
         {step === 3 && (

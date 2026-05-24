@@ -7,6 +7,8 @@ export { LoadingOverlay } from './LoadingOverlay';
 export { ImagePreviewModal } from './ImagePreviewModal';
 export { LogoRefreshScrollView } from './LogoRefreshScrollView';
 export { OrDivider } from './OrDivider';
+export { PhoneInput, getPhoneNationalLength, isPhoneComplete, toPhoneE164 } from './PhoneInput';
+export type { PhoneCountry } from './PhoneInput';
 export { Screen } from './Screen';
 export { Skeleton } from './Skeleton';
 export { SocialButton } from './SocialButton';

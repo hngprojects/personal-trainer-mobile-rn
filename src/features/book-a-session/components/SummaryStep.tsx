@@ -4,7 +4,7 @@ import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 import { PLATFORM_LOGOS } from '@/features/book-a-call/data/platform-logos';
 import { Trainer } from '@/features/trainers/types/trainer.types';
-import { Button, Typography } from '@/shared/components';
+import { Button, toPhoneE164, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 import { SessionDraft, SessionPlatform } from '../types/book-a-session.types';
@@ -165,7 +165,9 @@ export function SummaryStep({
                   {
                     icon: 'call-outline' as const,
                     label: 'Phone',
-                    value: draft.phoneNumber.trim(),
+                    value:
+                      toPhoneE164(draft.phoneNumber, draft.phoneCountry) ??
+                      draft.phoneNumber.trim(),
                     valueNode: null,
                   },
                 ]

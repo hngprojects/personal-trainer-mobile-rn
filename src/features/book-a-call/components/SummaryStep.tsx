@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
-import { Button, Typography } from '@/shared/components';
+import { Button, toPhoneE164, Typography } from '@/shared/components';
 import { palette, useTheme } from '@/shared/theme';
 
 import { CallContactMode, CallDraft } from '../types/book-a-call.types';
@@ -114,7 +114,7 @@ export function SummaryStep({
             {
               icon: 'call-outline' as const,
               label: 'Phone',
-              value: draft.phoneNumber,
+              value: toPhoneE164(draft.phoneNumber, draft.phoneCountry) ?? draft.phoneNumber,
               valueNode: null,
             },
             {

@@ -1,6 +1,6 @@
 import { create, isAxiosError } from 'axios';
 
-import { hasJwtExp } from '@/shared/api/jwt';
+import { getJwtType, hasJwtExp } from '@/shared/api/jwt';
 import { ApiError } from '@/shared/api/types';
 import { env } from '@/shared/constants/env';
 
@@ -70,9 +70,24 @@ async function refreshTokens(refreshToken: string, accessToken: string): Promise
       );
     }
 
+    // If the server rotated the refresh token, hold it to the same contract
+    // the rest of the app applies on cold start (must be a JWT with `exp` and
+    // type === "refresh"). Storing a malformed token would log the user out
+    // on the next 401 or cold start.
+    const rotated = parsed.data.refresh_token;
+    if (rotated !== undefined) {
+      if (!hasJwtExp(rotated) || getJwtType(rotated) !== 'refresh') {
+        throw new ApiError(
+          'Invalid refresh token returned from refresh',
+          response.status,
+          parsed.code,
+        );
+      }
+    }
+
     return {
       accessToken: parsed.data.access_token,
-      refreshToken: parsed.data.refresh_token ?? refreshToken,
+      refreshToken: rotated ?? refreshToken,
     };
   } catch (error) {
     throw toApiError(error);

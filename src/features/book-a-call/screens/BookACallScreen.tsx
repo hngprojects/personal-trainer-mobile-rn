@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   FadeIn,
@@ -23,7 +23,7 @@ import {
 import { trainers } from '@/features/trainers/data/trainers.data';
 import { useTrainer } from '@/features/trainers/hooks/useTrainer';
 import { ApiError } from '@/shared/api/types';
-import { Typography } from '@/shared/components';
+import { toPhoneE164, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 import { DateTimeStep } from '../components/DateTimeStep';
@@ -45,21 +45,34 @@ export function BookACallScreen() {
   const trainer = fetchedTrainer ?? (!trainerId ? trainers[0] : undefined);
   const bookDiscoveryCall = useBookDiscoveryCall();
   const timezone = getTimezone();
-  const { data: discoverySlots = [], isLoading: isLoadingSlots } = useDiscoverySlots(timezone);
-  const { data: upcomingBookings = [], isLoading: isLoadingUpcomingBookings } = useUpcomingBookings(
-    {
-      timezone,
-      type: 'discovery',
-      limit: 50,
-    },
-  );
+  const {
+    data: discoverySlots = [],
+    isLoading: isLoadingSlots,
+    isRefetching: isRefetchingSlots,
+    refetch: refetchSlots,
+  } = useDiscoverySlots(timezone);
+  const {
+    data: upcomingBookings = [],
+    isLoading: isLoadingUpcomingBookings,
+    isRefetching: isRefetchingUpcoming,
+    refetch: refetchUpcoming,
+  } = useUpcomingBookings({
+    timezone,
+    type: 'discovery',
+    limit: 50,
+  });
   const areSlotsReady = !isLoadingSlots && !isLoadingUpcomingBookings;
   const availableSlotDates = getDiscoverySlotDates(discoverySlots, upcomingBookings);
+  const isRefreshingSlots = isRefetchingSlots || isRefetchingUpcoming;
+  const refreshSlots = useCallback(async () => {
+    await Promise.all([refetchSlots(), refetchUpcoming()]);
+  }, [refetchSlots, refetchUpcoming]);
 
   const [step, setStep] = useState<Step>(1);
   const [draft, setDraft] = useState<CallDraft>({
     contactMode: null,
     phoneNumber: '',
+    phoneCountry: 'US',
     date: null,
     time: null,
   });
@@ -102,12 +115,17 @@ export function BookACallScreen() {
 
     setSubmitError(null);
 
+    const phoneNumber =
+      draft.contactMode === 'phone_callback'
+        ? (toPhoneE164(draft.phoneNumber, draft.phoneCountry) ?? '')
+        : '';
+
     try {
       await bookDiscoveryCall.mutateAsync({
         name: user?.name ?? 'FitCall User',
         email: user?.email ?? '',
         contact_mode: draft.contactMode,
-        phone_number: draft.phoneNumber.trim(),
+        phone_number: phoneNumber,
         trainer_id: trainer.id,
         selected_datetime: buildSelectedDateTime(draft.date, draft.time),
         timezone,
@@ -193,6 +211,8 @@ export function BookACallScreen() {
             availableSlots={availableSlotDates}
             isLoadingSlots={!areSlotsReady}
             useRemoteSlots={areSlotsReady}
+            onRefresh={refreshSlots}
+            isRefreshing={isRefreshingSlots}
           />
         )}
         {step === 3 && (

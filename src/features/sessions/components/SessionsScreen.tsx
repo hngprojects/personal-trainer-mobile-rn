@@ -3,7 +3,7 @@ import { useQueries } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { FlatList, Modal, Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
   FadeIn,
@@ -31,6 +31,12 @@ export function SessionsScreen() {
   const { spacing, colors } = useTheme();
   const statusBarStyle = useStatusBarStyle();
   const [activeTab, setActiveTab] = useState<'Upcoming' | 'History'>('Upcoming');
+  const [pickTrainerModalVisible, setPickTrainerModalVisible] = useState(false);
+
+  const goPickTrainer = () => {
+    setPickTrainerModalVisible(false);
+    router.push('/');
+  };
   const timezone = getTimezone();
   const {
     data: upcomingBookings = [],
@@ -163,7 +169,7 @@ export function SessionsScreen() {
             </Typography>
             <Button
               label="Book Session"
-              onPress={() => router.push('/')}
+              onPress={() => setPickTrainerModalVisible(true)}
               style={[styles.bookBtn, { marginTop: spacing.xl }]}
             />
           </Animated.View>
@@ -177,6 +183,41 @@ export function SessionsScreen() {
           />
         )}
       </View>
+
+      <Modal
+        transparent
+        visible={pickTrainerModalVisible}
+        animationType="fade"
+        onRequestClose={() => setPickTrainerModalVisible(false)}
+      >
+        <View style={[styles.modalOverlay, { backgroundColor: colors.modalBackdrop }]}>
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={() => setPickTrainerModalVisible(false)}
+          />
+          <View style={[styles.modalCard, { backgroundColor: colors.background }]}>
+            <View style={[styles.modalIconCircle, { backgroundColor: colors.primarySubtle }]}>
+              <Ionicons name="people-outline" size={28} color={colors.primary} />
+            </View>
+            <Typography style={[styles.modalTitle, { color: colors.text }]}>
+              Pick a trainer first
+            </Typography>
+            <Typography style={[styles.modalBody, { color: colors.textSecondary }]}>
+              You&apos;ll book your session with a specific trainer. Browse trainers on the home
+              screen and tap the one you&apos;d like to work with.
+            </Typography>
+            <View style={styles.modalActions}>
+              <Button
+                label="Cancel"
+                variant="outline"
+                onPress={() => setPickTrainerModalVisible(false)}
+                style={styles.modalBtn}
+              />
+              <Button label="Browse trainers" onPress={goPickTrainer} style={styles.modalBtn} />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </Screen>
   );
 }
@@ -276,6 +317,53 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     resizeMode: 'contain',
+  },
+  modalOverlay: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 340,
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    gap: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
+  },
+  modalIconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontFamily: fonts.semibold,
+    textAlign: 'center',
+  },
+  modalBody: {
+    fontSize: 13,
+    fontFamily: fonts.regular,
+    textAlign: 'center',
+    lineHeight: 19,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 8,
+    width: '100%',
+  },
+  modalBtn: {
+    flex: 1,
   },
 });
 

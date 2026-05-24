@@ -5,7 +5,7 @@ import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 import { PLATFORM_LOGOS } from '@/features/book-a-call/data/platform-logos';
 import { Trainer } from '@/features/trainers/types/trainer.types';
-import { Button, TextInput, Typography } from '@/shared/components';
+import { Button, isPhoneComplete, PhoneInput, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 import { SessionDraft, SessionPlatform } from '../types/book-a-session.types';
@@ -44,8 +44,8 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
   const { colors, spacing } = useTheme();
 
   const requiresPhone = draft.platform === 'phone_call';
-  const phoneProvided = draft.phoneNumber.trim().length > 0;
-  const canContinue = draft.platform !== null && (!requiresPhone || phoneProvided);
+  const phoneValid = isPhoneComplete(draft.phoneNumber, draft.phoneCountry);
+  const canContinue = draft.platform !== null && (!requiresPhone || phoneValid);
 
   return (
     <View style={styles.container}>
@@ -139,13 +139,12 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
             <Typography variant="body1" style={styles.phoneLabel}>
               Your phone number
             </Typography>
-            <TextInput
+            <PhoneInput
               value={draft.phoneNumber}
               onChangeText={(phoneNumber) => onUpdate({ phoneNumber })}
-              placeholder="+1 555 123 4567"
-              keyboardType="phone-pad"
-              textContentType="telephoneNumber"
-              autoComplete="tel"
+              country={draft.phoneCountry}
+              onCountryChange={(phoneCountry) => onUpdate({ phoneCountry, phoneNumber: '' })}
+              placeholder="555 123 4567"
               style={styles.phoneInput}
             />
           </Animated.View>
