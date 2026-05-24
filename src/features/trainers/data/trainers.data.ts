@@ -6,6 +6,18 @@ const CLIENT_AVATARS = [
   'https://randomuser.me/api/portraits/men/55.jpg',
   'https://randomuser.me/api/portraits/women/22.jpg',
 ];
+const DEFAULT_BENEFITS = [
+  {
+    id: 'personalized-training',
+    title: 'Personalized Training Plans',
+    text: 'Custom coaching designed for your goals.',
+  },
+  {
+    id: 'accountability',
+    title: 'Real Accountability',
+    text: 'Weekly check-ins and consistent support.',
+  },
+];
 
 export const trainers: Trainer[] = [
   {
@@ -18,8 +30,10 @@ export const trainers: Trainer[] = [
     clients: 12,
     experience: '4 yrs',
     bio: 'Strength and conditioning specialist with a focus on hypertrophy and powerlifting fundamentals.',
-    videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
+    videoUrl: 'https://videos.pexels.com/video-files/5528012/5528012-hd_1080_1920_25fps.mp4',
     tags: ['Yoga', 'Strength', 'Mobility'],
+    trainingStyles: ['Strength', 'Conditioning'],
+    benefits: DEFAULT_BENEFITS,
     clientAvatars: CLIENT_AVATARS,
   },
   {
@@ -32,8 +46,10 @@ export const trainers: Trainer[] = [
     clients: 12,
     experience: '5 yrs',
     bio: 'I help busy professionals lose weight, gain strength and improve confidence through personalized training.',
-    videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
+    videoUrl: 'https://videos.pexels.com/video-files/5528012/5528012-hd_1080_1920_25fps.mp4',
     tags: ['Yoga', 'Strength', 'Mobility'],
+    trainingStyles: ['Mobility', 'Functional Movement'],
+    benefits: DEFAULT_BENEFITS,
     clientAvatars: CLIENT_AVATARS,
   },
   {
@@ -46,8 +62,10 @@ export const trainers: Trainer[] = [
     clients: 12,
     experience: '6 yrs',
     bio: 'Distance running coach helping athletes break their personal records through smart programming.',
-    videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
+    videoUrl: 'https://videos.pexels.com/video-files/5528012/5528012-hd_1080_1920_25fps.mp4',
     tags: ['Yoga', 'Strength', 'Mobility'],
+    trainingStyles: ['Endurance', 'Running'],
+    benefits: DEFAULT_BENEFITS,
     clientAvatars: CLIENT_AVATARS,
   },
   {
@@ -60,8 +78,10 @@ export const trainers: Trainer[] = [
     clients: 12,
     experience: '7 yrs',
     bio: 'Bringing mindful movement and flexibility to people who think they could never touch their toes.',
-    videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
+    videoUrl: 'https://videos.pexels.com/video-files/5528012/5528012-hd_1080_1920_25fps.mp4',
     tags: ['Yoga', 'Strength', 'Mobility'],
+    trainingStyles: ['Yoga', 'Breathwork'],
+    benefits: DEFAULT_BENEFITS,
     clientAvatars: CLIENT_AVATARS,
   },
 ];

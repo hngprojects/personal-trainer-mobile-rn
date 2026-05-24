@@ -44,6 +44,7 @@ function MainLoadingScreen() {
 export default function MainLayout() {
   const { isLoggedIn, user } = useAuthSession();
   const profileQuery = useProfile();
+  const { colors } = useTheme();
 
   // Guard: any internal route requires an active session.
   if (!isLoggedIn) return <Redirect href="/(auth)/login" />;
@@ -52,9 +53,11 @@ export default function MainLayout() {
     return <MainLoadingScreen />;
   }
 
-  const profileComplete = profileQuery.data?.profileComplete ?? user?.profileComplete;
+  const profileComplete = profileQuery.isSuccess
+    ? profileQuery.data.profileComplete
+    : user?.profileComplete;
 
-  if (profileComplete === false) {
+  if (!profileQuery.isError && profileComplete === false) {
     return <Redirect href="/profile-setup" />;
   }
 
@@ -63,6 +66,7 @@ export default function MainLayout() {
       screenOptions={{
         headerShown: false,
         animation: 'slide_from_right',
+        contentStyle: { backgroundColor: colors.background },
       }}
     >
       {/* Per-screen overrides only — expo-router auto-detects the (tabs) group

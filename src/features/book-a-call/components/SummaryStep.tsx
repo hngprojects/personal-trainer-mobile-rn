@@ -1,12 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Image, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
-import { Button, Typography } from '@/shared/components';
+import { Button, toPhoneE164, Typography } from '@/shared/components';
 import { palette, useTheme } from '@/shared/theme';
 
-import { PLATFORM_LOGOS } from '../data/platform-logos';
-import { CallDraft, CallPlatform } from '../types/book-a-call.types';
+import { CallContactMode, CallDraft } from '../types/book-a-call.types';
 
 const MONTH_NAMES = [
   'January',
@@ -24,12 +23,8 @@ const MONTH_NAMES = [
 ];
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-function platformLabel(p: CallPlatform): string {
-  return p === 'google-meet' ? 'Google Meet' : 'Zoom';
-}
-
-function platformLogo(p: CallPlatform) {
-  return PLATFORM_LOGOS[p];
+function contactModeLabel(mode: CallContactMode): string {
+  return mode === 'phone_callback' ? 'Phone Call' : 'Zoom Meeting';
 }
 
 function formatDate(d: Date): string {
@@ -50,19 +45,26 @@ function addOneHour(time: string): string {
 interface SummaryStepProps {
   draft: CallDraft;
   onSubmit: () => void;
+  isSubmitting?: boolean;
+  errorMessage?: string | null;
 }
 
-export function SummaryStep({ draft, onSubmit }: SummaryStepProps) {
+export function SummaryStep({
+  draft,
+  onSubmit,
+  isSubmitting = false,
+  errorMessage,
+}: SummaryStepProps) {
   const { colors, spacing } = useTheme();
 
-  const platform = draft.platform!;
+  const contactMode = draft.contactMode!;
   const date = draft.date!;
   const time = draft.time!;
   const endTime = addOneHour(time);
 
   const whatHappensNext = [
     'One of our agents reviews your request',
-    `Agent calls you on ${platformLabel(platform)} at your preferred time`,
+    `Agent contacts you by ${contactModeLabel(contactMode)} at your preferred time`,
     'Agent answers questions and helps you get started',
   ];
 
@@ -110,21 +112,19 @@ export function SummaryStep({ draft, onSubmit }: SummaryStepProps) {
               valueNode: null,
             },
             {
-              icon: 'videocam-outline' as const,
-              label: 'Platform',
-              value: null,
-              valueNode: (
-                <View style={styles.platformValueRow}>
-                  <Image
-                    source={platformLogo(platform)}
-                    style={styles.platformValueLogo}
-                    resizeMode="contain"
-                  />
-                  <Typography variant="body2" color={colors.textSecondary}>
-                    {platformLabel(platform)}
-                  </Typography>
-                </View>
-              ),
+              icon: 'call-outline' as const,
+              label: 'Phone',
+              value: toPhoneE164(draft.phoneNumber, draft.phoneCountry) ?? draft.phoneNumber,
+              valueNode: null,
+            },
+            {
+              icon:
+                contactMode === 'phone_callback'
+                  ? ('call-outline' as const)
+                  : ('videocam-outline' as const),
+              label: 'Contact',
+              value: contactModeLabel(contactMode),
+              valueNode: null,
             },
           ].map(({ icon, label, value, valueNode }, idx, arr) => (
             <View
@@ -180,6 +180,18 @@ export function SummaryStep({ draft, onSubmit }: SummaryStepProps) {
           ))}
         </Animated.View>
 
+        {errorMessage ? (
+          <Animated.View
+            entering={FadeInUp.duration(260)}
+            style={[styles.errorBanner, { backgroundColor: colors.error + '14' }]}
+          >
+            <Ionicons name="alert-circle-outline" size={18} color={colors.error} />
+            <Typography variant="body2" color={colors.error} style={styles.errorText}>
+              {errorMessage}
+            </Typography>
+          </Animated.View>
+        ) : null}
+
         <View style={styles.footerSpacer} />
       </ScrollView>
 
@@ -193,7 +205,7 @@ export function SummaryStep({ draft, onSubmit }: SummaryStepProps) {
           },
         ]}
       >
-        <Button label="Submit Request" onPress={onSubmit} />
+        <Button label="Submit Request" isLoading={isSubmitting} onPress={onSubmit} />
       </View>
     </View>
   );
@@ -220,8 +232,6 @@ const styles = StyleSheet.create({
   },
   detailLeft: { flexDirection: 'row', alignItems: 'center' },
   detailIcon: { marginRight: 10 },
-  platformValueRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  platformValueLogo: { width: 20, height: 20 },
   nextCard: {
     borderRadius: 14,
     borderWidth: 1,
@@ -232,6 +242,15 @@ const styles = StyleSheet.create({
   nextRow: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 8 },
   nextCheck: { marginRight: 8, marginTop: 1 },
   nextText: { flex: 1, lineHeight: 20 },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 8,
+  },
+  errorText: { flex: 1, lineHeight: 20 },
   footerSpacer: { height: 8 },
   footer: { paddingTop: 12 },
 });

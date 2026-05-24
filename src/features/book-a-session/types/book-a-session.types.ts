@@ -1,10 +1,13 @@
-// Booking shape for a training session. Field names mirror the call-booking
-// draft (platform/date/time) so the shared DateTimeStep from book-a-call can be
-// reused with no glue.
-export type SessionPlatform = 'zoom' | 'google-meet';
+import type { PhoneCountry } from '@/shared/components';
+
+// Mirrors the call-booking shape so the shared DateTimeStep from book-a-call
+// can be reused. `phoneNumber` is only required when `platform === 'phone_call'`.
+export type SessionPlatform = 'zoom' | 'phone_call';
 
 export interface SessionDraft {
   platform: SessionPlatform | null;
+  phoneNumber: string;
+  phoneCountry: PhoneCountry;
   date: Date | null;
   time: string | null;
 }

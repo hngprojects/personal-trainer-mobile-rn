@@ -8,11 +8,13 @@ import { EntryScreen } from '@/features/entry';
 import { useOnboardingStore } from '@/features/onboarding/store/onboarding.store';
 import { AppProviders } from '@/providers/AppProviders';
 import { useAppReady } from '@/shared/hooks/useAppReady';
+import { useTheme } from '@/shared/theme';
 
 SplashScreen.preventAutoHideAsync();
 
 function RootLayoutNav() {
   const { isReady } = useAppReady();
+  const { colors } = useTheme();
   const { isLoggedIn } = useAuthSession();
   const hasCompleted = useOnboardingStore((s) => s.hasCompleted);
   const showWelcome = useAuthStore((s) => s.showWelcome);
@@ -36,7 +38,9 @@ function RootLayoutNav() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack
+      screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}
+    >
       {!hasCompleted && <Stack.Screen name="(onboarding)" options={{ animation: 'fade' }} />}
       {hasCompleted && !isLoggedIn && (
         <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
@@ -49,6 +53,8 @@ function RootLayoutNav() {
         <Stack.Screen name="profile-setup-video" options={{ animation: 'slide_from_bottom' }} />
       )}
       {isLoggedIn && !showWelcome && <Stack.Screen name="(main)" options={{ animation: 'fade' }} />}
+      <Stack.Screen name="privacy-policy" options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen name="terms-of-service" options={{ animation: 'slide_from_right' }} />
       <Stack.Screen name="+not-found" />
     </Stack>
   );

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   FadeIn,
   FadeInDown,
@@ -13,14 +13,24 @@ import Animated, {
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useAuthStore } from '@/features/auth/store/auth.store';
+import {
+  getDiscoverySlotDates,
+  getTimezone,
+  useDiscoverySlots,
+  useUpcomingBookings,
+} from '@/features/bookings';
 import { trainers } from '@/features/trainers/data/trainers.data';
-import { Typography } from '@/shared/components';
+import { useTrainer } from '@/features/trainers/hooks/useTrainer';
+import { ApiError } from '@/shared/api/types';
+import { toPhoneE164, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 import { DateTimeStep } from '../components/DateTimeStep';
 import { PlatformStep } from '../components/PlatformStep';
 import { SuccessView } from '../components/SuccessView';
 import { SummaryStep } from '../components/SummaryStep';
+import { useBookDiscoveryCall } from '../hooks/useBookDiscoveryCall';
 import { CallDraft } from '../types/book-a-call.types';
 
 type Step = 1 | 2 | 3 | 'success';
@@ -30,10 +40,50 @@ const STEP_DURATION = 320;
 export function BookACallScreen() {
   const { colors, spacing } = useTheme();
   const { trainerId } = useLocalSearchParams<{ trainerId?: string }>();
-  const trainer = trainers.find((t) => t.id === trainerId) ?? trainers[0];
+  const user = useAuthStore((state) => state.user);
+  const { data: fetchedTrainer, isLoading: isTrainerLoading } = useTrainer(trainerId);
+  const trainer = fetchedTrainer ?? (!trainerId ? trainers[0] : undefined);
+  const bookDiscoveryCall = useBookDiscoveryCall();
+  const timezone = getTimezone();
+  const {
+    data: discoverySlots = [],
+    isLoading: isLoadingSlots,
+    isError: isErrorSlots,
+    isRefetching: isRefetchingSlots,
+    refetch: refetchSlots,
+  } = useDiscoverySlots(timezone);
+  const {
+    data: upcomingBookings = [],
+    isLoading: isLoadingUpcomingBookings,
+    isError: isErrorUpcoming,
+    isRefetching: isRefetchingUpcoming,
+    refetch: refetchUpcoming,
+  } = useUpcomingBookings({
+    timezone,
+    type: 'discovery',
+    limit: 50,
+  });
+  // "Ready" must require BOTH queries to have settled WITHOUT error. Otherwise
+  // a failed fetch would flip the flag to true and the time grid would render
+  // an empty "remote" state — looking like the trainer has no availability
+  // when it's really a backend failure.
+  const areSlotsReady =
+    !isLoadingSlots && !isLoadingUpcomingBookings && !isErrorSlots && !isErrorUpcoming;
+  const availableSlotDates = getDiscoverySlotDates(discoverySlots, upcomingBookings);
+  const isRefreshingSlots = isRefetchingSlots || isRefetchingUpcoming;
+  const refreshSlots = useCallback(async () => {
+    await Promise.all([refetchSlots(), refetchUpcoming()]);
+  }, [refetchSlots, refetchUpcoming]);
 
   const [step, setStep] = useState<Step>(1);
-  const [draft, setDraft] = useState<CallDraft>({ platform: null, date: null, time: null });
+  const [draft, setDraft] = useState<CallDraft>({
+    contactMode: null,
+    phoneNumber: '',
+    phoneCountry: 'US',
+    date: null,
+    time: null,
+  });
+  const [submitError, setSubmitError] = useState<string | null>(null);
   // Tracks whether the user is moving forward or backward so the step content
   // can slide in from the correct edge.
   const direction = useRef<'forward' | 'backward'>('forward');
@@ -65,6 +115,38 @@ export function BookACallScreen() {
     }
   }
 
+  async function submitDiscoveryCall() {
+    if (!trainer || !draft.contactMode || !draft.date || !draft.time) {
+      return;
+    }
+
+    setSubmitError(null);
+
+    const phoneNumber =
+      draft.contactMode === 'phone_callback'
+        ? (toPhoneE164(draft.phoneNumber, draft.phoneCountry) ?? '')
+        : '';
+
+    try {
+      await bookDiscoveryCall.mutateAsync({
+        name: user?.name ?? 'FitCall User',
+        email: user?.email ?? '',
+        contact_mode: draft.contactMode,
+        phone_number: phoneNumber,
+        trainer_id: trainer.id,
+        selected_datetime: buildSelectedDateTime(draft.date, draft.time),
+        timezone,
+      });
+      advance();
+    } catch (error) {
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : 'We could not submit your call request. Please try again.';
+      setSubmitError(message);
+    }
+  }
+
   const isSuccess = step === 'success';
   const numericStep = isSuccess ? 3 : (step as number);
   const title = step === 3 || step === 'success' ? 'Call Request Summary' : 'Request a Call';
@@ -73,6 +155,17 @@ export function BookACallScreen() {
   useEffect(() => {
     progress.value = withTiming(numericStep / 3, { duration: 400 });
   }, [numericStep, progress]);
+
+  if (isTrainerLoading || !trainer) {
+    return (
+      <SafeAreaView
+        style={[styles.container, styles.centered, { backgroundColor: colors.background }]}
+        edges={['top', 'bottom']}
+      >
+        <ActivityIndicator color={colors.primary} />
+      </SafeAreaView>
+    );
+  }
 
   const entering = direction.current === 'forward' ? SlideInRight : SlideInLeft;
 
@@ -117,8 +210,26 @@ export function BookACallScreen() {
             onContinue={advance}
           />
         )}
-        {step === 2 && <DateTimeStep draft={draft} onUpdate={updateDraft} onContinue={advance} />}
-        {step === 3 && <SummaryStep draft={draft} onSubmit={advance} />}
+        {step === 2 && (
+          <DateTimeStep
+            draft={draft}
+            onUpdate={updateDraft}
+            onContinue={advance}
+            availableSlots={availableSlotDates}
+            isLoadingSlots={!areSlotsReady}
+            useRemoteSlots={areSlotsReady}
+            onRefresh={refreshSlots}
+            isRefreshing={isRefreshingSlots}
+          />
+        )}
+        {step === 3 && (
+          <SummaryStep
+            draft={draft}
+            onSubmit={submitDiscoveryCall}
+            isSubmitting={bookDiscoveryCall.isPending}
+            errorMessage={submitError}
+          />
+        )}
         {step === 'success' && <SuccessView />}
       </Animated.View>
     </SafeAreaView>
@@ -127,6 +238,7 @@ export function BookACallScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  centered: { alignItems: 'center', justifyContent: 'center' },
   header: { paddingBottom: 18 },
   backBtn: { marginBottom: 12 },
   headerTitle: { fontWeight: '700', marginBottom: 12 },
@@ -143,3 +255,22 @@ const styles = StyleSheet.create({
   stepLabel: { marginBottom: 0 },
   content: { flex: 1 },
 });
+
+function buildSelectedDateTime(date: Date, time: string): string {
+  const [rawTime, period] = time.split(' ');
+  const [rawHour, rawMinute] = rawTime.split(':').map(Number);
+  let hour = rawHour;
+
+  if (period === 'PM' && hour !== 12) {
+    hour += 12;
+  }
+
+  if (period === 'AM' && hour === 12) {
+    hour = 0;
+  }
+
+  const selected = new Date(date);
+  selected.setHours(hour, rawMinute ?? 0, 0, 0);
+
+  return selected.toISOString();
+}

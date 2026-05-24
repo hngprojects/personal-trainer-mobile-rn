@@ -3,7 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Href, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Image, Pressable, RefreshControl, View } from 'react-native';
+import { Image, Pressable, RefreshControl, ScrollView, View } from 'react-native';
 import Animated, {
   Easing,
   Extrapolation,
@@ -21,7 +21,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ClientAvatarStack } from '@/features/trainers/components/ClientAvatarStack';
 import { SpecialtyTags } from '@/features/trainers/components/SpecialtyTags';
-import { useTrainers } from '@/features/trainers/hooks/useTrainers';
+import { useInfiniteTrainers } from '@/features/trainers/hooks/useInfiniteTrainers';
 import type { Trainer } from '@/features/trainers/types/trainer.types';
 import { Avatar, Typography } from '@/shared/components';
 import { useStatusBarStyle } from '@/shared/hooks/useStatusBarStyle';
@@ -79,8 +79,20 @@ export function HomeScreen() {
   const { user } = useHome();
   const displayName = user?.name ?? '';
   const greeting = getTimeOfDayGreeting();
-  const { data: trainers = [], isLoading, isRefetching, refetch } = useTrainers();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const {
+    data: trainerPages,
+    isLoading,
+    isRefetching,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    refetch,
+  } = useInfiniteTrainers(selectedCategory);
+  const trainers = useMemo(
+    () => trainerPages?.pages.flatMap((page) => page.trainers) ?? [],
+    [trainerPages],
+  );
   const filteredTrainers = useMemo(() => {
     if (!selectedCategory) {
       return trainers;
@@ -94,7 +106,8 @@ export function HomeScreen() {
       return specialty.includes(category) || tags.includes(category);
     });
   }, [selectedCategory, trainers]);
-  const showInitialLoader = isLoading && trainers.length === 0;
+  const showTrainerLoading = isLoading && trainers.length === 0;
+  const showLoadMore = isFetchingNextPage && trainers.length > 0;
 
   const scrollY = useSharedValue(0);
   const logoRotation = useSharedValue(0);
@@ -104,6 +117,20 @@ export function HomeScreen() {
       scrollY.value = e.contentOffset.y;
     },
   });
+
+  function handleScrollNearEnd(event: {
+    nativeEvent: {
+      contentOffset: { y: number };
+      contentSize: { height: number };
+      layoutMeasurement: { height: number };
+    };
+  }) {
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+    const distanceFromBottom = contentSize.height - (contentOffset.y + layoutMeasurement.height);
+    if (distanceFromBottom < 260 && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }
 
   useEffect(() => {
     logoRotation.value = withRepeat(
@@ -182,17 +209,6 @@ export function HomeScreen() {
     };
   });
 
-  if (showInitialLoader) {
-    return (
-      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.background }}>
-        <StatusBar style={statusBarStyle} />
-        <View style={styles.loadingContainer}>
-          <Animated.Image source={LOGO} style={[styles.loadingLogo, loaderLogoStyle]} />
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar style={statusBarStyle} />
@@ -203,6 +219,8 @@ export function HomeScreen() {
 
       <Animated.ScrollView
         onScroll={scrollHandler}
+        onMomentumScrollEnd={handleScrollNearEnd}
+        onScrollEndDrag={handleScrollNearEnd}
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.body, { paddingHorizontal: spacing.md }]}
@@ -226,7 +244,7 @@ export function HomeScreen() {
             <Animated.View style={[styles.header, headerAnimatedStyle]}>
               <Pressable
                 style={styles.headerLeft}
-                onPress={() => router.push('/profile')}
+                onPress={() => router.push('/(main)/(tabs)/profile' as Href)}
                 accessibilityRole="button"
                 accessibilityLabel="Open your profile"
                 hitSlop={8}
@@ -237,7 +255,13 @@ export function HomeScreen() {
                   <Typography style={styles.userName}>{displayName}</Typography>
                 </View>
               </Pressable>
-              <Pressable hitSlop={8} style={styles.bellButton}>
+              <Pressable
+                hitSlop={8}
+                style={styles.bellButton}
+                onPress={() => router.push('/(main)/notifications' as Href)}
+                accessibilityRole="button"
+                accessibilityLabel="Open notifications"
+              >
                 <Ionicons name="notifications-outline" size={22} color={colors.text} />
               </Pressable>
             </Animated.View>
@@ -274,7 +298,40 @@ export function HomeScreen() {
             <Typography style={[styles.sectionTitle, { marginTop: spacing.lg }]}>
               Categories
             </Typography>
-            <View style={styles.categories}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.categories}
+            >
+              <Pressable
+                style={styles.categoryItem}
+                onPress={() => setSelectedCategory(null)}
+                accessibilityRole="button"
+                accessibilityLabel="Show all trainers"
+                accessibilityState={{ selected: selectedCategory === null }}
+              >
+                <View
+                  style={[
+                    styles.categoryCircle,
+                    styles.categoryIconCircle,
+                    selectedCategory === null && styles.categoryCircleSelected,
+                  ]}
+                >
+                  <Ionicons
+                    name="grid-outline"
+                    size={24}
+                    color={selectedCategory === null ? colors.primary : colors.textSecondary}
+                  />
+                </View>
+                <Typography
+                  style={[
+                    styles.categoryText,
+                    selectedCategory === null && styles.categoryTextSelected,
+                  ]}
+                >
+                  All
+                </Typography>
+              </Pressable>
               {CATEGORIES.map((category, index) => {
                 const isSelected = selectedCategory === category.label;
 
@@ -308,7 +365,7 @@ export function HomeScreen() {
                   </Animated.View>
                 );
               })}
-            </View>
+            </ScrollView>
           </Animated.View>
 
           {/* TRAINERS */}
@@ -318,25 +375,41 @@ export function HomeScreen() {
             </Typography>
           </Animated.View>
           <View style={styles.trainersGrid}>
-            {filteredTrainers.length === 0 ? (
+            {showTrainerLoading ? (
+              <View style={styles.emptyTrainers}>
+                <Animated.Image source={LOGO} style={[styles.inlineLoadingLogo, loaderLogoStyle]} />
+                <Typography style={styles.emptyTrainersText}>Loading trainers...</Typography>
+              </View>
+            ) : filteredTrainers.length === 0 ? (
               <View style={styles.emptyTrainers}>
                 <Typography style={styles.emptyTrainersText}>
-                  No trainers found for this category.
+                  {selectedCategory
+                    ? 'No trainers found for this category.'
+                    : 'No trainers available yet.'}
                 </Typography>
               </View>
             ) : (
-              filteredTrainers.slice(0, 4).map((trainer: Trainer, index: number) => (
+              filteredTrainers.map((trainer: Trainer, index: number) => (
                 <Animated.View
                   key={trainer.id}
                   entering={FadeInUp.delay(420 + index * 80).duration(ENTRY_DURATION)}
                   style={styles.trainerCard}
                 >
-                  <Pressable onPress={() => router.push('/trainer-profile' as Href)}>
+                  <Pressable
+                    onPress={() =>
+                      router.push({
+                        pathname: '/(main)/trainer-profile',
+                        params: { trainerId: trainer.id },
+                      } as never)
+                    }
+                  >
                     <Image source={{ uri: trainer.image }} style={styles.trainerImage} />
                     <View style={[styles.trainerBody, { padding: spacing.sm }]}>
                       <SpecialtyTags tags={trainer.tags} />
                       <View style={styles.trainerNameRow}>
-                        <Typography style={styles.trainerName}>{trainer.name}</Typography>
+                        <Typography style={styles.trainerName} numberOfLines={1}>
+                          {trainer.name}
+                        </Typography>
                         <Typography style={styles.trainerRating}>★ {trainer.rating}</Typography>
                       </View>
                       <ClientAvatarStack
@@ -348,6 +421,12 @@ export function HomeScreen() {
                 </Animated.View>
               ))
             )}
+            {showLoadMore ? (
+              <View style={styles.emptyTrainers}>
+                <Animated.Image source={LOGO} style={[styles.inlineLoadingLogo, loaderLogoStyle]} />
+                <Typography style={styles.emptyTrainersText}>Loading more trainers...</Typography>
+              </View>
+            ) : null}
           </View>
         </Animated.View>
       </Animated.ScrollView>

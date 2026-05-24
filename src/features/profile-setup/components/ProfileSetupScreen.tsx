@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -70,6 +70,7 @@ export function ProfileSetupScreen() {
 
   const isLast = step === TOTAL_STEPS - 1;
   const isFirst = step === 0;
+  const canSkip = step === 1;
   const handleContinue = isLast ? submit : next;
   const buttonLabel = isLast ? 'Get Started' : 'Continue';
   const copy = STEPS[step] ?? STEPS[0];
@@ -85,6 +86,21 @@ export function ProfileSetupScreen() {
         <View style={styles.headerRow}>
           {!isFirst && !isLast ? (
             <BackButton onPress={prev} disabled={isSubmitting} />
+          ) : (
+            <View style={styles.backSpacer} />
+          )}
+          {canSkip ? (
+            <Pressable
+              onPress={next}
+              disabled={isSubmitting}
+              hitSlop={10}
+              style={({ pressed }) => [
+                styles.skipButton,
+                { opacity: isSubmitting ? 0.35 : pressed ? 0.62 : 1 },
+              ]}
+            >
+              <Typography style={[styles.skipText, { color: colors.primary }]}>Skip</Typography>
+            </Pressable>
           ) : (
             <View style={styles.backSpacer} />
           )}
@@ -125,10 +141,23 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     minHeight: 40,
   },
   backSpacer: {
+    width: 40,
     height: 40,
+  },
+  skipButton: {
+    minWidth: 40,
+    height: 40,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    paddingLeft: 12,
+  },
+  skipText: {
+    fontSize: 14,
+    fontFamily: fonts.semibold,
   },
   copyBlock: {
     gap: 4,

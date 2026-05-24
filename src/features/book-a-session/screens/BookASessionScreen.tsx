@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   FadeIn,
   FadeInDown,
@@ -16,14 +16,24 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 // DateTimeStep is identical between call and session bookings — reuse instead
 // of duplicating. SessionDraft is structurally equivalent to CallDraft.
 import { DateTimeStep } from '@/features/book-a-call/components/DateTimeStep';
+import {
+  getTimezone,
+  getTrainerAvailabilityDates,
+  useCreateSessionBooking,
+  useUpcomingBookings,
+  type SessionBookingPlatform,
+} from '@/features/bookings';
 import { trainers } from '@/features/trainers/data/trainers.data';
+import { useTrainer } from '@/features/trainers/hooks/useTrainer';
+import { useTrainerAvailability } from '@/features/trainers/hooks/useTrainerAvailability';
+import { ApiError } from '@/shared/api/types';
 import { Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 import { PlatformStep } from '../components/PlatformStep';
 import { SuccessView } from '../components/SuccessView';
 import { SummaryStep } from '../components/SummaryStep';
-import { SessionDraft } from '../types/book-a-session.types';
+import { SessionDraft, SessionPlatform } from '../types/book-a-session.types';
 
 type Step = 1 | 2 | 3 | 'success';
 
@@ -32,10 +42,50 @@ const STEP_DURATION = 320;
 export function BookASessionScreen() {
   const { colors, spacing } = useTheme();
   const { trainerId } = useLocalSearchParams<{ trainerId?: string }>();
-  const trainer = trainers.find((t) => t.id === trainerId) ?? trainers[0];
+  const { data: fetchedTrainer, isLoading: isTrainerLoading } = useTrainer(trainerId);
+  const {
+    data: trainerAvailability = [],
+    isLoading: isLoadingAvailability,
+    isError: isErrorAvailability,
+    isRefetching: isRefetchingAvailability,
+    refetch: refetchAvailability,
+  } = useTrainerAvailability(trainerId);
+  const trainer = fetchedTrainer ?? (!trainerId ? trainers[0] : undefined);
+  const timezone = getTimezone();
+  const {
+    data: upcomingBookings = [],
+    isLoading: isLoadingUpcomingBookings,
+    isError: isErrorUpcoming,
+    isRefetching: isRefetchingUpcoming,
+    refetch: refetchUpcoming,
+  } = useUpcomingBookings({
+    timezone,
+    type: 'session',
+    limit: 50,
+  });
+  // Require both queries to have settled WITHOUT error so a failed fetch
+  // doesn't masquerade as "no remote availability" in the time grid.
+  const areSlotsReady =
+    !isLoadingUpcomingBookings &&
+    !isLoadingAvailability &&
+    !isErrorAvailability &&
+    !isErrorUpcoming;
+  const availableSlotDates = getTrainerAvailabilityDates(trainerAvailability, upcomingBookings);
+  const createSessionBooking = useCreateSessionBooking();
+  const isRefreshingSlots = isRefetchingAvailability || isRefetchingUpcoming;
+  const refreshSlots = useCallback(async () => {
+    await Promise.all([refetchAvailability(), refetchUpcoming()]);
+  }, [refetchAvailability, refetchUpcoming]);
 
   const [step, setStep] = useState<Step>(1);
-  const [draft, setDraft] = useState<SessionDraft>({ platform: null, date: null, time: null });
+  const [draft, setDraft] = useState<SessionDraft>({
+    platform: null,
+    phoneNumber: '',
+    phoneCountry: 'US',
+    date: null,
+    time: null,
+  });
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const direction = useRef<'forward' | 'backward'>('forward');
 
   const progress = useSharedValue(1 / 3);
@@ -65,6 +115,34 @@ export function BookASessionScreen() {
     }
   }
 
+  async function submitSessionBooking() {
+    if (!trainer || !draft.platform || !draft.date || !draft.time) {
+      return;
+    }
+
+    setSubmitError(null);
+
+    const scheduledStart = buildSelectedDateTime(draft.date, draft.time);
+    const scheduledEnd = new Date(new Date(scheduledStart).getTime() + 60 * 60_000).toISOString();
+
+    try {
+      await createSessionBooking.mutateAsync({
+        trainer_id: trainer.id,
+        scheduled_start: scheduledStart,
+        scheduled_end: scheduledEnd,
+        session_platform: toSessionBookingPlatform(draft.platform),
+        timezone,
+      });
+      advance();
+    } catch (error) {
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : 'We could not confirm your booking. Please try again.';
+      setSubmitError(message);
+    }
+  }
+
   const isSuccess = step === 'success';
   const numericStep = isSuccess ? 3 : (step as number);
   const title = step === 3 ? 'Booking Summary' : 'Book a Session';
@@ -72,6 +150,17 @@ export function BookASessionScreen() {
   useEffect(() => {
     progress.value = withTiming(numericStep / 3, { duration: 400 });
   }, [numericStep, progress]);
+
+  if (isTrainerLoading || !trainer) {
+    return (
+      <SafeAreaView
+        style={[styles.container, styles.centered, { backgroundColor: colors.background }]}
+        edges={['top', 'bottom']}
+      >
+        <ActivityIndicator color={colors.primary} />
+      </SafeAreaView>
+    );
+  }
 
   const entering = direction.current === 'forward' ? SlideInRight : SlideInLeft;
 
@@ -116,8 +205,27 @@ export function BookASessionScreen() {
             onContinue={advance}
           />
         )}
-        {step === 2 && <DateTimeStep draft={draft} onUpdate={updateDraft} onContinue={advance} />}
-        {step === 3 && <SummaryStep trainer={trainer} draft={draft} onSubmit={advance} />}
+        {step === 2 && (
+          <DateTimeStep
+            draft={draft}
+            onUpdate={updateDraft}
+            onContinue={advance}
+            availableSlots={availableSlotDates}
+            isLoadingSlots={!areSlotsReady}
+            useRemoteSlots={areSlotsReady}
+            onRefresh={refreshSlots}
+            isRefreshing={isRefreshingSlots}
+          />
+        )}
+        {step === 3 && (
+          <SummaryStep
+            trainer={trainer}
+            draft={draft}
+            onSubmit={submitSessionBooking}
+            isSubmitting={createSessionBooking.isPending}
+            errorMessage={submitError}
+          />
+        )}
         {step === 'success' && <SuccessView trainer={trainer} />}
       </Animated.View>
     </SafeAreaView>
@@ -126,6 +234,7 @@ export function BookASessionScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  centered: { alignItems: 'center', justifyContent: 'center' },
   header: { paddingBottom: 18 },
   backBtn: { marginBottom: 12 },
   headerTitle: { fontWeight: '700', marginBottom: 12 },
@@ -142,3 +251,26 @@ const styles = StyleSheet.create({
   stepLabel: { marginBottom: 0 },
   content: { flex: 1 },
 });
+
+function buildSelectedDateTime(date: Date, time: string): string {
+  const [rawTime, period] = time.split(' ');
+  const [rawHour, rawMinute] = rawTime.split(':').map(Number);
+  let hour = rawHour;
+
+  if (period === 'PM' && hour !== 12) {
+    hour += 12;
+  }
+
+  if (period === 'AM' && hour === 12) {
+    hour = 0;
+  }
+
+  const selected = new Date(date);
+  selected.setHours(hour, rawMinute ?? 0, 0, 0);
+
+  return selected.toISOString();
+}
+
+function toSessionBookingPlatform(platform: SessionPlatform): SessionBookingPlatform {
+  return platform === 'phone_call' ? 'phone_call' : 'zoom';
+}

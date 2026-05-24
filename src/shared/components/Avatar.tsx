@@ -17,6 +17,7 @@ interface AvatarProps {
   /** Optional icon rendered in a small circular badge on the bottom-right. */
   badgeIcon?: React.ReactNode;
   onPress?: () => void;
+  onBadgePress?: () => void;
   accessibilityLabel?: string;
 }
 
@@ -37,6 +38,7 @@ export function Avatar({
   loading = false,
   badgeIcon,
   onPress,
+  onBadgePress,
   accessibilityLabel,
 }: AvatarProps) {
   const { colors } = useTheme();
@@ -47,8 +49,8 @@ export function Avatar({
   const fallbackBg = colors.primary;
   const hasImage = !!uri;
 
-  const inner = (
-    <View style={{ width: size, height: size }}>
+  const imageContent = (
+    <>
       {hasImage ? (
         <Image source={{ uri }} style={{ width: size, height: size, borderRadius: radius }} />
       ) : (
@@ -69,39 +71,57 @@ export function Avatar({
           <ActivityIndicator color="#FFFFFF" />
         </View>
       ) : null}
+    </>
+  );
 
-      {badgeIcon ? (
-        <View
-          style={[
-            styles.badge,
-            {
-              width: badgeSize,
-              height: badgeSize,
-              borderRadius: badgeSize / 2,
-              right: badgeOffset,
-              bottom: badgeOffset,
-              borderColor: colors.background,
-            },
-          ]}
+  const badgeStyle = [
+    styles.badge,
+    {
+      width: badgeSize,
+      height: badgeSize,
+      borderRadius: badgeSize / 2,
+      right: badgeOffset,
+      bottom: badgeOffset,
+      borderColor: colors.background,
+    },
+  ];
+
+  const badge = badgeIcon ? (
+    onBadgePress ? (
+      <Pressable
+        onPress={onBadgePress}
+        disabled={loading}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel="Edit profile picture"
+        style={badgeStyle}
+      >
+        {badgeIcon}
+      </Pressable>
+    ) : (
+      <View style={badgeStyle}>{badgeIcon}</View>
+    )
+  ) : null;
+
+  const inner = (
+    <View style={{ width: size, height: size }}>
+      {onPress ? (
+        <Pressable
+          onPress={onPress}
+          disabled={loading}
+          accessibilityRole="button"
+          accessibilityLabel={accessibilityLabel ?? 'Profile picture'}
         >
-          {badgeIcon}
-        </View>
-      ) : null}
+          {imageContent}
+        </Pressable>
+      ) : (
+        imageContent
+      )}
+      {badge}
     </View>
   );
 
-  if (!onPress) return inner;
-
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={loading}
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel ?? 'Profile picture'}
-    >
-      {inner}
-    </Pressable>
-  );
+  return inner;
 }
 
 const styles = StyleSheet.create({

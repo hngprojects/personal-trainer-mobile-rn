@@ -6,8 +6,7 @@ import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const VIDEO_SOURCE =
-  'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_5MB.mp4';
+const VIDEO_SOURCE = 'https://videos.pexels.com/video-files/5528012/5528012-hd_1080_1920_25fps.mp4';
 
 export function ProfileSetupVideoScreen() {
   const insets = useSafeAreaInsets();

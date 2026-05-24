@@ -55,7 +55,8 @@ export const FITNESS_GOAL_TO_API: Record<string, string> = {
   lose_weight: 'lose_weight',
   build_muscle: 'build_muscle',
   flexibility: 'improve_flexibility',
-  endurance: 'boost_endurance',
+  endurance: 'boost_energy',
+  boost_endurance: 'boost_energy',
   habits: 'build_healthy_habits',
   strength: 'build_strength',
 };

@@ -1,11 +1,9 @@
 import React from 'react';
-import { Dimensions, StyleSheet } from 'react-native';
+import { StyleSheet, useWindowDimensions } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 
 import { OnboardingSlideData } from '../data/slides';
 import { OnboardingSlide } from './OnboardingSlide';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface OnboardingPagerProps {
   slides: OnboardingSlideData[];
@@ -14,6 +12,7 @@ interface OnboardingPagerProps {
 }
 
 export function OnboardingPager({ slides, onLogin, onRegister }: OnboardingPagerProps) {
+  const { width } = useWindowDimensions();
   const scrollX = useSharedValue(0);
 
   const scrollHandler = useAnimatedScrollHandler({
@@ -38,7 +37,7 @@ export function OnboardingPager({ slides, onLogin, onRegister }: OnboardingPager
           index={i}
           scrollX={scrollX}
           totalSlides={slides.length}
-          slideWidth={SCREEN_WIDTH}
+          slideWidth={width}
           onLogin={onLogin}
           onRegister={onRegister}
         />

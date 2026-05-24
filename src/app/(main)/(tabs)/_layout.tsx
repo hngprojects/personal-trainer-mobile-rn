@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 
 import { useTheme } from '@/shared/theme';
@@ -11,6 +11,7 @@ export default function TabsLayout() {
       screenOptions={{
         headerShown: false,
         animation: 'fade',
+        sceneStyle: { backgroundColor: colors.background },
         tabBarStyle: {
           backgroundColor: colors.tabBar,
           borderTopColor: colors.border,
@@ -23,9 +24,7 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <Feather name="home" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
