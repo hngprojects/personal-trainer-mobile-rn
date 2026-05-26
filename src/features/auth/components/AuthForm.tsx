@@ -4,7 +4,7 @@ import {
   isSuccessResponse,
   statusCodes,
 } from '@react-native-google-signin/google-signin';
-import { router } from 'expo-router';
+import { Href, router } from 'expo-router';
 import React, { useState } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 
@@ -111,6 +111,9 @@ export function AuthForm({ variant }: AuthFormProps) {
   );
 }
 
+const TERMS_ROUTE = '/terms-of-service' as Href;
+const PRIVACY_ROUTE = '/privacy-policy' as Href;
+
 export function AuthLegalNotice({ variant }: AuthFormProps) {
   const { colors } = useTheme();
   const verb = variant === 'signup' ? 'Sign Up' : 'Sign In';
@@ -118,11 +121,11 @@ export function AuthLegalNotice({ variant }: AuthFormProps) {
   return (
     <Typography style={[styles.legalText, { color: colors.textSecondary }]}>
       By clicking &quot;{verb}&quot;, I have read and agree with the{' '}
-      <Typography style={styles.legalLink} onPress={() => router.push('/terms-of-service')}>
+      <Typography style={styles.legalLink} onPress={() => router.push(TERMS_ROUTE)}>
         Terms of Service
       </Typography>{' '}
       and{' '}
-      <Typography style={styles.legalLink} onPress={() => router.push('/privacy-policy')}>
+      <Typography style={styles.legalLink} onPress={() => router.push(PRIVACY_ROUTE)}>
         Privacy Policy
       </Typography>
     </Typography>
