@@ -118,11 +118,14 @@ export function AuthLegalNotice({ variant }: AuthFormProps) {
   return (
     <Typography style={[styles.legalText, { color: colors.textSecondary }]}>
       By clicking &quot;{verb}&quot;, I have read and agree with the{' '}
-      <Typography style={styles.legalLink} onPress={() => router.push('/terms-of-service')}>
+      <Typography
+        style={styles.legalLink}
+        onPress={() => router.push('/terms-of-service' as never)}
+      >
         Terms of Service
       </Typography>{' '}
       and{' '}
-      <Typography style={styles.legalLink} onPress={() => router.push('/privacy-policy')}>
+      <Typography style={styles.legalLink} onPress={() => router.push('/privacy-policy' as never)}>
         Privacy Policy
       </Typography>
     </Typography>

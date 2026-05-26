@@ -1,10 +1,3 @@
-import { ComingSoonScreen } from '@/features/profile';
+import { NotificationsScreen } from '@/features/notifications';
 
-export default function NotificationsComingSoonRoute() {
-  return (
-    <ComingSoonScreen
-      title="Notifications"
-      message="Notifications and reminders will be available here soon."
-    />
-  );
-}
+export default NotificationsScreen;
