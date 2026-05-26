@@ -90,23 +90,27 @@ export function NotificationsScreen() {
     }
 
     setIsLoading(type);
-    const success = await notificationService.triggerNotification({
-      userId: user.id,
-      type,
-      title,
-      body,
-      deliveryMode,
-    });
-    setIsLoading(null);
+    let result = null;
+    try {
+      result = await notificationService.triggerNotification({
+        userId: user.id,
+        type,
+        title,
+        body,
+        deliveryMode,
+      });
+    } finally {
+      setIsLoading(null);
+    }
 
-    if (success) {
-      if (deliveryMode === 'local') {
+    if (result && result.success) {
+      if (result.deliveryKind === 'local') {
         toast.info('Notification scheduled! Lock your screen or go Home now.');
       } else {
         toast.success('Push notification sent via Expo API!');
       }
     } else {
-      toast.error('Failed to trigger notification.');
+      toast.error(result?.error || 'Failed to trigger notification.');
     }
   };
 
@@ -242,7 +246,13 @@ export function NotificationsScreen() {
     >
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+          accessibilityHint="Navigates back to the previous screen"
+        >
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Typography variant="h2" style={{ color: colors.text }}>
@@ -259,6 +269,9 @@ export function NotificationsScreen() {
               toast.success('Console logs cleared!');
             }
           }}
+          accessibilityRole="button"
+          accessibilityLabel={activeTab === 0 ? 'Clear alert history' : 'Clear console logs'}
+          accessibilityHint="Permanently deletes all logs or alerts from the display"
         >
           <Ionicons name="trash-outline" size={20} color={colors.textSecondary} />
         </TouchableOpacity>
@@ -316,7 +329,13 @@ export function NotificationsScreen() {
               >
                 {deviceToken || 'Token not registered yet'}
               </Typography>
-              <TouchableOpacity style={styles.tokenCopyBtn} onPress={handleShareToken}>
+              <TouchableOpacity
+                style={styles.tokenCopyBtn}
+                onPress={handleShareToken}
+                accessibilityRole="button"
+                accessibilityLabel="Share device push token"
+                accessibilityHint="Opens the share tray to copy or send the token"
+              >
                 <Ionicons name="share-outline" size={16} color={colors.primary} />
               </TouchableOpacity>
             </View>

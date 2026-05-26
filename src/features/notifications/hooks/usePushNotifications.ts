@@ -44,12 +44,12 @@ export function usePushNotifications() {
 
     async function setupNotifications() {
       if (!isLoggedIn || !user?.id) {
-        // If user logs out, clear registered tokens
+        // Unconditionally clear tokens on logout to prevent credential leakage
+        store.addLog('info', 'User logged out. Clearing device push token session.');
         if (store.deviceToken) {
-          store.addLog('info', 'User logged out. Clearing device push token session.');
           store.setDeviceToken(null);
-          await secureStorage.clearDevicePushToken();
         }
+        await secureStorage.clearDevicePushToken();
         return;
       }
 
@@ -171,8 +171,7 @@ export function usePushNotifications() {
       }
     });
 
-    // Listen for notification TAPS (foreground/background/terminated clicks)
-    responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
+    const handleResponse = (response: Notifications.NotificationResponse) => {
       const { data } = response.notification.request.content;
       const type = data?.type as NotificationType;
 
@@ -194,7 +193,20 @@ export function usePushNotifications() {
       } else {
         router.push('/(main)/notifications' as never); // Fallback to notifications list
       }
-    });
+    };
+
+    // Listen for notification TAPS (foreground/background/running state clicks)
+    responseListener.current =
+      Notifications.addNotificationResponseReceivedListener(handleResponse);
+
+    // Retrieve and handle any cold-start (terminated-state) notification tap that launched the app
+    Notifications.getLastNotificationResponseAsync()
+      .then((lastResponse) => {
+        if (lastResponse) {
+          handleResponse(lastResponse);
+        }
+      })
+      .catch(() => undefined);
 
     return () => {
       if (notificationListener.current) {

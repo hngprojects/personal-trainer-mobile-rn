@@ -14,6 +14,17 @@ function sleep(ms: number) {
 
 async function registerTokenWithBackend(userId: string, token: string): Promise<void> {
   const store = useNotificationStore.getState();
+
+  // Guard against invalid/empty parameters before starting networking retries
+  if (!userId?.trim() || !token?.trim()) {
+    store.addLog(
+      'error',
+      'Token registration aborted: input validation failed.',
+      `userId: "${userId || ''}", token: "${token || ''}"`,
+    );
+    return;
+  }
+
   store.setRegistering(true);
   store.addLog('info', 'Registering device push token with backend...', `Token: ${token}`);
 
@@ -35,7 +46,6 @@ async function registerTokenWithBackend(userId: string, token: string): Promise<
       // Save token securely on device to mark it as registered
       await secureStorage.saveDevicePushToken(token);
 
-      store.setPermissionStatus('granted');
       store.setDeviceToken(token);
       store.addLog(
         'success',
@@ -72,6 +82,12 @@ async function registerTokenWithBackend(userId: string, token: string): Promise<
   store.setRegistering(false);
 }
 
+export interface TriggerNotificationResult {
+  success: boolean;
+  deliveryKind: 'remote' | 'local';
+  error?: string;
+}
+
 interface TriggerNotificationParams {
   userId: string;
   type: NotificationType;
@@ -81,7 +97,9 @@ interface TriggerNotificationParams {
   deliveryMode: 'push' | 'local';
 }
 
-async function triggerNotification(params: TriggerNotificationParams): Promise<boolean> {
+async function triggerNotification(
+  params: TriggerNotificationParams,
+): Promise<TriggerNotificationResult> {
   const store = useNotificationStore.getState();
   const { type, title, body, data, deliveryMode } = params;
 
@@ -106,7 +124,7 @@ async function triggerNotification(params: TriggerNotificationParams): Promise<b
         },
         body: JSON.stringify({
           to: token,
-          sound: 'default',
+          sound: store.settings.soundEnabled ? 'default' : null,
           title,
           body,
           data: { ...data, type },
@@ -118,7 +136,7 @@ async function triggerNotification(params: TriggerNotificationParams): Promise<b
           'success',
           `Remote push notification dispatched successfully via Expo Push API`,
         );
-        return true;
+        return { success: true, deliveryKind: 'remote' };
       } else {
         const text = await response.text();
         throw new Error(`Expo API returned ${response.status}: ${text}`);
@@ -154,10 +172,11 @@ async function triggerNotification(params: TriggerNotificationParams): Promise<b
       },
     });
 
-    return true;
+    return { success: true, deliveryKind: 'local' };
   } catch (error: any) {
-    store.addLog('error', 'Failed to schedule local notification', error.message || error);
-    return false;
+    const errorMsg = error.message || error;
+    store.addLog('error', 'Failed to schedule local notification', errorMsg);
+    return { success: false, deliveryKind: 'local', error: errorMsg };
   }
 }
 

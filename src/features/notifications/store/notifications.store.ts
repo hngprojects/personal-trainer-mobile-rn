@@ -73,12 +73,8 @@ export const useNotificationStore = createStore<NotificationsState & Notificatio
       set({ notifications: nextNotifications });
       asyncStorage.setItem(STORAGE_KEYS_NOTIF.ITEMS, nextNotifications).catch(() => undefined);
 
-      // Auto-log notification receipt
-      get().addLog(
-        'success',
-        `Received notification: "${notif.title}"`,
-        `Type: ${notif.type}\nBody: ${notif.body}`,
-      );
+      // Auto-log notification receipt using sanitized metadata
+      get().addLog('success', 'Received notification banner', `Type: ${notif.type}`);
     },
 
     markAsRead: (id) => {
@@ -136,7 +132,7 @@ export const useNotificationStore = createStore<NotificationsState & Notificatio
         ]);
 
         set({
-          settings: savedSettings ?? DEFAULT_SETTINGS,
+          settings: { ...DEFAULT_SETTINGS, ...(savedSettings || {}) },
           notifications: savedItems ?? [],
           logs: savedLogs ?? [],
         });
