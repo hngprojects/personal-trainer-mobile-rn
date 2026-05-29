@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
 });
 
 function buildSelectedDateTime(date: Date, time: string): string {
-  const [rawTime, period] = time.split(' ');
+  const [rawTime, period] = time.trim().split(/\s+/);
   const [rawHour, rawMinute] = rawTime.split(':').map(Number);
   let hour = rawHour;
 
