@@ -32,7 +32,7 @@ function formatDate(d: Date): string {
 }
 
 function addOneHour(time: string): string {
-  const [rawTime, period] = time.split(' ');
+  const [rawTime, period] = time.trim().split(/\s+/);
   let [h] = rawTime.split(':').map(Number);
   if (period === 'PM' && h !== 12) h += 12;
   if (period === 'AM' && h === 12) h = 0;

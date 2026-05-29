@@ -653,7 +653,7 @@ const styles = StyleSheet.create({
 });
 
 function buildRescheduleDateTime(viewDate: Date, day: number, time: string): string {
-  const [rawTime, period] = time.split(' ');
+  const [rawTime, period] = time.trim().split(/\s+/);
   const [rawHour, rawMinute] = rawTime.split(':').map(Number);
   let hour = rawHour;
   if (period === 'PM' && hour !== 12) hour += 12;
