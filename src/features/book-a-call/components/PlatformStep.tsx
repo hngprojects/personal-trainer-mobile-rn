@@ -31,9 +31,9 @@ const CONTACT_OPTIONS: {
   },
   {
     id: 'phone_callback',
-    name: 'Phone Call',
-    description: 'A FitCall rep will call the phone number you provide.',
-    icon: 'call-outline',
+    name: 'WhatsApp Call',
+    description: 'A FitCall rep will call your WhatsApp number.',
+    icon: 'logo-whatsapp',
   },
 ];
 
@@ -45,7 +45,9 @@ interface PlatformStepProps {
 }
 
 export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformStepProps) {
-  const { colors, spacing } = useTheme();
+  const { colors, spacing, isDark } = useTheme();
+  const glassSurface = isDark ? 'rgba(0,0,0,0.48)' : 'rgba(255,255,255,0.78)';
+  const glassBorder = isDark ? 'rgba(255,255,255,0.20)' : 'rgba(255,255,255,0.46)';
   const requiresPhone = draft.contactMode === 'phone_callback';
   const phoneValid = isPhoneComplete(draft.phoneNumber, draft.phoneCountry);
   const canContinue = draft.contactMode !== null && (!requiresPhone || phoneValid);
@@ -61,18 +63,18 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
       >
         {/* Heading */}
         <Animated.View entering={FadeInDown.duration(360)}>
-          <Typography variant="h2" style={styles.heading}>
+          <Typography variant="h2" style={[styles.heading, { color: '#FFFFFF' }]}>
             Got questions? Let&apos;s answer them.
           </Typography>
-          <Typography variant="body2" color={colors.textSecondary} style={styles.subtitle}>
-            One of our agents will reach out to you by Zoom or phone.
+          <Typography variant="body2" color="rgba(255,255,255,0.76)" style={styles.subtitle}>
+            One of our agents will reach out to you by Zoom or WhatsApp.
           </Typography>
         </Animated.View>
 
         {/* Info card */}
         <Animated.View
           entering={FadeInUp.delay(80).duration(360)}
-          style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          style={[styles.card, { backgroundColor: glassSurface, borderColor: glassBorder }]}
         >
           <Typography variant="body2" style={styles.cardLabel}>
             On this call, our agent will:
@@ -95,7 +97,7 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
         {/* Trainer / enquiring-about card */}
         <Animated.View
           entering={FadeInUp.delay(160).duration(360)}
-          style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          style={[styles.card, { backgroundColor: glassSurface, borderColor: glassBorder }]}
         >
           <Typography variant="body2" color={colors.primary} style={styles.enquiringLabel}>
             Enquiring about
@@ -132,8 +134,8 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
                 style={[
                   styles.platformCard,
                   {
-                    backgroundColor: colors.surface,
-                    borderColor: selected ? colors.primary : colors.border,
+                    backgroundColor: glassSurface,
+                    borderColor: selected ? colors.primary : glassBorder,
                     borderWidth: selected ? 1.5 : 1,
                   },
                 ]}
@@ -171,7 +173,7 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
         {requiresPhone && (
           <Animated.View entering={FadeInUp.duration(260)}>
             <Typography variant="body1" style={styles.sectionHeader}>
-              Your phone number
+              Your WhatsApp number
             </Typography>
             <PhoneInput
               value={draft.phoneNumber}
@@ -187,7 +189,7 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
         {/* Info banner */}
         <Animated.View
           entering={FadeInUp.delay(480).duration(360)}
-          style={[styles.infoBanner, { backgroundColor: colors.primarySubtle }]}
+          style={[styles.infoBanner, { backgroundColor: glassSurface, borderColor: glassBorder }]}
         >
           <Ionicons
             name="information-circle-outline"
@@ -197,7 +199,7 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
           />
           <Typography variant="body2" color={colors.primary} style={styles.infoText}>
             {requiresPhone
-              ? 'Use a US or UK number where you can receive calls or quick scheduling updates.'
+              ? 'Use the WhatsApp number where our team can reach you.'
               : 'Make sure you have Zoom installed before your discovery call.'}
           </Typography>
         </Animated.View>
@@ -211,11 +213,15 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
           {
             paddingHorizontal: spacing.md,
             paddingBottom: spacing.lg,
-            backgroundColor: colors.background,
           },
         ]}
       >
-        <Button label="Continue" disabled={!canContinue} onPress={onContinue} />
+        <Button
+          label="Continue"
+          disabled={!canContinue}
+          onPress={onContinue}
+          style={styles.glassButton}
+        />
       </View>
     </View>
   );
@@ -278,6 +284,7 @@ const styles = StyleSheet.create({
   infoBanner: {
     flexDirection: 'row',
     alignItems: 'flex-start',
+    borderWidth: 1,
     borderRadius: 12,
     padding: 14,
     marginTop: 4,
@@ -287,4 +294,9 @@ const styles = StyleSheet.create({
   infoText: { flex: 1, lineHeight: 20 },
   footerSpacer: { height: 128 },
   footer: { paddingTop: 12 },
+  glassButton: {
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.34)',
+  },
 });

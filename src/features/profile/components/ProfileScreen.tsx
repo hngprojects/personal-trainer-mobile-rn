@@ -160,17 +160,11 @@ export function ProfileScreen() {
             label="Fitness Goals & Preferences"
             onPress={navigate('/fitness-preferences')}
           />
-          {/*
-            Notifications & Reminders is intentionally hidden for now.
-            Restore this row when the notifications experience is ready.
-          */}
-          {/*
-            <SettingsRow
-              icon={<Ionicons name="notifications-outline" size={18} color={colors.icon} />}
-              label="Notifications & Reminders"
-              onPress={navigate('/notifications')}
-            />
-          */}
+          <SettingsRow
+            icon={<Ionicons name="notifications-outline" size={18} color={colors.icon} />}
+            label="Notifications & Reminders"
+            onPress={navigate('/notifications')}
+          />
         </Animated.View>
 
         <Animated.View entering={FadeInUp.delay(260).duration(360)} style={styles.section}>

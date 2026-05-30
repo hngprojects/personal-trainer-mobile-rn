@@ -13,6 +13,8 @@ export interface Session {
   time: string;
   duration: string;
   status: 'upcoming' | 'completed' | 'cancelled' | 'rescheduled';
+  startsAt?: string;
+  createdAt?: string | null;
   platform?: string;
   goals?: string[];
 }

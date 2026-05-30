@@ -1,4 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image as ExpoImage } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
@@ -6,10 +8,11 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'reac
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Avatar, Button, Screen, Typography } from '@/shared/components';
-import { useStatusBarStyle } from '@/shared/hooks/useStatusBarStyle';
 import { fonts, useTheme } from '@/shared/theme';
 
 import { useSessionDetails } from '../hooks/useSessionDetails';
+
+const FALLBACK_BACKGROUND = require('../../../../assets/images/auth-bg.jpg');
 
 export function SessionDetailsScreen() {
   // `id` is the session_id (from booking.session_id) and drives GET /sessions/{id}.
@@ -37,16 +40,20 @@ export function SessionDetailsScreen() {
     time?: string;
     duration?: string;
   }>();
-  const { spacing, colors } = useTheme();
+  const { spacing, colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
-  const statusBarStyle = useStatusBarStyle();
   const { data: apiSession, isLoading } = useSessionDetails(id);
+  const glassSurface = isDark ? 'rgba(0,0,0,0.48)' : 'rgba(255,255,255,0.78)';
+  const glassBorder = isDark ? 'rgba(255,255,255,0.20)' : 'rgba(255,255,255,0.46)';
+  const backgroundSource = trainerAvatar ? { uri: trainerAvatar } : FALLBACK_BACKGROUND;
 
   if (isLoading) {
     return (
-      <Screen padding={false} edges={['top']}>
-        <StatusBar style={statusBarStyle} />
-        <View style={[styles.loading, { backgroundColor: colors.background }]}>
+      <Screen padding={false} edges={[]} backgroundColor="#000000">
+        <StatusBar style="light" translucent backgroundColor="transparent" />
+        <ExpoImage source={backgroundSource} style={styles.backgroundImage} contentFit="cover" />
+        <View pointerEvents="none" style={styles.backgroundScrim} />
+        <View style={styles.loading}>
           <ActivityIndicator color={colors.primary} />
         </View>
       </Screen>
@@ -55,13 +62,20 @@ export function SessionDetailsScreen() {
 
   if (!apiSession) {
     return (
-      <Screen padding={false} edges={['top']}>
-        <StatusBar style={statusBarStyle} />
-        <View style={styles.header}>
+      <Screen padding={false} edges={[]} backgroundColor="#000000">
+        <StatusBar style="light" translucent backgroundColor="transparent" />
+        <ExpoImage source={backgroundSource} style={styles.backgroundImage} contentFit="cover" />
+        <View pointerEvents="none" style={styles.backgroundScrim} />
+        <LinearGradient
+          pointerEvents="none"
+          colors={['rgba(0,0,0,0.62)', 'rgba(0,0,0,0.84)', 'rgba(0,0,0,0.96)']}
+          style={styles.backgroundShade}
+        />
+        <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
           <Pressable onPress={() => router.back()} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={24} color={colors.icon} />
+            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
           </Pressable>
-          <Typography variant="h3" style={styles.headerTitle}>
+          <Typography variant="h3" style={[styles.headerTitle, { color: '#FFFFFF' }]}>
             Session Not Found
           </Typography>
         </View>
@@ -71,7 +85,7 @@ export function SessionDetailsScreen() {
             { paddingHorizontal: spacing.md, alignItems: 'center', marginTop: 100 },
           ]}
         >
-          <Typography variant="body1" color={colors.textSecondary}>
+          <Typography variant="body1" color="rgba(255,255,255,0.74)">
             The session you are looking for does not exist or has been removed.
           </Typography>
           <Button
@@ -111,14 +125,27 @@ export function SessionDetailsScreen() {
       : duration;
 
   return (
-    <Screen padding={false} edges={['top']}>
-      <StatusBar style={statusBarStyle} />
+    <Screen padding={false} edges={[]} backgroundColor="#000000">
+      <StatusBar style="light" translucent backgroundColor="transparent" />
+      <ExpoImage
+        source={backgroundSource}
+        style={styles.backgroundImage}
+        contentFit="cover"
+        transition={180}
+      />
+      <View pointerEvents="none" style={styles.backgroundScrim} />
+      <LinearGradient
+        pointerEvents="none"
+        colors={['rgba(0,0,0,0.58)', 'rgba(0,0,0,0.72)', 'rgba(0,0,0,0.88)', 'rgba(0,0,0,0.96)']}
+        locations={[0, 0.28, 0.68, 1]}
+        style={styles.backgroundShade}
+      />
 
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color={colors.icon} />
+          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
         </Pressable>
-        <Typography variant="h3" style={styles.headerTitle}>
+        <Typography variant="h3" style={[styles.headerTitle, { color: '#FFFFFF' }]}>
           Session Details
         </Typography>
       </View>
@@ -126,40 +153,36 @@ export function SessionDetailsScreen() {
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingHorizontal: spacing.md, paddingBottom: 120 + insets.bottom },
+          { paddingHorizontal: spacing.md, paddingBottom: 190 + insets.bottom },
         ]}
       >
-        <Typography variant="body2" color={colors.textSecondary} style={styles.sectionLabel}>
+        <Typography variant="body2" color="rgba(255,255,255,0.74)" style={styles.sectionLabel}>
           Your Trainer
         </Typography>
 
         <View
-          style={[
-            styles.trainerCard,
-            { backgroundColor: colors.background, borderColor: colors.divider },
-          ]}
+          style={[styles.trainerCard, { backgroundColor: glassSurface, borderColor: glassBorder }]}
         >
           <Avatar name={trainerName ?? 'FitCall Trainer'} uri={trainerAvatar || null} size={56} />
           <View style={styles.trainerInfo}>
             <View style={styles.trainerHeader}>
-              <Typography style={styles.trainerName}>{trainerName ?? 'FitCall Trainer'}</Typography>
+              <Typography style={[styles.trainerName, { color: '#FFFFFF' }]}>
+                {trainerName ?? 'FitCall Trainer'}
+              </Typography>
               <Ionicons name="checkmark-circle" size={16} color={colors.success} />
             </View>
-            <Typography variant="label" color={colors.textSecondary}>
+            <Typography variant="label" color="rgba(255,255,255,0.70)">
               Strength & Accountability
             </Typography>
           </View>
         </View>
 
-        <Typography variant="body2" color={colors.textSecondary} style={styles.sectionLabel}>
+        <Typography variant="body2" color="rgba(255,255,255,0.74)" style={styles.sectionLabel}>
           Booking Information
         </Typography>
 
         <View
-          style={[
-            styles.infoList,
-            { backgroundColor: colors.background, borderColor: colors.divider },
-          ]}
+          style={[styles.infoList, { backgroundColor: glassSurface, borderColor: glassBorder }]}
         >
           <InfoItem icon="calendar-outline" label="Date" value={displayDate ?? 'Pending'} />
           <InfoItem icon="time-outline" label="Time" value={displayTime ?? 'Pending'} />
@@ -183,7 +206,7 @@ export function SessionDetailsScreen() {
           ) : null}
         </View>
 
-        <Typography variant="body2" color={colors.textSecondary} style={styles.sectionLabel}>
+        <Typography variant="body2" color="rgba(255,255,255,0.74)" style={styles.sectionLabel}>
           Session Goals
         </Typography>
 
@@ -191,12 +214,9 @@ export function SessionDetailsScreen() {
           {['Cardio', 'Core Strength', 'Weight Loss', 'Mobility'].map((goal) => (
             <View
               key={goal}
-              style={[
-                styles.goalTag,
-                { backgroundColor: colors.surfaceMuted, borderColor: colors.divider },
-              ]}
+              style={[styles.goalTag, { backgroundColor: glassSurface, borderColor: glassBorder }]}
             >
-              <Typography variant="label" color={colors.textSecondary}>
+              <Typography variant="label" color="rgba(255,255,255,0.78)">
                 {goal}
               </Typography>
             </View>
@@ -208,15 +228,18 @@ export function SessionDetailsScreen() {
         style={[
           styles.footer,
           {
-            backgroundColor: colors.background,
-            borderTopColor: colors.border,
             paddingHorizontal: spacing.md,
-            paddingTop: spacing.md,
+            paddingTop: 0,
             paddingBottom: spacing.md + insets.bottom,
           },
         ]}
       >
-        <Button label="Reschedule" onPress={handleReschedule} disabled={!rescheduleId} />
+        <Button
+          label="Reschedule"
+          onPress={handleReschedule}
+          disabled={!rescheduleId}
+          style={styles.glassButton}
+        />
       </View>
     </Screen>
   );
@@ -237,14 +260,14 @@ function InfoItem({
   return (
     <View style={styles.infoItem}>
       <View style={styles.infoIconLabel}>
-        <Ionicons name={icon} size={20} color={colors.iconMuted} />
-        <Typography variant="body2" color={colors.textSecondary} style={styles.infoLabel}>
+        <Ionicons name={icon} size={20} color="rgba(255,255,255,0.68)" />
+        <Typography variant="body2" color="rgba(255,255,255,0.70)" style={styles.infoLabel}>
           {label}
         </Typography>
       </View>
       <View style={styles.infoValueContainer}>
         {isPlatform && <View style={[styles.platformDot, { backgroundColor: colors.primary }]} />}
-        <Typography variant="body2" style={styles.infoValue}>
+        <Typography variant="body2" style={[styles.infoValue, { color: '#FFFFFF' }]}>
           {value}
         </Typography>
       </View>
@@ -253,6 +276,18 @@ function InfoItem({
 }
 
 const styles = StyleSheet.create({
+  backgroundImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  },
+  backgroundScrim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.56)',
+  },
+  backgroundShade: {
+    ...StyleSheet.absoluteFillObject,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -349,7 +384,11 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    borderTopWidth: 1,
+  },
+  glassButton: {
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.34)',
   },
   loading: {
     flex: 1,

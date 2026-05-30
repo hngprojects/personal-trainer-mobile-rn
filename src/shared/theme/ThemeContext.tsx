@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useColorScheme as useSystemColorScheme } from 'react-native';
+import { Appearance } from 'react-native';
 import * as SystemUI from 'expo-system-ui';
 
 import { STORAGE_KEYS } from '@/shared/constants/keys';
@@ -10,6 +10,11 @@ import { spacing } from './spacing';
 import { typography } from './typography';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
+type ResolvedColorScheme = 'light' | 'dark';
+
+function resolveSystemScheme(): ResolvedColorScheme {
+  return Appearance.getColorScheme() === 'dark' ? 'dark' : 'light';
+}
 
 interface ThemeContextValue {
   mode: ThemeMode;
@@ -28,12 +33,24 @@ interface ThemeProviderProps {
 }
 
 export function ThemeProvider({ children, initialMode = 'system' }: ThemeProviderProps) {
-  const systemScheme = useSystemColorScheme();
+  const [systemScheme, setSystemScheme] = useState<ResolvedColorScheme>(resolveSystemScheme);
   const [mode, setModeState] = useState<ThemeMode>(initialMode);
 
   useEffect(() => {
+    const subscription = Appearance.addChangeListener(({ colorScheme }) => {
+      setSystemScheme(colorScheme === 'dark' ? 'dark' : 'light');
+      setModeState('system');
+      asyncStorage.setItem(STORAGE_KEYS.THEME_MODE, 'system').catch(() => undefined);
+    });
+
+    return () => subscription.remove();
+  }, []);
+
+  useEffect(() => {
     asyncStorage.getItem<ThemeMode>(STORAGE_KEYS.THEME_MODE).then((saved) => {
-      if (saved) setModeState(saved);
+      if (saved === 'light' || saved === 'dark' || saved === 'system') {
+        setModeState(saved);
+      }
     });
   }, []);
 

@@ -1,18 +1,23 @@
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
+import { StyleSheet, View } from 'react-native';
 
 import { OnboardingPager, useOnboarding } from '@/features/onboarding';
-import { GradientBackground } from '@/shared/components';
-import { useStatusBarStyle } from '@/shared/hooks/useStatusBarStyle';
 
 export default function OnboardingScreen() {
   const { slides, goToLogin, goToRegister } = useOnboarding();
-  const statusBarStyle = useStatusBarStyle();
 
   return (
-    <GradientBackground>
-      <StatusBar style={statusBarStyle} />
+    <View style={styles.container}>
+      <StatusBar style="light" translucent backgroundColor="transparent" />
       <OnboardingPager slides={slides} onLogin={goToLogin} onRegister={goToRegister} />
-    </GradientBackground>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+});

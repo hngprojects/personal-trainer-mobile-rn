@@ -74,20 +74,22 @@ export function SessionsScreen() {
     const trainer = query.data;
     if (trainer) trainersById.set(trainerIdsToFetch[index]!, trainer);
   });
-  const apiSessions = upcomingBookings.map((booking) =>
-    mapUpcomingBookingToSession(
-      booking,
-      (booking.trainerId ? trainersById.get(booking.trainerId) : undefined) ??
-        trainersByName.get(normalizeName(booking.trainerName)),
-    ),
-  );
+  const apiSessions = upcomingBookings
+    .map((booking) =>
+      mapUpcomingBookingToSession(
+        booking,
+        (booking.trainerId ? trainersById.get(booking.trainerId) : undefined) ??
+          trainersByName.get(normalizeName(booking.trainerName)),
+      ),
+    )
+    .sort(sortSessionsByNewestCreated);
 
-  const upcomingSessions = apiSessions.filter(
-    (s) => s.status === 'upcoming' || s.status === 'rescheduled',
-  );
-  const historySessions = apiSessions.filter(
-    (s) => s.status === 'completed' || s.status === 'cancelled',
-  );
+  const upcomingSessions = apiSessions
+    .filter((s) => !isPastSession(s) && (s.status === 'upcoming' || s.status === 'rescheduled'))
+    .sort(sortSessionsByNewestCreated);
+  const historySessions = apiSessions
+    .filter((s) => isPastSession(s) || s.status === 'completed' || s.status === 'cancelled')
+    .sort(sortSessionsByNewestScheduled);
 
   const displayedSessions = activeTab === 'Upcoming' ? upcomingSessions : historySessions;
   const isEmpty = displayedSessions.length === 0;
@@ -391,8 +393,30 @@ function mapUpcomingBookingToSession(booking: UpcomingBooking, trainer?: Trainer
     time: `${formatTime(start)} - ${formatTime(end)}`,
     duration: `${durationMinutes} mins`,
     status: normalizeStatus(booking.status),
+    startsAt: booking.startsAt,
+    createdAt: booking.createdAt,
     platform: booking.platform ?? 'Video Call',
   };
+}
+
+function isPastSession(session: Session) {
+  if (!session.startsAt) return false;
+  const time = new Date(session.startsAt).getTime();
+  return Number.isFinite(time) && time < Date.now();
+}
+
+function sortSessionsByNewestCreated(a: Session, b: Session) {
+  return getSortableDate(b.createdAt ?? b.startsAt) - getSortableDate(a.createdAt ?? a.startsAt);
+}
+
+function sortSessionsByNewestScheduled(a: Session, b: Session) {
+  return getSortableDate(b.startsAt ?? b.createdAt) - getSortableDate(a.startsAt ?? a.createdAt);
+}
+
+function getSortableDate(value: string | null | undefined) {
+  if (!value) return 0;
+  const time = new Date(value).getTime();
+  return Number.isFinite(time) ? time : 0;
 }
 
 function normalizeName(value: string) {

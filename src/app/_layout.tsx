@@ -1,10 +1,11 @@
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useAuthSession } from '@/features/auth/hooks/useAuthSession';
 import { useAuthStore } from '@/features/auth/store/auth.store';
 import { EntryScreen } from '@/features/entry';
+import { useNotificationsSocket, usePushNotifications } from '@/features/notifications';
 import { useOnboardingStore } from '@/features/onboarding/store/onboarding.store';
 import { AppProviders } from '@/providers/AppProviders';
 import { useAppReady } from '@/shared/hooks/useAppReady';
@@ -17,8 +18,14 @@ function RootLayoutNav() {
   const { colors } = useTheme();
   const { isLoggedIn } = useAuthSession();
   const hasCompleted = useOnboardingStore((s) => s.hasCompleted);
+  const resetOnboarding = useOnboardingStore((s) => s.resetOnboarding);
   const showWelcome = useAuthStore((s) => s.showWelcome);
   const [entryDone, setEntryDone] = useState(false);
+  const didResetOnboardingForLaunch = useRef(false);
+  useNotificationsSocket(isLoggedIn);
+
+  // Initialize and run push notifications globally
+  usePushNotifications();
 
   // Hide splash only AFTER React has painted the navigation tree.
   // useEffect fires post-render/paint, so the correct screen is visible
@@ -28,6 +35,13 @@ function RootLayoutNav() {
       SplashScreen.hideAsync();
     }
   }, [isReady]);
+
+  useEffect(() => {
+    if (!isReady || didResetOnboardingForLaunch.current) return;
+
+    didResetOnboardingForLaunch.current = true;
+    resetOnboarding();
+  }, [isReady, resetOnboarding]);
 
   const handleEntryComplete = useCallback(() => setEntryDone(true), []);
 

@@ -4,4 +4,5 @@ export const STORAGE_KEYS = {
   USER_PROFILE: 'app_user_profile',
   ONBOARDING_COMPLETE: 'app_onboarding_complete',
   THEME_MODE: 'app_theme_mode',
+  DEVICE_PUSH_TOKEN: 'app_device_push_token',
 } as const;

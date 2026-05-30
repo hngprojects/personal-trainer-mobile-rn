@@ -26,10 +26,10 @@ const PLATFORMS: PlatformOption[] = [
     logo: PLATFORM_LOGOS.zoom,
   },
   {
-    id: 'phone_call',
-    name: 'Phone Call',
-    description: 'Your trainer will call the phone number you provide.',
-    icon: 'call-outline',
+    id: 'whatsapp',
+    name: 'WhatsApp Call',
+    description: 'Your trainer will call your WhatsApp number at the booked time.',
+    icon: 'logo-whatsapp',
   },
 ];
 
@@ -41,9 +41,11 @@ interface PlatformStepProps {
 }
 
 export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformStepProps) {
-  const { colors, spacing } = useTheme();
+  const { colors, spacing, isDark } = useTheme();
+  const glassSurface = isDark ? 'rgba(0,0,0,0.48)' : 'rgba(255,255,255,0.78)';
+  const glassBorder = isDark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.58)';
 
-  const requiresPhone = draft.platform === 'phone_call';
+  const requiresPhone = draft.platform === 'whatsapp';
   const phoneValid = isPhoneComplete(draft.phoneNumber, draft.phoneCountry);
   const canContinue = draft.platform !== null && (!requiresPhone || phoneValid);
 
@@ -57,18 +59,18 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
         keyboardShouldPersistTaps="handled"
       >
         <Animated.View entering={FadeInDown.duration(360)}>
-          <Typography variant="h2" style={styles.heading}>
+          <Typography variant="h2" color="#FFFFFF" style={styles.heading}>
             How should the session happen?
           </Typography>
-          <Typography variant="body2" color={colors.textSecondary} style={styles.subtitle}>
-            Choose a video meeting or a direct phone call.
+          <Typography variant="body2" color="rgba(255,255,255,0.74)" style={styles.subtitle}>
+            Choose Zoom or a WhatsApp call.
           </Typography>
         </Animated.View>
 
         {/* Trainer / booking-with card */}
         <Animated.View
           entering={FadeInUp.delay(80).duration(360)}
-          style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          style={[styles.card, { backgroundColor: glassSurface, borderColor: glassBorder }]}
         >
           <Typography variant="body2" color={colors.primary} style={styles.bookingLabel}>
             Booking session with
@@ -98,7 +100,7 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
                 style={[
                   styles.platformCard,
                   {
-                    backgroundColor: colors.surface,
+                    backgroundColor: glassSurface,
                     borderColor: selected ? colors.primary : colors.border,
                     borderWidth: selected ? 1.5 : 1,
                   },
@@ -137,7 +139,7 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
         {requiresPhone && (
           <Animated.View entering={FadeInUp.duration(260)}>
             <Typography variant="body1" style={styles.phoneLabel}>
-              Your phone number
+              Your WhatsApp number
             </Typography>
             <PhoneInput
               value={draft.phoneNumber}
@@ -152,7 +154,7 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
 
         <Animated.View
           entering={FadeInUp.delay(340).duration(360)}
-          style={[styles.infoBanner, { backgroundColor: colors.primarySubtle }]}
+          style={[styles.infoBanner, { backgroundColor: glassSurface, borderColor: glassBorder }]}
         >
           <Ionicons
             name="information-circle-outline"
@@ -162,7 +164,7 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
           />
           <Typography variant="body2" color={colors.primary} style={styles.infoText}>
             {requiresPhone
-              ? 'Use a number where you can take the trainer’s call at the booked time.'
+              ? 'Use the WhatsApp number where your trainer can reach you at the booked time.'
               : 'Make sure you have Zoom installed before your session.'}
           </Typography>
         </Animated.View>
@@ -176,11 +178,15 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
           {
             paddingHorizontal: spacing.md,
             paddingBottom: spacing.lg,
-            backgroundColor: colors.background,
           },
         ]}
       >
-        <Button label="Continue" disabled={!canContinue} onPress={onContinue} />
+        <Button
+          label="Continue"
+          disabled={!canContinue}
+          onPress={onContinue}
+          style={styles.glassButton}
+        />
       </View>
     </View>
   );
@@ -240,6 +246,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     borderRadius: 12,
+    borderWidth: 1,
     padding: 14,
     marginTop: 4,
     marginBottom: 8,
@@ -248,4 +255,10 @@ const styles = StyleSheet.create({
   infoText: { flex: 1, lineHeight: 20 },
   footerSpacer: { height: 128 },
   footer: { paddingTop: 12 },
+  glassButton: {
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.30)',
+  },
 });

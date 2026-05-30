@@ -24,7 +24,7 @@ const MONTH_NAMES = [
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 function contactModeLabel(mode: CallContactMode): string {
-  return mode === 'phone_callback' ? 'Phone Call' : 'Zoom Meeting';
+  return mode === 'phone_callback' ? 'WhatsApp Call' : 'Zoom Meeting';
 }
 
 function formatDate(d: Date): string {
@@ -32,7 +32,7 @@ function formatDate(d: Date): string {
 }
 
 function addOneHour(time: string): string {
-  const [rawTime, period] = time.split(' ');
+  const [rawTime, period] = time.trim().split(/\s+/);
   let [h] = rawTime.split(':').map(Number);
   if (period === 'PM' && h !== 12) h += 12;
   if (period === 'AM' && h === 12) h = 0;
@@ -55,7 +55,9 @@ export function SummaryStep({
   isSubmitting = false,
   errorMessage,
 }: SummaryStepProps) {
-  const { colors, spacing } = useTheme();
+  const { colors, spacing, isDark } = useTheme();
+  const glassSurface = isDark ? 'rgba(0,0,0,0.48)' : 'rgba(255,255,255,0.78)';
+  const glassBorder = isDark ? 'rgba(255,255,255,0.20)' : 'rgba(255,255,255,0.46)';
 
   const contactMode = draft.contactMode!;
   const date = draft.date!;
@@ -76,10 +78,10 @@ export function SummaryStep({
         showsVerticalScrollIndicator={false}
       >
         <Animated.View entering={FadeInDown.duration(360)}>
-          <Typography variant="h2" style={styles.heading}>
+          <Typography variant="h2" style={[styles.heading, { color: '#FFFFFF' }]}>
             Review your call request
           </Typography>
-          <Typography variant="body2" color={colors.textSecondary} style={styles.subtitle}>
+          <Typography variant="body2" color="rgba(255,255,255,0.76)" style={styles.subtitle}>
             Please review the details below and confirm.
           </Typography>
         </Animated.View>
@@ -87,10 +89,7 @@ export function SummaryStep({
         {/* Details card */}
         <Animated.View
           entering={FadeInUp.delay(80).duration(360)}
-          style={[
-            styles.detailsCard,
-            { backgroundColor: colors.surface, borderColor: colors.border },
-          ]}
+          style={[styles.detailsCard, { backgroundColor: glassSurface, borderColor: glassBorder }]}
         >
           {[
             {
@@ -111,16 +110,20 @@ export function SummaryStep({
               value: '60 mins',
               valueNode: null,
             },
-            {
-              icon: 'call-outline' as const,
-              label: 'Phone',
-              value: toPhoneE164(draft.phoneNumber, draft.phoneCountry) ?? draft.phoneNumber,
-              valueNode: null,
-            },
+            ...(contactMode === 'phone_callback'
+              ? [
+                  {
+                    icon: 'logo-whatsapp' as const,
+                    label: 'WhatsApp',
+                    value: toPhoneE164(draft.phoneNumber, draft.phoneCountry) ?? draft.phoneNumber,
+                    valueNode: null,
+                  },
+                ]
+              : []),
             {
               icon:
                 contactMode === 'phone_callback'
-                  ? ('call-outline' as const)
+                  ? ('logo-whatsapp' as const)
                   : ('videocam-outline' as const),
               label: 'Contact',
               value: contactModeLabel(contactMode),
@@ -157,10 +160,7 @@ export function SummaryStep({
         {/* What happens next */}
         <Animated.View
           entering={FadeInUp.delay(180).duration(360)}
-          style={[
-            styles.nextCard,
-            { backgroundColor: colors.background, borderColor: colors.border },
-          ]}
+          style={[styles.nextCard, { backgroundColor: glassSurface, borderColor: glassBorder }]}
         >
           <Typography variant="body1" style={styles.nextHeading}>
             What happens next
@@ -201,11 +201,15 @@ export function SummaryStep({
           {
             paddingHorizontal: spacing.md,
             paddingBottom: spacing.lg,
-            backgroundColor: colors.background,
           },
         ]}
       >
-        <Button label="Submit Request" isLoading={isSubmitting} onPress={onSubmit} />
+        <Button
+          label="Submit Request"
+          isLoading={isSubmitting}
+          onPress={onSubmit}
+          style={styles.glassButton}
+        />
       </View>
     </View>
   );
@@ -253,4 +257,9 @@ const styles = StyleSheet.create({
   errorText: { flex: 1, lineHeight: 20 },
   footerSpacer: { height: 8 },
   footer: { paddingTop: 12 },
+  glassButton: {
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.34)',
+  },
 });
