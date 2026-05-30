@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   FadeIn,
   FadeInDown,
@@ -174,24 +175,30 @@ export function BookACallScreen() {
       style={[styles.container, { backgroundColor: colors.background }]}
       edges={['top', 'bottom']}
     >
+      <Image source={{ uri: trainer.image }} style={styles.backgroundImage} />
+      <View pointerEvents="none" style={styles.backgroundScrim} />
+      <LinearGradient
+        pointerEvents="none"
+        colors={['rgba(0,0,0,0.56)', 'rgba(0,0,0,0.70)', 'rgba(0,0,0,0.88)', 'rgba(0,0,0,0.96)']}
+        locations={[0, 0.32, 0.68, 1]}
+        style={styles.backgroundShade}
+      />
       {!isSuccess && (
         <Animated.View
           entering={FadeInDown.duration(360)}
           style={[styles.header, { paddingHorizontal: spacing.md, paddingTop: spacing.sm }]}
         >
           <Pressable onPress={handleBack} hitSlop={12} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={22} color={colors.text} />
+            <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
           </Pressable>
-          <Typography variant="h2" style={styles.headerTitle}>
+          <Typography variant="h2" style={[styles.headerTitle, { color: '#FFFFFF' }]}>
             {title}
           </Typography>
 
-          <View style={[styles.progressTrack, { backgroundColor: colors.border }]}>
-            <Animated.View
-              style={[styles.progressFill, { backgroundColor: colors.primary }, progressStyle]}
-            />
+          <View style={styles.progressTrack}>
+            <Animated.View style={[styles.progressFill, progressStyle]} />
           </View>
-          <Typography variant="body2" color={colors.textSecondary} style={styles.stepLabel}>
+          <Typography variant="body2" color="rgba(255,255,255,0.74)" style={styles.stepLabel}>
             Step {numericStep} of 3
           </Typography>
         </Animated.View>
@@ -220,6 +227,7 @@ export function BookACallScreen() {
             useRemoteSlots={areSlotsReady}
             onRefresh={refreshSlots}
             isRefreshing={isRefreshingSlots}
+            glass
           />
         )}
         {step === 3 && (
@@ -238,6 +246,19 @@ export function BookACallScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  backgroundImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  backgroundScrim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.54)',
+  },
+  backgroundShade: {
+    ...StyleSheet.absoluteFillObject,
+  },
   centered: { alignItems: 'center', justifyContent: 'center' },
   header: { paddingBottom: 18 },
   backBtn: { marginBottom: 12 },
@@ -247,10 +268,12 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     overflow: 'hidden',
     marginBottom: 8,
+    backgroundColor: 'rgba(255,255,255,0.22)',
   },
   progressFill: {
     height: '100%',
     borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.82)',
   },
   stepLabel: { marginBottom: 0 },
   content: { flex: 1 },

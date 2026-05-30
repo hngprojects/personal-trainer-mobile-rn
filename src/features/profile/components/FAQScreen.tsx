@@ -22,7 +22,7 @@ const FAQ_ITEMS = [
   {
     question: 'What is FitCall and how does it work?',
     answer:
-      'FitCall connects you with vetted trainers for discovery calls and virtual training sessions. Choose a trainer, pick an available slot, and meet by Zoom or phone.',
+      'FitCall connects you with vetted trainers for discovery calls and virtual training sessions. Choose a trainer, pick an available slot, and meet by Zoom or WhatsApp.',
   },
   {
     question: 'What types of training sessions does FitCall offer?',
@@ -42,7 +42,7 @@ const FAQ_ITEMS = [
   {
     question: 'How do discovery calls work?',
     answer:
-      'Discovery calls help you ask questions before starting. You can choose Zoom or a phone call, then pick one of the available call slots.',
+      'Discovery calls help you ask questions before starting. You can choose Zoom or a WhatsApp call, then pick one of the available call slots.',
   },
 ];
 

@@ -26,7 +26,7 @@ const MONTH_NAMES = [
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 function platformLabel(p: SessionPlatform): string {
-  return p === 'phone_call' ? 'Phone Call' : 'Zoom';
+  return p === 'whatsapp' ? 'WhatsApp Call' : 'Zoom';
 }
 
 function formatDate(d: Date): string {
@@ -59,7 +59,9 @@ export function SummaryStep({
   isSubmitting = false,
   errorMessage,
 }: SummaryStepProps) {
-  const { colors, spacing } = useTheme();
+  const { colors, spacing, isDark } = useTheme();
+  const glassSurface = isDark ? 'rgba(0,0,0,0.48)' : 'rgba(255,255,255,0.78)';
+  const glassBorder = isDark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.58)';
 
   const platform = draft.platform!;
   const date = draft.date!;
@@ -74,10 +76,10 @@ export function SummaryStep({
         showsVerticalScrollIndicator={false}
       >
         <Animated.View entering={FadeInDown.duration(360)}>
-          <Typography variant="h2" style={styles.heading}>
+          <Typography variant="h2" color="#FFFFFF" style={styles.heading}>
             Review Your Booking
           </Typography>
-          <Typography variant="body2" color={colors.textSecondary} style={styles.subtitle}>
+          <Typography variant="body2" color="rgba(255,255,255,0.74)" style={styles.subtitle}>
             Please review the details below and confirm.
           </Typography>
         </Animated.View>
@@ -85,10 +87,7 @@ export function SummaryStep({
         {/* Trainer card */}
         <Animated.View
           entering={FadeInUp.delay(80).duration(360)}
-          style={[
-            styles.trainerCard,
-            { backgroundColor: colors.surface, borderColor: colors.border },
-          ]}
+          style={[styles.trainerCard, { backgroundColor: glassSurface, borderColor: glassBorder }]}
         >
           <Image source={{ uri: trainer.image }} style={styles.trainerAvatar} />
           <View style={styles.trainerInfo}>
@@ -112,10 +111,7 @@ export function SummaryStep({
         {/* Details card */}
         <Animated.View
           entering={FadeInUp.delay(160).duration(360)}
-          style={[
-            styles.detailsCard,
-            { backgroundColor: colors.surface, borderColor: colors.border },
-          ]}
+          style={[styles.detailsCard, { backgroundColor: glassSurface, borderColor: glassBorder }]}
         >
           {[
             {
@@ -138,15 +134,15 @@ export function SummaryStep({
             },
             {
               icon:
-                platform === 'phone_call'
-                  ? ('call-outline' as const)
+                platform === 'whatsapp'
+                  ? ('logo-whatsapp' as const)
                   : ('videocam-outline' as const),
               label: 'Platform',
               value: null,
               valueNode: (
                 <View style={styles.platformValueRow}>
-                  {platform === 'phone_call' ? (
-                    <Ionicons name="call-outline" size={18} color={colors.primary} />
+                  {platform === 'whatsapp' ? (
+                    <Ionicons name="logo-whatsapp" size={18} color={colors.primary} />
                   ) : (
                     <Image
                       source={PLATFORM_LOGOS.zoom}
@@ -160,11 +156,11 @@ export function SummaryStep({
                 </View>
               ),
             },
-            ...(platform === 'phone_call' && draft.phoneNumber.trim()
+            ...(platform === 'whatsapp' && draft.phoneNumber.trim()
               ? [
                   {
-                    icon: 'call-outline' as const,
-                    label: 'Phone',
+                    icon: 'logo-whatsapp' as const,
+                    label: 'WhatsApp',
                     value:
                       toPhoneE164(draft.phoneNumber, draft.phoneCountry) ??
                       draft.phoneNumber.trim(),
@@ -221,11 +217,15 @@ export function SummaryStep({
           {
             paddingHorizontal: spacing.md,
             paddingBottom: spacing.lg,
-            backgroundColor: colors.background,
           },
         ]}
       >
-        <Button label="Confirm Booking" isLoading={isSubmitting} onPress={onSubmit} />
+        <Button
+          label="Confirm Booking"
+          isLoading={isSubmitting}
+          onPress={onSubmit}
+          style={styles.glassButton}
+        />
       </View>
     </View>
   );
@@ -279,4 +279,10 @@ const styles = StyleSheet.create({
   errorText: { flex: 1, lineHeight: 20 },
   footerSpacer: { height: 8 },
   footer: { paddingTop: 12 },
+  glassButton: {
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.30)',
+  },
 });

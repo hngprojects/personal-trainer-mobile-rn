@@ -105,6 +105,7 @@ interface DateTimeStepProps {
   useRemoteSlots?: boolean;
   onRefresh?: () => void | Promise<unknown>;
   isRefreshing?: boolean;
+  glass?: boolean;
 }
 
 export function DateTimeStep({
@@ -116,8 +117,11 @@ export function DateTimeStep({
   useRemoteSlots = false,
   onRefresh,
   isRefreshing = false,
+  glass = false,
 }: DateTimeStepProps) {
-  const { colors, spacing } = useTheme();
+  const { colors, spacing, isDark } = useTheme();
+  const glassSurface = isDark ? 'rgba(0,0,0,0.48)' : 'rgba(255,255,255,0.78)';
+  const glassBorder = isDark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.58)';
   const today = new Date();
   const todayMidnight = startOfDay(today);
   const futureAvailableSlots = useMemo(() => {
@@ -208,10 +212,14 @@ export function DateTimeStep({
     <View style={styles.container}>
       <ScrollContainer>
         <Animated.View entering={FadeInDown.duration(360)}>
-          <Typography variant="h2" style={styles.heading}>
+          <Typography variant="h2" color={glass ? '#FFFFFF' : undefined} style={styles.heading}>
             Pick a date and time
           </Typography>
-          <Typography variant="body2" color={colors.textSecondary} style={styles.subtitle}>
+          <Typography
+            variant="body2"
+            color={glass ? 'rgba(255,255,255,0.74)' : colors.textSecondary}
+            style={styles.subtitle}
+          >
             {isLoadingSlots ? 'Loading available slots...' : 'Only available slots are shown.'}
           </Typography>
         </Animated.View>
@@ -221,7 +229,10 @@ export function DateTimeStep({
           entering={FadeInUp.delay(80).duration(360)}
           style={[
             styles.calendarCard,
-            { backgroundColor: colors.surface, borderColor: colors.border },
+            {
+              backgroundColor: glass ? glassSurface : colors.surface,
+              borderColor: glass ? glassBorder : colors.border,
+            },
           ]}
         >
           {/* Month header */}
@@ -404,11 +415,16 @@ export function DateTimeStep({
           {
             paddingHorizontal: spacing.md,
             paddingBottom: spacing.lg,
-            backgroundColor: colors.background,
+            backgroundColor: glass ? 'transparent' : colors.background,
           },
         ]}
       >
-        <Button label="Continue" disabled={!isValid} onPress={onContinue} />
+        <Button
+          label="Continue"
+          disabled={!isValid}
+          onPress={onContinue}
+          style={glass && styles.glassButton}
+        />
       </View>
     </View>
   );
@@ -574,4 +590,10 @@ const styles = StyleSheet.create({
   },
   footerSpacer: { height: 8 },
   footer: { paddingTop: 12 },
+  glassButton: {
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.30)',
+  },
 });

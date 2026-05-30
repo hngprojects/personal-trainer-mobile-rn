@@ -50,7 +50,8 @@
           "photosPermission": "Allow FITCALL to access your photos so you can set a profile picture.",
           "cameraPermission": "Allow FITCALL to use your camera so you can take a profile picture."
         }
-      ]
+      ],
+      "expo-image"
     ],
     "experiments": {
       "typedRoutes": true,

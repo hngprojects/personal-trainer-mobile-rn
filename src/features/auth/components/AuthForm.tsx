@@ -39,10 +39,18 @@ type AuthFormVariant = 'signup' | 'signin';
 
 interface AuthFormProps {
   variant: AuthFormVariant;
+  /**
+   * When true, render text against a dark/photo backdrop — overrides the
+   * theme's `textSecondary` with a high-contrast off-white so the "already
+   * have an account" prompt stays readable on the auth-bg image.
+   */
+  onDark?: boolean;
 }
 
-export function AuthForm({ variant }: AuthFormProps) {
+export function AuthForm({ variant, onDark }: AuthFormProps) {
   const { spacing, colors } = useTheme();
+  const secondaryColor = onDark ? 'rgba(255,255,255,0.78)' : colors.textSecondary;
+  const linkColor = onDark ? '#FFFFFF' : palette.highlightBlue['5'];
   const googleAuth = useGoogleAuth();
   const [isGoogleFlowPending, setIsGoogleFlowPending] = useState(false);
 
@@ -100,29 +108,35 @@ export function AuthForm({ variant }: AuthFormProps) {
       />
 
       <View style={[styles.footer, { marginTop: spacing.md }]}>
-        <Typography style={[styles.footerText, { color: colors.textSecondary }]}>
-          {footerText}
-        </Typography>
+        <Typography style={[styles.footerText, { color: secondaryColor }]}>{footerText}</Typography>
         <Pressable onPress={() => router.replace(footerHref)}>
-          <Typography style={styles.link}>{footerLinkLabel}</Typography>
+          <Typography style={[styles.link, { color: linkColor }]}>{footerLinkLabel}</Typography>
         </Pressable>
       </View>
     </View>
   );
 }
 
-export function AuthLegalNotice({ variant }: AuthFormProps) {
+export function AuthLegalNotice({ variant, onDark }: AuthFormProps) {
   const { colors } = useTheme();
   const verb = variant === 'signup' ? 'Sign Up' : 'Sign In';
+  const bodyColor = onDark ? 'rgba(255,255,255,0.72)' : colors.textSecondary;
+  const linkColor = onDark ? '#FFFFFF' : palette.highlightBlue['5'];
 
   return (
-    <Typography style={[styles.legalText, { color: colors.textSecondary }]}>
+    <Typography style={[styles.legalText, { color: bodyColor }]}>
       By clicking &quot;{verb}&quot;, I have read and agree with the{' '}
-      <Typography style={styles.legalLink} onPress={() => router.push('/terms-of-service')}>
+      <Typography
+        style={[styles.legalLink, { color: linkColor }]}
+        onPress={() => router.push('/terms-of-service')}
+      >
         Terms of Service
       </Typography>{' '}
       and{' '}
-      <Typography style={styles.legalLink} onPress={() => router.push('/privacy-policy')}>
+      <Typography
+        style={[styles.legalLink, { color: linkColor }]}
+        onPress={() => router.push('/privacy-policy')}
+      >
         Privacy Policy
       </Typography>
     </Typography>
