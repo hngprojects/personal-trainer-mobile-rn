@@ -11,12 +11,14 @@ interface FormFieldProps<
   control: Control<TFieldValues>;
   name: TName;
   label?: string;
+  required?: boolean;
 }
 
 export function FormField<TFieldValues extends FieldValues, TName extends FieldPath<TFieldValues>>({
   control,
   name,
   label,
+  required,
   ...inputProps
 }: FormFieldProps<TFieldValues, TName>) {
   return (
@@ -26,6 +28,7 @@ export function FormField<TFieldValues extends FieldValues, TName extends FieldP
       render={({ field: { value, onChange, onBlur }, fieldState: { error } }) => (
         <TextInput
           label={label}
+          required={required}
           value={value as string}
           onChangeText={onChange}
           onBlur={onBlur}

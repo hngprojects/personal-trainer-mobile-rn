@@ -1,24 +1,24 @@
 {
   "expo": {
-    "name": "react-native-starter",
-    "slug": "react-native-starter",
+    "name": "FITCALL",
+    "slug": "fitcall",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "reactnativestarter",
+    "icon": "./assets/images/logo-app.png",
+    "scheme": "fitcall",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#FFFFFF",
+        "foregroundImage": "./assets/images/logo.png",
+        "monochromeImage": "./assets/images/logo.png"
       },
       "predictiveBackGestureEnabled": false,
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.hng.fitcall"
     },
     "web": {
       "output": "static",
@@ -27,16 +27,32 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
+      "expo-notifications",
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
-          "android": {
-            "image": "./assets/images/splash-icon.png",
-            "imageWidth": 76
-          }
+          "backgroundColor": "#FFFFFF",
+          "image": "./assets/images/logo.png",
+          "imageWidth": 200
         }
-      ]
+      ],
+      "expo-font",
+      "@react-native-google-signin/google-signin",
+      "expo-video",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow FITCALL to use your location to personalize your profile."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow FITCALL to access your photos so you can set a profile picture.",
+          "cameraPermission": "Allow FITCALL to use your camera so you can take a profile picture."
+        }
+      ],
+      "expo-image"
     ],
     "experiments": {
       "typedRoutes": true,

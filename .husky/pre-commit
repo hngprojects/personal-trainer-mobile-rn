@@ -1,0 +1,93 @@
+#!/bin/sh
+set -e
+
+LONG_LINE_EXCLUDE="pnpm-lock.yaml|yarn.lock|package-lock.json|.*\.min\.js|.*\.min\.css|.*\.map|.*\.lockb|.*\.svg|.*\.png"
+
+FIXED=0
+FAILED=0
+
+IS_NODE=0
+[ -f "package.json" ] && IS_NODE=1
+
+STAGED=$(git diff --cached --name-only)
+
+fix_long_lines() {
+  file="$1"
+  awk 'length > 200 { print substr($0, 1, 200); next } { print }' "$file" > "${file}.cleaned"
+  mv "${file}.cleaned" "$file"
+}
+
+fix_create_require() {
+  file="$1"
+  grep -v "createRequire\|from 'module'" "$file" > "${file}.cleaned"
+  mv "${file}.cleaned" "$file"
+}
+
+for file in $STAGED; do
+  [ -f "$file" ] || continue
+
+  # ── Check 1: Long lines ──────────────────────────────────────────────────────
+  BASENAME=$(basename "$file")
+  if echo "$BASENAME" | grep -qE "^($LONG_LINE_EXCLUDE)$"; then
+    : # skip silently
+  elif awk 'length > 200 { found=1; exit } END { exit !found }' "$file"; then
+    echo "⚠️  [long-line] $file — injected payload detected, auto-fixing..."
+    fix_long_lines "$file"
+    git add "$file"
+    FIXED=1
+  fi
+
+  # ── Check 2: createRequire shim ──────────────────────────────────────────────
+  if echo "$file" | grep -qE '\.(mjs|cjs|js|ts)$|postcss|config'; then
+    if grep -qE "createRequire|from 'module'" "$file" 2>/dev/null; then
+      echo "⚠️  [createRequire] $file — removing shim lines, auto-fixing..."
+      fix_create_require "$file"
+      git add "$file"
+      FIXED=1
+    fi
+  fi
+
+  # ── Check 3: Obfuscation patterns ────────────────────────────────────────────
+  for pattern in "String\.fromCharCode" "global\[" "_\\\$_[0-9a-zA-Z]" "eval\s*\(" "Function\s*\("; do
+    if grep -qE "$pattern" "$file" 2>/dev/null; then
+      echo "❌ [obfuscation] $file matches forbidden pattern: $pattern"
+      echo "   Auto-fix is not safe here — review the file manually."
+      FAILED=1
+    fi
+  done
+
+  # ── Check 4: postcss.config.mjs size ────────────────────────────────────────
+  if [ "$IS_NODE" -eq 1 ] && echo "$file" | grep -q "postcss"; then
+    SIZE=$(wc -c < "$file")
+    if [ "$SIZE" -gt 500 ]; then
+      echo "⚠️  [file-size] $file is $SIZE bytes — likely injected, auto-fixing..."
+      cat > "$file" << 'EOF'
+const config = {
+  plugins: {
+    "@tailwindcss/postcss": {},
+  },
+};
+
+export default config;
+EOF
+      git add "$file"
+      FIXED=1
+    fi
+  fi
+done
+
+pnpm lint-staged
+
+if [ "$FIXED" -eq 1 ]; then
+  echo ""
+  echo "🔧 Auto-fixes were applied and re-staged."
+  echo "   Run 'git diff --cached' to review what changed before your commit proceeds."
+fi
+
+if [ "$FAILED" -eq 1 ]; then
+  echo ""
+  echo "❌ Commit blocked. Resolve the issues above manually, then re-commit."
+  exit 1
+fi
+
+exit 0

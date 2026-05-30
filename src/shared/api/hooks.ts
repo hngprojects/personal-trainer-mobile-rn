@@ -2,11 +2,11 @@ import { useMutation, UseMutationOptions, useQuery, UseQueryOptions } from '@tan
 
 import { ApiError } from './types';
 
-export function useApiMutation<TData, TVariables = void>(
+export function useApiMutation<TData, TVariables = void, TContext = unknown>(
   mutationFn: (vars: TVariables) => Promise<TData>,
-  options?: Omit<UseMutationOptions<TData, ApiError, TVariables>, 'mutationFn'>,
+  options?: Omit<UseMutationOptions<TData, ApiError, TVariables, TContext>, 'mutationFn'>,
 ) {
-  return useMutation<TData, ApiError, TVariables>({ mutationFn, ...options });
+  return useMutation<TData, ApiError, TVariables, TContext>({ mutationFn, ...options });
 }
 
 export function useApiQuery<TData>(

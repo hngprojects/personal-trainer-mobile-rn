@@ -1,6 +1,7 @@
 import React from 'react';
-import { ScrollView, StyleSheet, View, ViewProps } from 'react-native';
-import { SafeAreaView, Edge } from 'react-native-safe-area-context';
+import { StyleSheet, View, ViewProps } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import { Edge, SafeAreaView } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/shared/theme';
 
@@ -9,6 +10,7 @@ interface ScreenProps extends ViewProps {
   scrollable?: boolean;
   edges?: Edge[];
   padding?: boolean;
+  backgroundColor?: string;
 }
 
 export function Screen({
@@ -16,19 +18,23 @@ export function Screen({
   scrollable = false,
   edges = ['top', 'bottom'],
   padding = true,
+  backgroundColor,
   style,
   ...props
 }: ScreenProps) {
   const { colors, spacing } = useTheme();
+  const bg = backgroundColor ?? colors.background;
 
   const inner = scrollable ? (
-    <ScrollView
+    <KeyboardAwareScrollView
       style={styles.fill}
-      contentContainerStyle={[padding && { padding: spacing.md }]}
+      contentContainerStyle={[styles.scrollContent, padding && { padding: spacing.md }]}
       showsVerticalScrollIndicator={false}
+      bottomOffset={24}
+      keyboardShouldPersistTaps="handled"
     >
       {children}
-    </ScrollView>
+    </KeyboardAwareScrollView>
   ) : (
     <View style={[styles.fill, padding && { padding: spacing.md }, style]} {...props}>
       {children}
@@ -36,7 +42,7 @@ export function Screen({
   );
 
   return (
-    <SafeAreaView style={[styles.fill, { backgroundColor: colors.background }]} edges={edges}>
+    <SafeAreaView style={[styles.fill, { backgroundColor: bg }]} edges={edges}>
       {inner}
     </SafeAreaView>
   );
@@ -44,4 +50,5 @@ export function Screen({
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
+  scrollContent: { flexGrow: 1 },
 });

@@ -1,97 +1,160 @@
-import React, { useRef } from 'react';
-import {
-  Dimensions,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
-
-import { Button } from '@/shared/components';
-import { useTheme } from '@/shared/theme';
+import { useEventListener } from 'expo';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useVideoPlayer, VideoView } from 'expo-video';
+import React, { useCallback, useEffect, useRef } from 'react';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import Animated, {
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { OnboardingSlideData } from '../data/slides';
-import { OnboardingDots } from './OnboardingDots';
 import { OnboardingSlide } from './OnboardingSlide';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const ONBOARDING_VIDEOS = [
+  require('../../../../assets/videos/onboarding-video1.mp4'),
+  require('../../../../assets/videos/onbaording-video2.mp4'),
+  require('../../../../assets/videos/onboarding-video3.mp4'),
+] as const;
+
+const VIDEO_FADE_DURATION = 420;
 
 interface OnboardingPagerProps {
   slides: OnboardingSlideData[];
-  currentSlide: number;
-  isLastSlide: boolean;
-  onNext: () => void;
-  onSkip: () => void;
-  onSlideChange: (index: number) => void;
+  onLogin: () => void;
+  onRegister: () => void;
 }
 
-export function OnboardingPager({
-  slides,
-  currentSlide,
-  isLastSlide,
-  onNext,
-  onSkip,
-  onSlideChange,
-}: OnboardingPagerProps) {
-  const { spacing } = useTheme();
-  const scrollRef = useRef<ScrollView>(null);
+export function OnboardingPager({ slides, onLogin, onRegister }: OnboardingPagerProps) {
+  const { width } = useWindowDimensions();
+  const scrollX = useSharedValue(0);
+  const videoFade = useSharedValue(0);
+  const videoIndexRef = useRef(0);
+  const isTransitioningRef = useRef(false);
+  const transitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
-    if (index !== currentSlide) onSlideChange(index);
-  };
+  const player = useVideoPlayer(ONBOARDING_VIDEOS[0], (instance) => {
+    instance.loop = false;
+    instance.muted = true;
+    instance.play();
+  });
 
-  const handleNext = () => {
-    if (!isLastSlide) {
-      scrollRef.current?.scrollTo({ x: (currentSlide + 1) * SCREEN_WIDTH, animated: true });
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (e) => {
+      scrollX.value = e.contentOffset.x;
+    },
+  });
+
+  const transitionToNextVideo = useCallback(() => {
+    if (isTransitioningRef.current) return;
+
+    isTransitioningRef.current = true;
+    videoFade.value = withTiming(1, { duration: VIDEO_FADE_DURATION });
+
+    transitionTimeoutRef.current = setTimeout(async () => {
+      const nextIndex = (videoIndexRef.current + 1) % ONBOARDING_VIDEOS.length;
+
+      try {
+        await player.replaceAsync(ONBOARDING_VIDEOS[nextIndex]);
+        player.loop = false;
+        player.muted = true;
+        player.play();
+        videoIndexRef.current = nextIndex;
+      } finally {
+        videoFade.value = withTiming(0, { duration: VIDEO_FADE_DURATION + 120 });
+        isTransitioningRef.current = false;
+      }
+    }, VIDEO_FADE_DURATION);
+  }, [player, videoFade]);
+
+  useEventListener(player, 'playToEnd', transitionToNextVideo);
+  useEventListener(player, 'statusChange', ({ status }) => {
+    if (status === 'error') {
+      transitionToNextVideo();
     }
-    onNext();
-  };
+  });
 
-  const accentColor = slides[currentSlide]?.accentColor;
+  useEffect(
+    () => () => {
+      if (transitionTimeoutRef.current) {
+        clearTimeout(transitionTimeoutRef.current);
+      }
+    },
+    [],
+  );
+
+  const videoTransitionStyle = useAnimatedStyle(() => ({
+    opacity: videoFade.value,
+  }));
 
   return (
-    <View style={styles.container}>
-      {/* Skip button */}
-      {!isLastSlide && (
-        <View style={[styles.skipRow, { paddingHorizontal: spacing.md, paddingTop: spacing.md }]}>
-          <Button label="Skip" variant="ghost" onPress={onSkip} />
-        </View>
-      )}
-
-      {/* Slides */}
-      <ScrollView
-        ref={scrollRef}
+    <View style={styles.fill}>
+      <VideoView
+        player={player}
+        style={styles.backgroundVideo}
+        contentFit="cover"
+        nativeControls={false}
+        allowsPictureInPicture={false}
+      />
+      <LinearGradient
+        pointerEvents="none"
+        colors={[
+          'rgba(8,31,64,0.36)',
+          'rgba(15,46,92,0.38)',
+          'rgba(6,24,49,0.64)',
+          'rgba(0,0,0,0.92)',
+        ]}
+        locations={[0, 0.34, 0.68, 1]}
+        style={styles.overlay}
+      />
+      <LinearGradient
+        pointerEvents="none"
+        colors={['rgba(27,63,117,0.24)', 'rgba(255,255,255,0.06)', 'rgba(0,0,0,0)']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0.7 }}
+        style={styles.blueSheen}
+      />
+      <Animated.View pointerEvents="none" style={[styles.transitionWash, videoTransitionStyle]} />
+      <Animated.ScrollView
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={handleScroll}
+        onScroll={scrollHandler}
         scrollEventThrottle={16}
         style={styles.fill}
       >
-        {slides.map((slide) => (
-          <OnboardingSlide key={slide.id} slide={slide} />
+        {slides.map((slide, i) => (
+          <OnboardingSlide
+            key={slide.id}
+            slide={slide}
+            index={i}
+            scrollX={scrollX}
+            totalSlides={slides.length}
+            slideWidth={width}
+            onLogin={onLogin}
+            onRegister={onRegister}
+          />
         ))}
-      </ScrollView>
-
-      {/* Bottom controls */}
-      <View
-        style={[
-          styles.footer,
-          { paddingHorizontal: spacing.xl, paddingBottom: spacing.xl, gap: spacing.lg },
-        ]}
-      >
-        <OnboardingDots total={slides.length} current={currentSlide} accentColor={accentColor} />
-        <Button label={isLastSlide ? 'Get Started' : 'Next'} onPress={handleNext} />
-      </View>
+      </Animated.ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
   fill: { flex: 1 },
-  skipRow: { alignItems: 'flex-end' },
-  footer: { alignItems: 'center' },
+  backgroundVideo: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  blueSheen: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  transitionWash: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#061831',
+  },
 });

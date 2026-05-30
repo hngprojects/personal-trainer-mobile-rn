@@ -1,21 +1,23 @@
+import { StatusBar } from 'expo-status-bar';
 import React from 'react';
+import { StyleSheet, View } from 'react-native';
 
 import { OnboardingPager, useOnboarding } from '@/features/onboarding';
-import { Screen } from '@/shared/components';
 
 export default function OnboardingScreen() {
-  const { slides, currentSlide, isLastSlide, goToNext, skip } = useOnboarding();
+  const { slides, goToLogin, goToRegister } = useOnboarding();
 
   return (
-    <Screen padding={false} edges={['top', 'bottom']}>
-      <OnboardingPager
-        slides={slides}
-        currentSlide={currentSlide}
-        isLastSlide={isLastSlide}
-        onNext={goToNext}
-        onSkip={skip}
-        onSlideChange={() => {}}
-      />
-    </Screen>
+    <View style={styles.container}>
+      <StatusBar style="light" translucent backgroundColor="transparent" />
+      <OnboardingPager slides={slides} onLogin={goToLogin} onRegister={goToRegister} />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+});
