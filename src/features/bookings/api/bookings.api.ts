@@ -30,6 +30,7 @@ export interface UpcomingBooking {
   trainerName: string;
   trainerAvatar: string | null;
   platform: string | null;
+  createdAt: string | null;
 }
 
 interface BookingListParams {
@@ -233,6 +234,7 @@ function mapUpcomingBooking(raw: unknown): UpcomingBooking | null {
           : null),
     ),
     platform: pickString(raw, ['platform', 'contact_mode']) ?? null,
+    createdAt: pickString(raw, ['created_at', 'createdAt']),
   };
 }
 

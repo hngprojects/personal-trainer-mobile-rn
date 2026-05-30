@@ -1,4 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image as ExpoImage } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
@@ -16,10 +18,12 @@ import {
   useUpcomingBookings,
 } from '@/features/bookings';
 import { useTrainerAvailability } from '@/features/trainers/hooks/useTrainerAvailability';
+import { useTrainer } from '@/features/trainers/hooks/useTrainer';
 import { ApiError } from '@/shared/api/types';
 import { Button, Screen, Typography } from '@/shared/components';
-import { useStatusBarStyle } from '@/shared/hooks/useStatusBarStyle';
 import { fonts, useTheme } from '@/shared/theme';
+
+const FALLBACK_BACKGROUND = require('../../../../assets/images/auth-bg.jpg');
 
 const REASONS: { label: string; code: RescheduleReason }[] = [
   { label: 'Something came up', code: 'something_came_up' },
@@ -36,10 +40,12 @@ export function RescheduleSessionScreen() {
     bookingType?: string;
     trainerId?: string;
   }>();
-  const { spacing, colors } = useTheme();
+  const { spacing, colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
-  const statusBarStyle = useStatusBarStyle();
   const reschedule = useRescheduleBooking();
+  const { data: trainer } = useTrainer(trainerId);
+  const glassSurface = isDark ? 'rgba(0,0,0,0.48)' : 'rgba(255,255,255,0.78)';
+  const glassBorder = isDark ? 'rgba(255,255,255,0.20)' : 'rgba(255,255,255,0.46)';
   const [step, setStep] = useState(1);
   const [selectedReason, setSelectedReason] = useState<RescheduleReason | ''>('');
   const [notes, setNotes] = useState('');
@@ -130,14 +136,27 @@ export function RescheduleSessionScreen() {
   };
 
   return (
-    <Screen padding={false} edges={['top']}>
-      <StatusBar style={statusBarStyle} />
+    <Screen padding={false} edges={[]} backgroundColor="#000000">
+      <StatusBar style="light" translucent backgroundColor="transparent" />
+      <ExpoImage
+        source={trainer?.image ? { uri: trainer.image } : FALLBACK_BACKGROUND}
+        style={styles.backgroundImage}
+        contentFit="cover"
+        transition={180}
+      />
+      <View pointerEvents="none" style={styles.backgroundScrim} />
+      <LinearGradient
+        pointerEvents="none"
+        colors={['rgba(0,0,0,0.58)', 'rgba(0,0,0,0.72)', 'rgba(0,0,0,0.88)', 'rgba(0,0,0,0.96)']}
+        locations={[0, 0.28, 0.68, 1]}
+        style={styles.backgroundShade}
+      />
 
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <Pressable onPress={handleBack} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color={colors.icon} />
+          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
         </Pressable>
-        <Typography variant="h3" style={styles.headerTitle}>
+        <Typography variant="h3" style={[styles.headerTitle, { color: '#FFFFFF' }]}>
           Reschedule Session
         </Typography>
       </View>
@@ -153,7 +172,7 @@ export function RescheduleSessionScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <Typography variant="label" color={colors.textSecondary} style={styles.stepIndicator}>
+        <Typography variant="label" color="rgba(255,255,255,0.74)" style={styles.stepIndicator}>
           Step {step} of 2
         </Typography>
 
@@ -163,6 +182,8 @@ export function RescheduleSessionScreen() {
             onSelectReason={setSelectedReason}
             notes={notes}
             onNotesChange={setNotes}
+            glassSurface={glassSurface}
+            glassBorder={glassBorder}
           />
         ) : (
           <DateTimeStep
@@ -181,6 +202,8 @@ export function RescheduleSessionScreen() {
             isCurrentOrPastMonth={isCurrentOrPastMonth}
             availableSlots={availableSlots}
             isLoadingAvailability={isLoadingAvailability}
+            glassSurface={glassSurface}
+            glassBorder={glassBorder}
           />
         )}
 
@@ -198,10 +221,8 @@ export function RescheduleSessionScreen() {
         style={[
           styles.footer,
           {
-            backgroundColor: colors.background,
-            borderTopColor: colors.border,
             paddingHorizontal: spacing.md,
-            paddingTop: spacing.md,
+            paddingTop: 0,
             paddingBottom: spacing.md + insets.bottom,
           },
         ]}
@@ -213,6 +234,7 @@ export function RescheduleSessionScreen() {
           disabled={
             step === 1 ? !selectedReason : !selectedDate || !selectedTime || isLoadingAvailability
           }
+          style={styles.glassButton}
         />
       </View>
     </Screen>
@@ -224,23 +246,27 @@ function ReasonStep({
   onSelectReason,
   notes,
   onNotesChange,
+  glassSurface,
+  glassBorder,
 }: {
   selectedReason: RescheduleReason | '';
   onSelectReason: (reason: RescheduleReason) => void;
   notes: string;
   onNotesChange: (notes: string) => void;
+  glassSurface: string;
+  glassBorder: string;
 }) {
   const { colors } = useTheme();
   return (
     <View>
-      <Typography variant="h2" style={styles.stepTitle}>
+      <Typography variant="h2" style={[styles.stepTitle, { color: '#FFFFFF' }]}>
         Why do you need to reschedule?
       </Typography>
-      <Typography variant="body2" color={colors.textSecondary} style={styles.stepSubtitle}>
+      <Typography variant="body2" color="rgba(255,255,255,0.76)" style={styles.stepSubtitle}>
         This helps your trainer prepare for the change.
       </Typography>
 
-      <Typography variant="body2" style={styles.label}>
+      <Typography variant="body2" style={[styles.label, { color: '#FFFFFF' }]}>
         Select a reason
       </Typography>
       <View style={styles.reasonsGrid}>
@@ -254,7 +280,8 @@ function ReasonStep({
                 styles.reasonChip,
                 {
                   backgroundColor: isActive ? colors.primarySubtle : colors.background,
-                  borderColor: isActive ? colors.primary : colors.divider,
+                  borderColor: isActive ? colors.primary : glassBorder,
+                  ...(!isActive && { backgroundColor: glassSurface }),
                 },
               ]}
             >
@@ -270,7 +297,7 @@ function ReasonStep({
         })}
       </View>
 
-      <Typography variant="body2" style={[styles.label, { marginTop: 24 }]}>
+      <Typography variant="body2" style={[styles.label, { marginTop: 24, color: '#FFFFFF' }]}>
         Additional details
       </Typography>
       <TextInput
@@ -283,8 +310,8 @@ function ReasonStep({
         style={[
           styles.textArea,
           {
-            backgroundColor: colors.inputBackground,
-            borderColor: colors.divider,
+            backgroundColor: glassSurface,
+            borderColor: glassBorder,
             color: colors.text,
           },
         ]}
@@ -306,6 +333,8 @@ function DateTimeStep({
   isCurrentOrPastMonth,
   availableSlots,
   isLoadingAvailability,
+  glassSurface,
+  glassBorder,
 }: {
   selectedDate: number | null;
   onSelectDate: (date: number) => void;
@@ -319,6 +348,8 @@ function DateTimeStep({
   isCurrentOrPastMonth: boolean;
   availableSlots: Date[];
   isLoadingAvailability: boolean;
+  glassSurface: string;
+  glassBorder: string;
 }) {
   const { colors } = useTheme();
   const availableDates = getAvailableDatesForMonth(viewDate, availableSlots);
@@ -332,10 +363,10 @@ function DateTimeStep({
 
   return (
     <View>
-      <Typography variant="h2" style={styles.stepTitle}>
+      <Typography variant="h2" style={[styles.stepTitle, { color: '#FFFFFF' }]}>
         Pick a new date and time
       </Typography>
-      <Typography variant="body2" color={colors.textSecondary} style={styles.stepSubtitle}>
+      <Typography variant="body2" color="rgba(255,255,255,0.76)" style={styles.stepSubtitle}>
         {isLoadingAvailability
           ? 'Loading available slots...'
           : 'Only available reschedule slots are shown. All times are in your local timezone.'}
@@ -344,7 +375,7 @@ function DateTimeStep({
       <View
         style={[
           styles.calendarContainer,
-          { backgroundColor: colors.background, borderColor: colors.divider },
+          { backgroundColor: glassSurface, borderColor: glassBorder },
         ]}
       >
         <View style={styles.calendarHeader}>
@@ -414,7 +445,7 @@ function DateTimeStep({
         <LegendItem color={colors.primary} label="Selected" />
       </View>
 
-      <Typography variant="body2" style={[styles.label, { marginTop: 24 }]}>
+      <Typography variant="body2" style={[styles.label, { marginTop: 24, color: '#FFFFFF' }]}>
         <Ionicons name="time-outline" size={16} color={colors.icon} /> Available Times in your
         Timezone ({timezoneStr})
       </Typography>
@@ -454,8 +485,8 @@ function DateTimeStep({
                 style={[
                   styles.timeSlot,
                   {
-                    backgroundColor: isSelected ? colors.primary : colors.background,
-                    borderColor: isSelected ? colors.primary : colors.divider,
+                    backgroundColor: isSelected ? colors.primary : glassSurface,
+                    borderColor: isSelected ? colors.primary : glassBorder,
                   },
                 ]}
               >
@@ -488,6 +519,18 @@ function LegendItem({ color, label }: { color: string; label: string }) {
 }
 
 const styles = StyleSheet.create({
+  backgroundImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  },
+  backgroundScrim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.56)',
+  },
+  backgroundShade: {
+    ...StyleSheet.absoluteFillObject,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -639,7 +682,11 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    borderTopWidth: 1,
+  },
+  glassButton: {
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.34)',
   },
   errorBanner: {
     flexDirection: 'row',

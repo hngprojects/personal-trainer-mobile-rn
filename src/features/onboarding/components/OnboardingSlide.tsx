@@ -9,12 +9,12 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
 import { OnboardingSlideData } from '../data/slides';
-import { OnboardingCallout } from './OnboardingCallout';
 import { OnboardingDots } from './OnboardingDots';
 
 interface OnboardingSlideProps {
@@ -36,31 +36,15 @@ export function OnboardingSlide({
   onLogin,
   onRegister,
 }: OnboardingSlideProps) {
-  const { spacing, colors } = useTheme();
+  const { spacing } = useTheme();
+  const insets = useSafeAreaInsets();
   const mounted = useSharedValue(0);
-  const phoneWidth = Math.min(slideWidth * 0.72, 380);
-  const imageHeight = phoneWidth / 0.494;
 
   useEffect(() => {
     mounted.value = withTiming(1, { duration: 700, easing: Easing.out(Easing.cubic) });
   }, [mounted]);
 
   const inputRange = [(index - 1) * slideWidth, index * slideWidth, (index + 1) * slideWidth];
-
-  const phoneStyle = useAnimatedStyle(() => {
-    const opacityFromScroll = interpolate(
-      scrollX.value,
-      inputRange,
-      [0, 1, 0],
-      Extrapolation.CLAMP,
-    );
-    const scale = interpolate(scrollX.value, inputRange, [0.92, 1, 0.92], Extrapolation.CLAMP);
-    const translateX = interpolate(scrollX.value, inputRange, [-40, 0, 40], Extrapolation.CLAMP);
-    return {
-      opacity: opacityFromScroll * mounted.value,
-      transform: [{ scale }, { translateX }],
-    };
-  });
 
   const titleStyle = useAnimatedStyle(() => {
     const opacityFromScroll = interpolate(
@@ -100,38 +84,52 @@ export function OnboardingSlide({
     };
   });
 
-  return (
-    <View style={[styles.container, { width: slideWidth, paddingHorizontal: spacing.lg }]}>
-      <View style={[styles.phoneAnchor, { width: phoneWidth }]}>
-        <View style={styles.phoneClip}>
-          <Animated.Image
-            source={slide.image}
-            style={[styles.phoneImage, { width: phoneWidth, height: imageHeight }, phoneStyle]}
-            resizeMode="contain"
-          />
-        </View>
-        <OnboardingCallout
-          data={slide.callout}
-          scrollX={scrollX}
-          index={index}
-          slideWidth={slideWidth}
-        />
-      </View>
+  const panelStyle = useAnimatedStyle(() => {
+    const opacityFromScroll = interpolate(
+      scrollX.value,
+      inputRange,
+      [0, 1, 0],
+      Extrapolation.CLAMP,
+    );
+    const translateYFromScroll = interpolate(
+      scrollX.value,
+      inputRange,
+      [36, 0, 36],
+      Extrapolation.CLAMP,
+    );
+    const scale = interpolate(scrollX.value, inputRange, [0.96, 1, 0.96], Extrapolation.CLAMP);
+    return {
+      opacity: opacityFromScroll * mounted.value,
+      transform: [{ translateY: translateYFromScroll + (1 - mounted.value) * 28 }, { scale }],
+    };
+  });
 
-      <View
-        style={[
-          styles.card,
-          { paddingTop: spacing.md, paddingBottom: spacing.lg, gap: spacing.md },
-        ]}
-      >
+  return (
+    <View
+      style={[
+        styles.container,
+        {
+          width: slideWidth,
+          paddingHorizontal: spacing.lg,
+          paddingTop: insets.top + spacing.xl,
+          paddingBottom: insets.bottom + spacing.lg,
+        },
+      ]}
+    >
+      <Animated.View style={[styles.card, { padding: spacing.lg, gap: spacing.md }, panelStyle]}>
         <View style={{ gap: spacing.sm }}>
           <Animated.View style={titleStyle}>
-            <Typography variant="h2" align="center" color={colors.text}>
+            <Typography variant="h2" align="center" color="#FFFFFF" style={styles.title}>
               {slide.title}
             </Typography>
           </Animated.View>
           <Animated.View style={subtitleStyle}>
-            <Typography variant="body1" color={colors.textSecondary} align="center">
+            <Typography
+              variant="body1"
+              color="rgba(255,255,255,0.78)"
+              align="center"
+              style={styles.subtitle}
+            >
               {slide.subtitle}
             </Typography>
           </Animated.View>
@@ -142,36 +140,69 @@ export function OnboardingSlide({
         </View>
 
         <View style={{ gap: spacing.sm }}>
-          <Button label="Get Started" onPress={onRegister} />
-          <Button label="Log In" variant="secondary" onPress={onLogin} />
+          <Button
+            label="Get Started"
+            onPress={onRegister}
+            style={[
+              styles.primaryButton,
+              {
+                backgroundColor: '#0F4690',
+                borderColor: 'rgba(255,255,255,0.28)',
+              },
+            ]}
+          />
+          <Button
+            label="Log In"
+            onPress={onLogin}
+            style={[
+              styles.secondaryButton,
+              {
+                backgroundColor: 'rgba(255,255,255,0.16)',
+                borderColor: 'rgba(255,255,255,0.30)',
+              },
+            ]}
+          />
         </View>
-      </View>
+      </Animated.View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: 'center' },
-  phoneAnchor: {
+  container: {
     flex: 1,
-    position: 'relative',
-    zIndex: 0,
-  },
-  phoneClip: {
-    flex: 1,
-    width: '100%',
-    overflow: 'hidden',
+    justifyContent: 'flex-end',
     alignItems: 'center',
-  },
-  phoneImage: {
-    maxWidth: '100%',
   },
   card: {
     width: '100%',
     zIndex: 1,
-    elevation: 1,
+    elevation: 5,
+    borderRadius: 28,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(4,14,29,0.56)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
+    shadowColor: '#000',
+    shadowOpacity: 0.24,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 14 },
+  },
+  title: {
+    lineHeight: 34,
+  },
+  subtitle: {
+    lineHeight: 23,
   },
   dotsRow: {
     alignItems: 'center',
+  },
+  primaryButton: {
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  secondaryButton: {
+    borderRadius: 16,
+    borderWidth: 1,
   },
 });

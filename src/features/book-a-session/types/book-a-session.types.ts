@@ -1,8 +1,8 @@
 import type { PhoneCountry } from '@/shared/components';
 
 // Mirrors the call-booking shape so the shared DateTimeStep from book-a-call
-// can be reused. `phoneNumber` is only required when `platform === 'phone_call'`.
-export type SessionPlatform = 'zoom' | 'phone_call';
+// can be reused. `phoneNumber` is only required when `platform === 'whatsapp'`.
+export type SessionPlatform = 'zoom' | 'whatsapp';
 
 export interface SessionDraft {
   platform: SessionPlatform | null;

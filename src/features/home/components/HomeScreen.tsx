@@ -1,10 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
+import { FlashList, type FlashListProps, type FlashListRef } from '@shopify/flash-list';
+import { Image as CachedImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Href, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Image, Pressable, RefreshControl, ScrollView, View } from 'react-native';
+import type { GestureResponderEvent } from 'react-native';
 import Animated, {
+  type AnimatedProps,
   Easing,
   Extrapolation,
   FadeIn,
@@ -20,7 +24,6 @@ import Animated, {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ClientAvatarStack } from '@/features/trainers/components/ClientAvatarStack';
-import { SpecialtyTags } from '@/features/trainers/components/SpecialtyTags';
 import { useInfiniteTrainers } from '@/features/trainers/hooks/useInfiniteTrainers';
 import type { Trainer } from '@/features/trainers/types/trainer.types';
 import { Avatar, Typography } from '@/shared/components';
@@ -29,6 +32,14 @@ import { useTheme } from '@/shared/theme';
 
 import { useHome } from '../hooks/useHome';
 import { HERO_GRADIENT, useHomeStyles } from './HomeScreen.styles';
+
+// Wrap FlashList with reanimated so `onScroll` can drive the shared value.
+// The generic re-cast keeps `data` / `renderItem` typed against Trainer.
+const AnimatedFlashList = Animated.createAnimatedComponent(
+  FlashList,
+) as unknown as React.ForwardRefExoticComponent<
+  AnimatedProps<FlashListProps<Trainer>> & React.RefAttributes<FlashListRef<Trainer>>
+>;
 
 const CATEGORIES = [
   {
@@ -54,9 +65,13 @@ const CATEGORIES = [
 ] as const;
 
 const ENTRY_DURATION = 420;
+// Cap entrance-animation delay so cards loaded on later pages don't fly in
+// seconds late — the user perceives that as a slow/stuck scroll.
+const MAX_ENTRY_INDEX = 5;
 
 const HERO_IMAGE = require('../../../../assets/images/hero-trainers.png');
 const LOGO = require('../../../../assets/images/logo.png');
+const HOME_BACKGROUND_IMAGE = require('../../../../assets/images/auth-bg.jpg');
 
 function getTimeOfDayGreeting() {
   const hour = new Date().getHours();
@@ -72,6 +87,99 @@ function getTimeOfDayGreeting() {
   return 'Good Evening';
 }
 
+interface TrainerListItemProps {
+  trainer: Trainer;
+}
+
+// Memoized so existing cards don't re-render when the parent's state changes
+// (selected category, refetch flags, etc.). Combined with FlatList
+// virtualization, only on-screen cards do any work per scroll frame.
+const TrainerListItem = React.memo(function TrainerListItem({ trainer }: TrainerListItemProps) {
+  const styles = useHomeStyles();
+  const firstName = trainer.name.split(' ')[0] || 'Trainer';
+
+  const handleBook = (event: GestureResponderEvent) => {
+    event.stopPropagation();
+    router.push({
+      pathname: '/book-a-session',
+      params: { trainerId: trainer.id },
+    } as never);
+  };
+
+  return (
+    <View style={styles.trainerCard}>
+      <Pressable
+        style={styles.trainerPressable}
+        onPress={() =>
+          router.push({
+            pathname: '/(main)/trainer-profile',
+            params: { trainerId: trainer.id },
+          } as never)
+        }
+      >
+        <CachedImage
+          source={{ uri: trainer.image }}
+          style={styles.trainerImage}
+          contentFit="cover"
+          transition={180}
+          cachePolicy="memory-disk"
+        />
+        <LinearGradient
+          colors={['rgba(0,0,0,0.02)', 'rgba(0,0,0,0.14)', 'rgba(0,0,0,0.88)']}
+          locations={[0, 0.58, 1]}
+          style={styles.trainerImageOverlay}
+        />
+        <LinearGradient
+          colors={['rgba(255,255,255,0.12)', 'rgba(255,255,255,0.03)', 'rgba(255,255,255,0)']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0.7 }}
+          style={styles.trainerGlassSheen}
+        />
+        <LinearGradient
+          colors={['rgba(255,255,255,0)', 'rgba(0,0,0,0.06)', 'rgba(0,0,0,0.70)']}
+          locations={[0, 0.55, 1]}
+          style={styles.trainerBottomGlass}
+        />
+        <View style={styles.trainerRatingBadge}>
+          <Typography style={styles.trainerRating}>★ {trainer.rating}</Typography>
+        </View>
+        <View style={styles.trainerBody}>
+          <View style={styles.trainerInfoColumn}>
+            <Typography style={styles.trainerName} numberOfLines={1}>
+              {trainer.name}
+            </Typography>
+            <ClientAvatarStack
+              avatars={trainer.clientAvatars}
+              totalClients={trainer.clients}
+              textColor="rgba(255,255,255,0.72)"
+              borderColor="rgba(255,255,255,0.68)"
+            />
+          </View>
+          <Pressable style={styles.workWithButton} onPress={handleBook}>
+            <LinearGradient
+              colors={['rgba(255,255,255,0.32)', 'rgba(255,255,255,0.10)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.workWithGlass}
+            />
+            <Typography
+              style={styles.workWithText}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.82}
+            >
+              Work With {firstName}
+            </Typography>
+            <View style={styles.workWithIcon}>
+              <Ionicons name="arrow-forward" size={15} color="#FFFFFF" />
+            </View>
+          </Pressable>
+        </View>
+      </Pressable>
+    </View>
+  );
+});
+
 export function HomeScreen() {
   const { spacing, colors } = useTheme();
   const styles = useHomeStyles();
@@ -79,6 +187,7 @@ export function HomeScreen() {
   const { user } = useHome();
   const displayName = user?.name ?? '';
   const greeting = getTimeOfDayGreeting();
+  const trainerListRef = useRef<FlashListRef<Trainer>>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const {
     data: trainerPages,
@@ -89,23 +198,13 @@ export function HomeScreen() {
     fetchNextPage,
     refetch,
   } = useInfiniteTrainers(selectedCategory);
+  // The API already filters by `selectedCategory` via the queryKey, so we no
+  // longer re-filter on the client — that was running on every render and
+  // duplicating server work.
   const trainers = useMemo(
     () => trainerPages?.pages.flatMap((page) => page.trainers) ?? [],
     [trainerPages],
   );
-  const filteredTrainers = useMemo(() => {
-    if (!selectedCategory) {
-      return trainers;
-    }
-
-    const category = selectedCategory.toLowerCase();
-    return trainers.filter((trainer) => {
-      const specialty = trainer.specialty.toLowerCase();
-      const tags = trainer.tags.map((tag) => tag.toLowerCase());
-
-      return specialty.includes(category) || tags.includes(category);
-    });
-  }, [selectedCategory, trainers]);
   const showTrainerLoading = isLoading && trainers.length === 0;
   const showLoadMore = isFetchingNextPage && trainers.length > 0;
 
@@ -118,19 +217,20 @@ export function HomeScreen() {
     },
   });
 
-  function handleScrollNearEnd(event: {
-    nativeEvent: {
-      contentOffset: { y: number };
-      contentSize: { height: number };
-      layoutMeasurement: { height: number };
-    };
-  }) {
-    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
-    const distanceFromBottom = contentSize.height - (contentOffset.y + layoutMeasurement.height);
-    if (distanceFromBottom < 260 && hasNextPage && !isFetchingNextPage) {
+  const onEndReached = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
     }
-  }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const selectCategory = useCallback(
+    (category: string | null) => {
+      trainerListRef.current?.scrollToOffset({ offset: 0, animated: false });
+      scrollY.value = 0;
+      setSelectedCategory((current) => (current === category ? null : category));
+    },
+    [scrollY],
+  );
 
   useEffect(() => {
     logoRotation.value = withRepeat(
@@ -190,16 +290,6 @@ export function HomeScreen() {
     };
   });
 
-  const contentRefreshStyle = useAnimatedStyle(() => {
-    const pullVisibility = interpolate(scrollY.value, [-70, -24], [1, 0], Extrapolation.CLAMP);
-    const visibility = Math.max(pullVisibility, refreshLogoVisibility.value);
-
-    return {
-      opacity: interpolate(visibility, [0, 1], [1, 0.46], Extrapolation.CLAMP),
-      transform: [{ scale: interpolate(visibility, [0, 1], [1, 0.985], Extrapolation.CLAMP) }],
-    };
-  });
-
   const refreshVeilStyle = useAnimatedStyle(() => {
     const pullVisibility = interpolate(scrollY.value, [-70, -24], [1, 0], Extrapolation.CLAMP);
     const visibility = Math.max(pullVisibility, refreshLogoVisibility.value);
@@ -209,21 +299,224 @@ export function HomeScreen() {
     };
   });
 
+  const renderItem = useCallback(
+    ({ item, index }: { item: Trainer; index: number }) => (
+      <Animated.View
+        entering={FadeInUp.delay(Math.min(index, MAX_ENTRY_INDEX) * 70)
+          .duration(420)
+          .springify()
+          .damping(18)
+          .stiffness(160)}
+        style={styles.trainerCell}
+      >
+        <TrainerListItem trainer={item} />
+      </Animated.View>
+    ),
+    [styles.trainerCell],
+  );
+
+  const ListHeader = (
+    <View style={styles.listHeaderInset}>
+      {/* HEADER — outer wrapper owns the entry animation, inner owns the scroll-driven style */}
+      <Animated.View
+        entering={FadeInDown.duration(ENTRY_DURATION)}
+        style={{ marginTop: spacing.sm }}
+      >
+        <Animated.View style={[styles.header, headerAnimatedStyle]}>
+          <Pressable
+            style={styles.headerLeft}
+            onPress={() => router.push('/(main)/(tabs)/profile' as Href)}
+            accessibilityRole="button"
+            accessibilityLabel="Open your profile"
+            hitSlop={8}
+          >
+            <Avatar name={displayName} uri={user?.avatarUrl} size={40} />
+            <View style={{ marginLeft: spacing.sm }}>
+              <Typography style={styles.greeting}>Hi, {greeting}!</Typography>
+              <Typography style={styles.userName}>{displayName}</Typography>
+            </View>
+          </Pressable>
+          <Pressable
+            hitSlop={8}
+            style={styles.bellButton}
+            onPress={() => router.push('/(main)/notifications' as Href)}
+            accessibilityRole="button"
+            accessibilityLabel="Open notifications"
+          >
+            <Ionicons name="notifications-outline" size={22} color={colors.text} />
+          </Pressable>
+        </Animated.View>
+      </Animated.View>
+
+      {/* HERO — same split: outer = entering, inner = scroll-driven */}
+      <Animated.View
+        entering={FadeInUp.delay(100).duration(ENTRY_DURATION)}
+        style={{ marginTop: spacing.lg }}
+      >
+        <Animated.View style={heroAnimatedStyle}>
+          <LinearGradient
+            colors={HERO_GRADIENT}
+            locations={[0, 0.55, 1]}
+            start={{ x: 1, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={styles.heroCard}
+          >
+            <View style={styles.heroLeft}>
+              <Typography style={styles.heroTitle}>Your Fitness Journey Starts Here</Typography>
+              <Typography style={styles.heroText}>
+                Explore training programs built around your goals and routine.
+              </Typography>
+            </View>
+
+            {/* Alpha-channel PNG — fuses with the gradient naturally, no overlay needed. */}
+            <Image source={HERO_IMAGE} style={styles.heroImage} />
+          </LinearGradient>
+        </Animated.View>
+      </Animated.View>
+
+      {/* CATEGORIES */}
+      <Animated.View entering={FadeIn.delay(200).duration(ENTRY_DURATION)}>
+        <Typography style={[styles.sectionTitle, { marginTop: spacing.lg }]}>Categories</Typography>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categories}
+        >
+          <Pressable
+            style={[styles.categoryItem, selectedCategory === null && styles.categoryItemSelected]}
+            onPress={() => selectCategory(null)}
+            accessibilityRole="button"
+            accessibilityLabel="Show all trainers"
+            accessibilityState={{ selected: selectedCategory === null }}
+          >
+            <View
+              style={[
+                styles.categoryIconBadge,
+                selectedCategory === null && styles.categoryIconBadgeSelected,
+              ]}
+            >
+              <Image source={HERO_IMAGE} style={styles.categoryBadgeImage} />
+            </View>
+            <Typography
+              style={[
+                styles.categoryText,
+                selectedCategory === null && styles.categoryTextSelected,
+              ]}
+            >
+              All
+            </Typography>
+          </Pressable>
+          {CATEGORIES.map((category, index) => {
+            const isSelected = selectedCategory === category.label;
+
+            return (
+              <Animated.View
+                key={category.label}
+                entering={FadeInUp.delay(220 + index * 40).duration(ENTRY_DURATION)}
+              >
+                <Pressable
+                  style={[styles.categoryItem, isSelected && styles.categoryItemSelected]}
+                  onPress={() => selectCategory(category.label)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Show ${category.label} trainers`}
+                  accessibilityState={{ selected: isSelected }}
+                >
+                  <View
+                    style={[
+                      styles.categoryIconBadge,
+                      isSelected && styles.categoryIconBadgeSelected,
+                    ]}
+                  >
+                    <Image source={{ uri: category.image }} style={styles.categoryBadgeImage} />
+                  </View>
+                  <Typography
+                    style={[styles.categoryText, isSelected && styles.categoryTextSelected]}
+                  >
+                    {category.label}
+                  </Typography>
+                </Pressable>
+              </Animated.View>
+            );
+          })}
+        </ScrollView>
+      </Animated.View>
+
+      {/* TRAINERS TITLE */}
+      <Animated.View entering={FadeIn.delay(400).duration(ENTRY_DURATION)}>
+        <Typography style={[styles.sectionTitle, { marginTop: spacing.lg }]}>
+          {selectedCategory ? `${selectedCategory} Trainers` : 'Trainers'}
+        </Typography>
+      </Animated.View>
+    </View>
+  );
+
+  const ListEmpty = (
+    <View style={styles.emptyTrainers}>
+      {showTrainerLoading ? (
+        <>
+          <Animated.Image source={LOGO} style={[styles.inlineLoadingLogo, loaderLogoStyle]} />
+          <Typography style={styles.emptyTrainersText}>Loading trainers...</Typography>
+        </>
+      ) : (
+        <Typography style={styles.emptyTrainersText}>
+          {selectedCategory ? 'No trainers found for this category.' : 'No trainers available yet.'}
+        </Typography>
+      )}
+    </View>
+  );
+
+  const ListFooter = showLoadMore ? (
+    <View style={styles.emptyTrainers}>
+      <Animated.Image source={LOGO} style={[styles.inlineLoadingLogo, loaderLogoStyle]} />
+      <Typography style={styles.emptyTrainersText}>Loading more trainers...</Typography>
+    </View>
+  ) : null;
+
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar style={statusBarStyle} />
+      <View pointerEvents="none" style={styles.backgroundLayer}>
+        <Image
+          source={HOME_BACKGROUND_IMAGE}
+          style={styles.backgroundTrainerImage}
+          resizeMode="cover"
+          blurRadius={1.4}
+        />
+        <View style={styles.backgroundWash} />
+        <LinearGradient
+          colors={[
+            colors.background,
+            'rgba(128,128,128,0.18)',
+            colors.background,
+            colors.background,
+          ]}
+          locations={[0, 0.42, 0.78, 1]}
+          style={styles.backgroundGradient}
+        />
+      </View>
       <Animated.View pointerEvents="none" style={[styles.refreshVeil, refreshVeilStyle]} />
       <Animated.View pointerEvents="none" style={[styles.refreshLogoLayer, refreshLogoStyle]}>
         <Animated.Image source={LOGO} style={styles.refreshLogo} />
       </Animated.View>
 
-      <Animated.ScrollView
+      <AnimatedFlashList
+        ref={trainerListRef}
+        data={trainers}
+        keyExtractor={(item) => item.id}
+        renderItem={renderItem}
+        numColumns={2}
+        ListHeaderComponent={ListHeader}
+        ListEmptyComponent={ListEmpty}
+        ListFooterComponent={ListFooter}
+        onEndReached={onEndReached}
+        onEndReachedThreshold={0.5}
         onScroll={scrollHandler}
-        onMomentumScrollEnd={handleScrollNearEnd}
-        onScrollEndDrag={handleScrollNearEnd}
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.body, { paddingHorizontal: spacing.md }]}
+        contentContainerStyle={{
+          paddingHorizontal: spacing.md,
+          paddingBottom: 24,
+        }}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
@@ -234,202 +527,7 @@ export function HomeScreen() {
             progressViewOffset={-1000}
           />
         }
-      >
-        <Animated.View style={contentRefreshStyle}>
-          {/* HEADER — outer wrapper owns the entry animation, inner owns the scroll-driven style */}
-          <Animated.View
-            entering={FadeInDown.duration(ENTRY_DURATION)}
-            style={{ marginTop: spacing.sm }}
-          >
-            <Animated.View style={[styles.header, headerAnimatedStyle]}>
-              <Pressable
-                style={styles.headerLeft}
-                onPress={() => router.push('/(main)/(tabs)/profile' as Href)}
-                accessibilityRole="button"
-                accessibilityLabel="Open your profile"
-                hitSlop={8}
-              >
-                <Avatar name={displayName} uri={user?.avatarUrl} size={40} />
-                <View style={{ marginLeft: spacing.sm }}>
-                  <Typography style={styles.greeting}>Hi, {greeting}!</Typography>
-                  <Typography style={styles.userName}>{displayName}</Typography>
-                </View>
-              </Pressable>
-              <Pressable
-                hitSlop={8}
-                style={styles.bellButton}
-                onPress={() => router.push('/(main)/notifications' as Href)}
-                accessibilityRole="button"
-                accessibilityLabel="Open notifications"
-              >
-                <Ionicons name="notifications-outline" size={22} color={colors.text} />
-              </Pressable>
-            </Animated.View>
-          </Animated.View>
-
-          {/* HERO — same split: outer = entering, inner = scroll-driven */}
-          <Animated.View
-            entering={FadeInUp.delay(100).duration(ENTRY_DURATION)}
-            style={{ marginTop: spacing.lg }}
-          >
-            <Animated.View style={heroAnimatedStyle}>
-              <LinearGradient
-                colors={HERO_GRADIENT}
-                locations={[0, 0.55, 1]}
-                start={{ x: 1, y: 0 }}
-                end={{ x: 0, y: 1 }}
-                style={styles.heroCard}
-              >
-                <View style={styles.heroLeft}>
-                  <Typography style={styles.heroTitle}>Your Fitness Journey Starts Here</Typography>
-                  <Typography style={styles.heroText}>
-                    Explore training programs built around your goals and routine.
-                  </Typography>
-                </View>
-
-                {/* Alpha-channel PNG — fuses with the gradient naturally, no overlay needed. */}
-                <Image source={HERO_IMAGE} style={styles.heroImage} />
-              </LinearGradient>
-            </Animated.View>
-          </Animated.View>
-
-          {/* CATEGORIES */}
-          <Animated.View entering={FadeIn.delay(200).duration(ENTRY_DURATION)}>
-            <Typography style={[styles.sectionTitle, { marginTop: spacing.lg }]}>
-              Categories
-            </Typography>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.categories}
-            >
-              <Pressable
-                style={styles.categoryItem}
-                onPress={() => setSelectedCategory(null)}
-                accessibilityRole="button"
-                accessibilityLabel="Show all trainers"
-                accessibilityState={{ selected: selectedCategory === null }}
-              >
-                <View
-                  style={[
-                    styles.categoryCircle,
-                    styles.categoryIconCircle,
-                    selectedCategory === null && styles.categoryCircleSelected,
-                  ]}
-                >
-                  <Ionicons
-                    name="grid-outline"
-                    size={24}
-                    color={selectedCategory === null ? colors.primary : colors.textSecondary}
-                  />
-                </View>
-                <Typography
-                  style={[
-                    styles.categoryText,
-                    selectedCategory === null && styles.categoryTextSelected,
-                  ]}
-                >
-                  All
-                </Typography>
-              </Pressable>
-              {CATEGORIES.map((category, index) => {
-                const isSelected = selectedCategory === category.label;
-
-                return (
-                  <Animated.View
-                    key={category.label}
-                    entering={FadeInUp.delay(220 + index * 40).duration(ENTRY_DURATION)}
-                  >
-                    <Pressable
-                      style={styles.categoryItem}
-                      onPress={() =>
-                        setSelectedCategory((current) =>
-                          current === category.label ? null : category.label,
-                        )
-                      }
-                      accessibilityRole="button"
-                      accessibilityLabel={`Show ${category.label} trainers`}
-                      accessibilityState={{ selected: isSelected }}
-                    >
-                      <View
-                        style={[styles.categoryCircle, isSelected && styles.categoryCircleSelected]}
-                      >
-                        <Image source={{ uri: category.image }} style={styles.categoryImage} />
-                      </View>
-                      <Typography
-                        style={[styles.categoryText, isSelected && styles.categoryTextSelected]}
-                      >
-                        {category.label}
-                      </Typography>
-                    </Pressable>
-                  </Animated.View>
-                );
-              })}
-            </ScrollView>
-          </Animated.View>
-
-          {/* TRAINERS */}
-          <Animated.View entering={FadeIn.delay(400).duration(ENTRY_DURATION)}>
-            <Typography style={[styles.sectionTitle, { marginTop: spacing.lg }]}>
-              {selectedCategory ? `${selectedCategory} Trainers` : 'Trainers'}
-            </Typography>
-          </Animated.View>
-          <View style={styles.trainersGrid}>
-            {showTrainerLoading ? (
-              <View style={styles.emptyTrainers}>
-                <Animated.Image source={LOGO} style={[styles.inlineLoadingLogo, loaderLogoStyle]} />
-                <Typography style={styles.emptyTrainersText}>Loading trainers...</Typography>
-              </View>
-            ) : filteredTrainers.length === 0 ? (
-              <View style={styles.emptyTrainers}>
-                <Typography style={styles.emptyTrainersText}>
-                  {selectedCategory
-                    ? 'No trainers found for this category.'
-                    : 'No trainers available yet.'}
-                </Typography>
-              </View>
-            ) : (
-              filteredTrainers.map((trainer: Trainer, index: number) => (
-                <Animated.View
-                  key={trainer.id}
-                  entering={FadeInUp.delay(420 + index * 80).duration(ENTRY_DURATION)}
-                  style={styles.trainerCard}
-                >
-                  <Pressable
-                    onPress={() =>
-                      router.push({
-                        pathname: '/(main)/trainer-profile',
-                        params: { trainerId: trainer.id },
-                      } as never)
-                    }
-                  >
-                    <Image source={{ uri: trainer.image }} style={styles.trainerImage} />
-                    <View style={[styles.trainerBody, { padding: spacing.sm }]}>
-                      <SpecialtyTags tags={trainer.tags} />
-                      <View style={styles.trainerNameRow}>
-                        <Typography style={styles.trainerName} numberOfLines={1}>
-                          {trainer.name}
-                        </Typography>
-                        <Typography style={styles.trainerRating}>★ {trainer.rating}</Typography>
-                      </View>
-                      <ClientAvatarStack
-                        avatars={trainer.clientAvatars}
-                        totalClients={trainer.clients}
-                      />
-                    </View>
-                  </Pressable>
-                </Animated.View>
-              ))
-            )}
-            {showLoadMore ? (
-              <View style={styles.emptyTrainers}>
-                <Animated.Image source={LOGO} style={[styles.inlineLoadingLogo, loaderLogoStyle]} />
-                <Typography style={styles.emptyTrainersText}>Loading more trainers...</Typography>
-              </View>
-            ) : null}
-          </View>
-        </Animated.View>
-      </Animated.ScrollView>
+      />
     </SafeAreaView>
   );
 }

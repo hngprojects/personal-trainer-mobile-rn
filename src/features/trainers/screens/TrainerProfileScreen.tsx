@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
@@ -11,7 +12,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import Animated, { FadeIn, FadeInDown, FadeInUp, ZoomIn } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ImagePreviewModal } from '@/shared/components';
@@ -27,7 +28,7 @@ export function TrainerProfileScreen() {
   const { data: galleryImages = [] } = useTrainerImages(trainerId);
   const [tab, setTab] = useState('Coach');
   const [expandedImageIndex, setExpandedImageIndex] = useState<number | null>(null);
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   if (isLoading) {
     return (
@@ -67,6 +68,18 @@ export function TrainerProfileScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar style="light" />
+      <Animated.Image
+        entering={FadeIn.duration(520)}
+        source={{ uri: trainer.image }}
+        style={styles.backgroundImage}
+      />
+      <View pointerEvents="none" style={styles.backgroundScrim} />
+      <LinearGradient
+        pointerEvents="none"
+        colors={['rgba(0,0,0,0.50)', 'rgba(0,0,0,0.66)', 'rgba(0,0,0,0.86)', 'rgba(0,0,0,0.96)']}
+        locations={[0, 0.34, 0.72, 1]}
+        style={styles.backgroundShade}
+      />
 
       {/* Back button respects the top safe-area inset so it doesn't sit under the notch. */}
       <Pressable
@@ -79,33 +92,46 @@ export function TrainerProfileScreen() {
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 116 }}
         showsVerticalScrollIndicator={false}
       >
         {/* HERO — cover image extends edge-to-edge under the status bar */}
         <Animated.View entering={FadeIn.duration(420)} style={styles.hero}>
-          <Animated.Image
-            entering={FadeIn.duration(520)}
-            source={{ uri: trainer.coverImage }}
-            style={styles.cover}
-          />
-          <Animated.View
-            entering={ZoomIn.delay(180).duration(380)}
-            style={[styles.avatar, { borderColor: colors.background }]}
-          >
-            <Pressable
-              onPress={() => setExpandedImageIndex(0)}
-              style={styles.avatarPressable}
-              accessibilityRole="imagebutton"
-              accessibilityLabel="View trainer display picture"
-            >
-              <Image source={{ uri: trainer.image }} style={styles.avatarImage} />
-            </Pressable>
+          <Animated.View entering={FadeInDown.delay(120).duration(380)} style={styles.heroCopy}>
+            <Text style={styles.heroTitle}>{trainer.name}</Text>
+            <Text style={styles.heroSubtitle}>
+              {trainer.specialty} trainer with {trainer.experience} experience
+            </Text>
+          </Animated.View>
+
+          <Animated.View entering={FadeInUp.delay(180).duration(420)} style={styles.heroStats}>
+            <View style={styles.heroStatItem}>
+              <Text style={styles.heroStatLabel}>Exp</Text>
+              <Text style={styles.heroStatValue}>{trainer.experience}</Text>
+            </View>
+            <View style={styles.heroStatDivider} />
+            <View style={styles.heroStatItem}>
+              <Text style={styles.heroStatLabel}>Clients</Text>
+              <Text style={styles.heroStatValue}>{trainer.clients}</Text>
+            </View>
+            <View style={styles.heroStatDivider} />
+            <View style={styles.heroStatItem}>
+              <Text style={styles.heroStatLabel}>Rating</Text>
+              <Text style={styles.heroStatValue}>★ {trainer.rating}</Text>
+            </View>
           </Animated.View>
         </Animated.View>
 
         {/* CONTENT */}
-        <View style={styles.info}>
+        <View
+          style={[
+            styles.info,
+            {
+              backgroundColor: isDark ? 'rgba(0,0,0,0.56)' : 'rgba(255,255,255,0.88)',
+              borderColor: isDark ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.64)',
+            },
+          ]}
+        >
           <Animated.View entering={FadeInDown.delay(80).duration(380)}>
             <Text style={[styles.name, { color: colors.text }]}>{trainer.name}</Text>
             <Text style={[styles.role, { color: colors.textSecondary }]}>
@@ -272,34 +298,59 @@ export function TrainerProfileScreen() {
               ))}
             </Animated.View>
           )}
-
-          {/* BUTTONS */}
-          <Animated.View entering={FadeInUp.delay(300).duration(420)}>
-            <Pressable
-              style={styles.primaryBtn}
-              onPress={() =>
-                router.push({
-                  pathname: '/book-a-session',
-                  params: { trainerId: trainer.id },
-                } as never)
-              }
-            >
-              <Text style={styles.primaryText}>Work With {trainer.name.split(' ')[0]}</Text>
-            </Pressable>
-            <Pressable
-              style={styles.secondaryBtn}
-              onPress={() =>
-                router.push({
-                  pathname: '/book-a-call',
-                  params: { trainerId: trainer.id },
-                } as never)
-              }
-            >
-              <Text style={styles.secondaryText}>Request a Call</Text>
-            </Pressable>
-          </Animated.View>
         </View>
       </ScrollView>
+      <Animated.View
+        entering={FadeInUp.delay(300).duration(420)}
+        style={[
+          styles.actionFooter,
+          {
+            paddingBottom: insets.bottom + 12,
+          },
+        ]}
+      >
+        <Pressable
+          style={styles.glassBtn}
+          onPress={() =>
+            router.push({
+              pathname: '/book-a-session',
+              params: { trainerId: trainer.id },
+            } as never)
+          }
+        >
+          <View style={styles.glassButtonHighlight} />
+          <Text
+            style={styles.glassPrimaryText}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.82}
+          >
+            Work With {trainer.name.split(' ')[0]}
+          </Text>
+          <View style={styles.glassIcon}>
+            <Ionicons name="arrow-forward" size={15} color="#FFFFFF" />
+          </View>
+        </Pressable>
+        <Pressable
+          style={styles.glassBtn}
+          onPress={() =>
+            router.push({
+              pathname: '/book-a-call',
+              params: { trainerId: trainer.id },
+            } as never)
+          }
+        >
+          <View style={styles.glassButtonHighlight} />
+          <Text
+            style={styles.glassPrimaryText}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.86}
+          >
+            Request a Call
+          </Text>
+        </Pressable>
+      </Animated.View>
       <ImagePreviewModal
         images={[
           { id: 'trainer-display-picture', imageUrl: trainer.image },
@@ -318,6 +369,18 @@ const styles = StyleSheet.create({
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   emptyTitle: { fontSize: 15, fontWeight: '700', marginBottom: 16, textAlign: 'center' },
   scroll: { flex: 1 },
+  backgroundImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  },
+  backgroundScrim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.52)',
+  },
+  backgroundShade: {
+    ...StyleSheet.absoluteFillObject,
+  },
   backButton: {
     position: 'absolute',
     left: 16,
@@ -329,30 +392,151 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  hero: { height: 290 },
-  cover: { width: '100%', height: 240 },
-  avatar: {
-    width: 75,
-    height: 75,
-    borderRadius: 40,
-    borderWidth: 3,
+  hero: {
+    height: 380,
+    justifyContent: 'flex-end',
+  },
+  cover: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  },
+  heroScrim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.18)',
+  },
+  heroShade: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.24)',
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+  },
+  trainerIdentityPill: {
     position: 'absolute',
-    alignSelf: 'center',
-    bottom: 8,
+    left: 18,
+    right: 18,
+    bottom: 224,
+    maxWidth: 260,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+    paddingRight: 14,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.28)',
     overflow: 'hidden',
-    backgroundColor: '#DCE7FF',
   },
   avatarPressable: {
-    flex: 1,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(255,255,255,0.22)',
   },
   avatarImage: {
     width: '100%',
     height: '100%',
   },
-  info: { paddingHorizontal: 16 },
-  name: { textAlign: 'center', fontWeight: '700', fontSize: 18 },
-  role: { textAlign: 'center', marginTop: 4, fontSize: 11 },
+  identityCopy: { flex: 1, minWidth: 0, marginLeft: 10 },
+  identityName: { color: '#FFFFFF', fontWeight: '800', fontSize: 14 },
+  identityRole: { color: 'rgba(255,255,255,0.78)', fontWeight: '600', fontSize: 11, marginTop: 2 },
+  heroCopy: {
+    position: 'absolute',
+    left: 18,
+    right: 18,
+    bottom: 102,
+  },
+  heroTitle: {
+    color: '#FFFFFF',
+    fontSize: 32,
+    lineHeight: 37,
+    fontWeight: '900',
+  },
+  heroSubtitle: {
+    color: 'rgba(255,255,255,0.82)',
+    fontSize: 13,
+    lineHeight: 19,
+    fontWeight: '600',
+    marginTop: 8,
+  },
+  heroStats: {
+    position: 'absolute',
+    left: 18,
+    right: 18,
+    bottom: 28,
+    minHeight: 54,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.24)',
+  },
+  heroStatItem: { flex: 1, alignItems: 'center' },
+  heroStatLabel: { color: 'rgba(255,255,255,0.62)', fontSize: 10, fontWeight: '700' },
+  heroStatValue: { color: '#FFFFFF', fontSize: 13, fontWeight: '900', marginTop: 3 },
+  heroStatDivider: { width: 1, height: 26, backgroundColor: 'rgba(255,255,255,0.18)' },
+  heroActions: {
+    position: 'absolute',
+    left: 18,
+    right: 18,
+    bottom: 18,
+    flexDirection: 'row',
+    gap: 10,
+  },
+  glassBtn: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 54,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingLeft: 16,
+    paddingRight: 8,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.30)',
+    overflow: 'hidden',
+  },
+  glassButtonHighlight: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  glassPrimaryText: {
+    flex: 1,
+    minWidth: 0,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    fontWeight: '900',
+    fontSize: 13,
+  },
+  glassIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    marginLeft: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.24)',
+  },
+  info: {
+    marginHorizontal: 12,
+    marginTop: -4,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 18,
+    borderRadius: 22,
+    borderWidth: 1,
+  },
+  name: { display: 'none', textAlign: 'center', fontWeight: '700', fontSize: 18 },
+  role: { display: 'none', textAlign: 'center', marginTop: 4, fontSize: 11 },
   stats: {
+    display: 'none',
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 18,
@@ -450,13 +634,35 @@ const styles = StyleSheet.create({
   reviewDate: { fontSize: 10, marginTop: 2 },
   star: { color: '#F4A100', fontSize: 12, fontWeight: '700' },
   reviewText: { fontSize: 11, marginTop: 10, lineHeight: 18 },
-  primaryBtn: { backgroundColor: '#005F86', marginTop: 20, paddingVertical: 13, borderRadius: 8 },
+  actionFooter: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 20,
+    flexDirection: 'row',
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    borderTopWidth: 0,
+    backgroundColor: 'rgba(0,0,0,0.10)',
+  },
+  primaryBtn: {
+    flex: 1,
+    minWidth: 0,
+    backgroundColor: '#005F86',
+    paddingVertical: 14,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+  },
   primaryText: { color: '#fff', textAlign: 'center', fontWeight: '700', fontSize: 12 },
   secondaryBtn: {
+    flex: 1,
+    minWidth: 0,
     borderWidth: 1,
     borderColor: '#005F86',
-    marginTop: 10,
-    paddingVertical: 13,
+    paddingVertical: 14,
+    paddingHorizontal: 10,
     borderRadius: 8,
   },
   secondaryText: { color: '#005F86', textAlign: 'center', fontWeight: '700', fontSize: 12 },

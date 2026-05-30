@@ -9,9 +9,18 @@ interface Props {
   totalClients: number;
   size?: number;
   maxVisible?: number;
+  textColor?: string;
+  borderColor?: string;
 }
 
-export function ClientAvatarStack({ avatars, totalClients, size = 22, maxVisible = 4 }: Props) {
+export function ClientAvatarStack({
+  avatars,
+  totalClients,
+  size = 22,
+  maxVisible = 4,
+  textColor,
+  borderColor,
+}: Props) {
   const visible = avatars.slice(0, maxVisible);
   const { colors } = useTheme();
 
@@ -30,14 +39,14 @@ export function ClientAvatarStack({ avatars, totalClients, size = 22, maxVisible
                 borderRadius: size / 2,
                 marginLeft: i === 0 ? 0 : -size / 2.4,
                 zIndex: visible.length - i,
-                borderColor: colors.background,
+                borderColor: borderColor ?? colors.background,
                 backgroundColor: colors.surfaceMuted,
               },
             ]}
           />
         ))}
       </View>
-      <Typography style={[styles.count, { color: colors.textSecondary }]}>
+      <Typography style={[styles.count, { color: textColor ?? colors.textSecondary }]}>
         {totalClients}+ Clients
       </Typography>
     </View>
