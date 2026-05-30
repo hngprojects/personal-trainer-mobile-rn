@@ -30,4 +30,16 @@ export const secureStorage = {
       SecureStore.deleteItemAsync(STORAGE_KEYS.REFRESH_TOKEN),
     ]);
   },
+
+  async saveDevicePushToken(token: string): Promise<void> {
+    await SecureStore.setItemAsync(STORAGE_KEYS.DEVICE_PUSH_TOKEN, token);
+  },
+
+  async getDevicePushToken(): Promise<string | null> {
+    return await SecureStore.getItemAsync(STORAGE_KEYS.DEVICE_PUSH_TOKEN);
+  },
+
+  async clearDevicePushToken(): Promise<void> {
+    await SecureStore.deleteItemAsync(STORAGE_KEYS.DEVICE_PUSH_TOKEN);
+  },
 };

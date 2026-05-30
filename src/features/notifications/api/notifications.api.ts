@@ -1,6 +1,10 @@
 import { client } from '@/shared/api/client';
-import { env } from '@/shared/constants/env';
 import type { ApiEnvelope } from '@/shared/api/types';
+import { env } from '@/shared/constants/env';
+
+import type { DeviceTokenRegisterRequest } from './notifications.types';
+
+const REGISTER_TOKEN_ENDPOINT = '/users/me/device-token';
 
 export interface UserNotification {
   id: string;
@@ -30,20 +34,6 @@ export function getNotificationsWebSocketUrl(accessToken: string): string {
   return `${base}/notifications/ws?token=${encodeURIComponent(accessToken)}`;
 }
 
-function extractNotifications(data: unknown): unknown[] {
-  if (Array.isArray(data)) return data;
-  if (!isRecord(data)) return [];
-
-  for (const key of ['notifications', 'items', 'results', 'data']) {
-    const value = data[key];
-    if (Array.isArray(value)) return value;
-  }
-
-  if (typeof data.id === 'string') return [data];
-
-  return [];
-}
-
 export function normalizeNotification(raw: unknown): UserNotification | null {
   if (!isRecord(raw)) return null;
 
@@ -63,6 +53,35 @@ export function normalizeNotification(raw: unknown): UserNotification | null {
     createdAt: pickString(raw, ['created_at', 'createdAt']),
     updatedAt: pickString(raw, ['updated_at', 'updatedAt']),
   };
+}
+
+function serializeRegistrationPayload(payload: DeviceTokenRegisterRequest) {
+  return {
+    token: payload.token,
+    platform: payload.platform,
+    user_id: payload.userId,
+  };
+}
+
+async function registerDeviceToken(payload: DeviceTokenRegisterRequest): Promise<void> {
+  await client.post<ApiEnvelope<null>>(
+    REGISTER_TOKEN_ENDPOINT,
+    serializeRegistrationPayload(payload),
+  );
+}
+
+function extractNotifications(data: unknown): unknown[] {
+  if (Array.isArray(data)) return data;
+  if (!isRecord(data)) return [];
+
+  for (const key of ['notifications', 'items', 'results', 'data']) {
+    const value = data[key];
+    if (Array.isArray(value)) return value;
+  }
+
+  if (typeof data.id === 'string') return [data];
+
+  return [];
 }
 
 function pickString(record: UnknownRecord, keys: string[]) {
@@ -88,3 +107,7 @@ function pickNumber(record: UnknownRecord, keys: string[]) {
 function isRecord(value: unknown): value is UnknownRecord {
   return typeof value === 'object' && value !== null;
 }
+
+export const notificationsApi = {
+  registerDeviceToken,
+};

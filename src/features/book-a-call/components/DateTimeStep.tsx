@@ -461,7 +461,7 @@ export function DateTimeStep({
 }
 
 function buildDateFromSlot(date: Date, time: string): Date {
-  const [rawTime, period] = time.split(' ');
+  const [rawTime, period] = time.trim().split(/\s+/);
   const [rawHour, rawMinute] = rawTime.split(':').map(Number);
   let hour = rawHour;
 

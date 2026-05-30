@@ -4,7 +4,7 @@ import {
   isSuccessResponse,
   statusCodes,
 } from '@react-native-google-signin/google-signin';
-import { router } from 'expo-router';
+import { Href, router } from 'expo-router';
 import React, { useState } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 
@@ -34,6 +34,8 @@ function friendlyApiMessage(error: unknown): string {
 }
 
 const GOOGLE_ICON = require('../../../../assets/images/google.png');
+const TERMS_ROUTE = '/terms-of-service' as Href;
+const PRIVACY_ROUTE = '/privacy-policy' as Href;
 
 type AuthFormVariant = 'signup' | 'signin';
 
@@ -128,14 +130,14 @@ export function AuthLegalNotice({ variant, onDark }: AuthFormProps) {
       By clicking &quot;{verb}&quot;, I have read and agree with the{' '}
       <Typography
         style={[styles.legalLink, { color: linkColor }]}
-        onPress={() => router.push('/terms-of-service')}
+        onPress={() => router.push(TERMS_ROUTE)}
       >
         Terms of Service
       </Typography>{' '}
       and{' '}
       <Typography
         style={[styles.legalLink, { color: linkColor }]}
-        onPress={() => router.push('/privacy-policy')}
+        onPress={() => router.push(PRIVACY_ROUTE)}
       >
         Privacy Policy
       </Typography>

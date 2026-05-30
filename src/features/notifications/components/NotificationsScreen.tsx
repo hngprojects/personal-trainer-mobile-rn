@@ -12,10 +12,11 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import type { UserNotification } from '../api/notifications.api';
-import { useNotifications } from '../hooks/useNotifications';
 import { Button, Typography } from '@/shared/components';
 import { fonts, useTheme } from '@/shared/theme';
+
+import type { UserNotification } from '../api/notifications.api';
+import { useNotifications } from '../hooks/useNotifications';
 
 export function NotificationsScreen() {
   const { colors, spacing } = useTheme();
@@ -105,86 +106,64 @@ export function NotificationsScreen() {
 
 function NotificationCard({ notification }: { notification: UserNotification }) {
   const { colors } = useTheme();
-  const dateLabel = formatNotificationDate(notification.sentAt ?? notification.createdAt);
+  const createdAt = notification.createdAt
+    ? new Date(notification.createdAt).toLocaleString([], {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      })
+    : null;
 
   return (
-    <View
-      style={[
-        styles.card,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.divider,
-        },
-      ]}
-    >
-      <View style={[styles.cardIcon, { backgroundColor: colors.primarySubtle }]}>
-        <Ionicons name={getNotificationIcon(notification.type)} size={20} color={colors.primary} />
+    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+      <View style={styles.cardIcon}>
+        <Ionicons name={iconForNotification(notification.type)} size={22} color={colors.primary} />
       </View>
       <View style={styles.cardBody}>
-        <View style={styles.cardHeader}>
-          <Typography variant="body1" style={styles.cardTitle} numberOfLines={2}>
+        <View style={styles.cardTitleRow}>
+          <Typography variant="body1" style={styles.cardTitle}>
             {notification.title}
           </Typography>
-          {dateLabel ? (
-            <Typography variant="label" color={colors.textMuted} style={styles.cardDate}>
-              {dateLabel}
+          {createdAt ? (
+            <Typography variant="body2" color={colors.textSecondary} style={styles.cardDate}>
+              {createdAt}
             </Typography>
           ) : null}
         </View>
-        {notification.message ? (
-          <Typography variant="body2" color={colors.textSecondary} style={styles.cardMessage}>
-            {notification.message}
-          </Typography>
-        ) : null}
+        <Typography variant="body2" color={colors.textSecondary} style={styles.cardMessage}>
+          {notification.message}
+        </Typography>
       </View>
     </View>
   );
 }
 
-function getNotificationIcon(type: string | null): keyof typeof Ionicons.glyphMap {
-  switch (type) {
-    case 'booking':
-    case 'session':
-      return 'calendar-outline';
-    case 'payment':
-      return 'card-outline';
-    case 'reminder':
-      return 'alarm-outline';
-    case 'test':
-      return 'flask-outline';
-    default:
-      return 'notifications-outline';
-  }
-}
-
-function formatNotificationDate(value: string | null) {
-  if (!value) return null;
-  const date = new Date(value);
-  if (!Number.isFinite(date.getTime())) return null;
-
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-  });
+function iconForNotification(type: string | null): keyof typeof Ionicons.glyphMap {
+  if (type === 'session') return 'calendar-outline';
+  if (type === 'trainer') return 'person-outline';
+  if (type === 'progress') return 'trophy-outline';
+  if (type === 'workout') return 'barbell-outline';
+  return 'notifications-outline';
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
   header: {
     minHeight: 56,
     flexDirection: 'row',
     alignItems: 'center',
   },
   backButton: {
-    padding: 8,
-    marginLeft: -8,
-    marginRight: 4,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 18,
-    fontFamily: fonts.bold,
+    flex: 1,
+    marginRight: 40,
+    textAlign: 'center',
+    fontFamily: fonts.semibold,
   },
   centerState: {
     flex: 1,
@@ -195,36 +174,33 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   listContent: {
-    flexGrow: 1,
-    paddingTop: 12,
+    paddingTop: 16,
   },
   emptyState: {
-    flex: 1,
     minHeight: 420,
     alignItems: 'center',
     justifyContent: 'center',
   },
   stateIcon: {
-    width: 62,
-    height: 62,
-    borderRadius: 31,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
   },
   stateTitle: {
-    fontFamily: fonts.bold,
+    fontFamily: fonts.semibold,
     textAlign: 'center',
     marginBottom: 8,
   },
   stateMessage: {
     textAlign: 'center',
-    lineHeight: 20,
-    maxWidth: 290,
+    lineHeight: 21,
   },
   retryButton: {
-    width: '100%',
-    marginTop: 24,
+    marginTop: 18,
+    minWidth: 140,
   },
   card: {
     flexDirection: 'row',
@@ -245,7 +221,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
-  cardHeader: {
+  cardTitleRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 8,
@@ -258,7 +234,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   cardMessage: {
-    marginTop: 6,
+    marginTop: 4,
     lineHeight: 20,
   },
 });
