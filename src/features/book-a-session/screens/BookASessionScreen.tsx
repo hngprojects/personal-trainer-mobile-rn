@@ -30,6 +30,7 @@ import { useTrainerAvailability } from '@/features/trainers/hooks/useTrainerAvai
 import { ApiError } from '@/shared/api/types';
 import { Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
+import { buildLocalDateTimeIso } from '@/shared/utils/dateTime';
 
 import { PlatformStep } from '../components/PlatformStep';
 import { SuccessView } from '../components/SuccessView';
@@ -275,22 +276,7 @@ const styles = StyleSheet.create({
 });
 
 function buildSelectedDateTime(date: Date, time: string): string {
-  const [rawTime, period] = time.trim().split(/\s+/);
-  const [rawHour, rawMinute] = rawTime.split(':').map(Number);
-  let hour = rawHour;
-
-  if (period === 'PM' && hour !== 12) {
-    hour += 12;
-  }
-
-  if (period === 'AM' && hour === 12) {
-    hour = 0;
-  }
-
-  const selected = new Date(date);
-  selected.setHours(hour, rawMinute ?? 0, 0, 0);
-
-  return selected.toISOString();
+  return buildLocalDateTimeIso(date, time);
 }
 
 function toSessionBookingPlatform(platform: SessionPlatform): SessionBookingPlatform {

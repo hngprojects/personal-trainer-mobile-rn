@@ -15,7 +15,7 @@ jobs:
     uses: ./.github/workflows/ci.yml
 
   build:
-    name: Build Release APK
+    name: Build Release (staging APK · production AAB)
     runs-on: ubuntu-latest
     needs: ci
     environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
@@ -64,13 +64,20 @@ jobs:
           restore-keys: |
             gradle-${{ runner.os }}-
 
+      # Prebuild also runs plugins/withReleaseSigning.js. On main it receives the
+      # release credentials below, so it decodes the keystore from base64 and
+      # writes the signing config into android/gradle.properties. On staging the
+      # vars are empty, so it leaves the debug-signing fallback in place.
       - name: Expo Prebuild
+        env:
+          # Auto-increment versionCode per build so Play Store uploads never
+          # collide. github.run_number is monotonic per workflow.
+          ANDROID_VERSION_CODE: ${{ github.run_number }}
+          ANDROID_RELEASE_KEYSTORE_BASE64: ${{ github.ref == 'refs/heads/main' && secrets.ANDROID_KEYSTORE_BASE64 || '' }}
+          ANDROID_RELEASE_KEYSTORE_PASSWORD: ${{ github.ref == 'refs/heads/main' && secrets.ANDROID_KEYSTORE_PASSWORD || '' }}
+          ANDROID_RELEASE_KEY_ALIAS: ${{ github.ref == 'refs/heads/main' && secrets.ANDROID_KEY_ALIAS || '' }}
+          ANDROID_RELEASE_KEY_PASSWORD: ${{ github.ref == 'refs/heads/main' && secrets.ANDROID_KEY_PASSWORD || '' }}
         run: npx expo prebuild --platform android --no-install
-
-      - name: Decode release keystore (production only)
-        if: github.ref == 'refs/heads/main'
-        run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/release.keystore
 
       - name: Cache Android Gradle
         uses: actions/cache@v5
@@ -88,31 +95,35 @@ jobs:
         working-directory: android
         run: ./gradlew assembleRelease --no-daemon
 
-      - name: Build release APK (production — release signed)
+      # Production AAB for Play Store upload, signed with the release keystore
+      # that the prebuild plugin configured from the GitHub secrets above.
+      - name: Build release AAB (production — release signed)
         if: github.ref == 'refs/heads/main'
         working-directory: android
-        env:
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: |
-          ./gradlew assembleRelease --no-daemon \
-            -Pandroid.injected.signing.store.file=${{ github.workspace }}/android/app/release.keystore \
-            -Pandroid.injected.signing.store.password="$ANDROID_KEYSTORE_PASSWORD" \
-            -Pandroid.injected.signing.key.alias="$ANDROID_KEY_ALIAS" \
-            -Pandroid.injected.signing.key.password="$ANDROID_KEY_PASSWORD"
+        run: ./gradlew bundleRelease --no-daemon
 
-      - name: Upload APK artifact
-        id: artifact
+      - name: Upload APK artifact (staging)
+        id: apk
+        if: github.ref != 'refs/heads/main'
         uses: actions/upload-artifact@v7
         with:
           name: android-release-apk-${{ github.ref_name }}
           path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 7
 
+      - name: Upload AAB artifact (production)
+        id: aab
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-release-aab-${{ github.ref_name }}
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 30
+
+      # Appetize runs APKs only — skip on production (AAB can't be previewed).
       - name: Upload to Appetize
         id: appetize
-        if: ${{ env.APPETIZE_API_TOKEN != '' }}
+        if: ${{ github.ref != 'refs/heads/main' && env.APPETIZE_API_TOKEN != '' }}
         uses: appetizeio/github-action-appetize@v1.0.5
         with:
           apiToken: ${{ secrets.APPETIZE_API_TOKEN }}
@@ -122,19 +133,34 @@ jobs:
 
       - name: Write job summary
         run: |
-          echo "## Android Build Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ **APK built successfully**" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| | |" >> $GITHUB_STEP_SUMMARY
-          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
-          echo "| Environment | \`${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Signing | \`${{ github.ref == 'refs/heads/main' && 'release keystore' || 'debug keystore' }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Branch | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Commit | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Artifact | [Download APK](${{ steps.artifact.outputs.artifact-url }}) |" >> $GITHUB_STEP_SUMMARY
-          if [ -n "${{ steps.appetize.outputs.publicKey }}" ]; then
-            echo "| Appetize | [▶ Preview on Appetize](https://appetize.io/app/${{ steps.appetize.outputs.publicKey }}) |" >> $GITHUB_STEP_SUMMARY
+          IS_PROD="${{ github.ref == 'refs/heads/main' }}"
+          if [ "$IS_PROD" = "true" ]; then
+            ARTIFACT_LABEL="AAB (Play Store)"
+            ARTIFACT_URL="${{ steps.aab.outputs.artifact-url }}"
+            SIGNING="release keystore (from secrets)"
           else
-            echo "| Appetize | Skipped (set \`APPETIZE_API_TOKEN\` secret to enable) |" >> $GITHUB_STEP_SUMMARY
+            ARTIFACT_LABEL="APK"
+            ARTIFACT_URL="${{ steps.apk.outputs.artifact-url }}"
+            SIGNING="debug keystore"
           fi
+          {
+            echo "## Android Build Summary"
+            echo ""
+            echo "✅ **Build succeeded**"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Environment | \`${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}\` |"
+            echo "| Output | \`$ARTIFACT_LABEL\` |"
+            echo "| Signing | \`$SIGNING\` |"
+            echo "| Branch | \`${{ github.ref_name }}\` |"
+            echo "| Commit | \`${{ github.sha }}\` |"
+            echo "| Artifact | [Download]($ARTIFACT_URL) |"
+            if [ -n "${{ steps.appetize.outputs.publicKey }}" ]; then
+              echo "| Appetize | [▶ Preview on Appetize](https://appetize.io/app/${{ steps.appetize.outputs.publicKey }}) |"
+            elif [ "$IS_PROD" = "true" ]; then
+              echo "| Appetize | N/A (AAB not previewable) |"
+            else
+              echo "| Appetize | Skipped (set \`APPETIZE_API_TOKEN\` secret to enable) |"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
