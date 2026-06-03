@@ -22,6 +22,7 @@ import { useTrainer } from '@/features/trainers/hooks/useTrainer';
 import { ApiError } from '@/shared/api/types';
 import { Button, Screen, Typography } from '@/shared/components';
 import { fonts, useTheme } from '@/shared/theme';
+import { buildLocalDatePartsIso, formatDisplayTime } from '@/shared/utils/dateTime';
 
 const FALLBACK_BACKGROUND = require('../../../../assets/images/auth-bg.jpg');
 
@@ -446,8 +447,8 @@ function DateTimeStep({
       </View>
 
       <Typography variant="body2" style={[styles.label, { marginTop: 24, color: '#FFFFFF' }]}>
-        <Ionicons name="time-outline" size={16} color={colors.icon} /> Available Times in your
-        Timezone ({timezoneStr})
+        <Ionicons name="time-outline" size={16} color="#FFFFFF" /> Available Times in your Timezone
+        ({timezoneStr})
       </Typography>
 
       <View style={styles.timesGrid}>
@@ -492,7 +493,7 @@ function DateTimeStep({
               >
                 <Typography
                   variant="label"
-                  color={isSelected ? '#FFFFFF' : colors.text}
+                  color={isSelected ? '#FFFFFF' : '#FFFFFF'}
                   style={[styles.timeText, isSelected && styles.activeTimeText]}
                 >
                   {time}
@@ -700,14 +701,7 @@ const styles = StyleSheet.create({
 });
 
 function buildRescheduleDateTime(viewDate: Date, day: number, time: string): string {
-  const [rawTime, period] = time.trim().split(/\s+/);
-  const [rawHour, rawMinute] = rawTime.split(':').map(Number);
-  let hour = rawHour;
-  if (period === 'PM' && hour !== 12) hour += 12;
-  if (period === 'AM' && hour === 12) hour = 0;
-
-  const dt = new Date(viewDate.getFullYear(), viewDate.getMonth(), day, hour, rawMinute ?? 0, 0, 0);
-  return dt.toISOString();
+  return buildLocalDatePartsIso(viewDate.getFullYear(), viewDate.getMonth(), day, time);
 }
 
 function startOfDay(date: Date) {
@@ -751,9 +745,5 @@ function getAvailableTimesForDate(date: Date, availableSlots: Date[]) {
 }
 
 function formatTime(date: Date) {
-  return date.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  });
+  return formatDisplayTime(date);
 }

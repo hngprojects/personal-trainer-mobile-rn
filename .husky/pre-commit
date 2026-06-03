@@ -26,6 +26,14 @@ fix_create_require() {
 for file in $STAGED; do
   [ -f "$file" ] || continue
 
+  # ── Skip binary files ────────────────────────────────────────────────────────
+  # The text-oriented checks/fixes below (awk line truncation, grep rewrites)
+  # corrupt binaries (images, fonts, video, keystores). `grep -I` reports no
+  # match for binary files, so this skips them generically.
+  if ! grep -Iq . "$file" 2>/dev/null; then
+    continue
+  fi
+
   # ── Check 1: Long lines ──────────────────────────────────────────────────────
   BASENAME=$(basename "$file")
   if echo "$BASENAME" | grep -qE "^($LONG_LINE_EXCLUDE)$"; then

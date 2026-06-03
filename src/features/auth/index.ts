@@ -8,6 +8,7 @@ export type {
   SocialProvider,
   UserProfile,
 } from './api/auth.types';
+export { AuthBackground } from './components/AuthBackground';
 export { AuthForm, AuthLegalNotice } from './components/AuthForm';
 export { WelcomeAnimation } from './components/WelcomeAnimation';
 export { useAuthSession } from './hooks/useAuthSession';
