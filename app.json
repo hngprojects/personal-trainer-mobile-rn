@@ -18,7 +18,7 @@
       },
       "predictiveBackGestureEnabled": false,
       "edgeToEdgeEnabled": true,
-      "package": "com.hng.fitcall"
+      "package": "net.emerj.fitcall"
     },
     "web": {
       "output": "static",
@@ -52,7 +52,8 @@
           "cameraPermission": "Allow FITCALL to use your camera so you can take a profile picture."
         }
       ],
-      "expo-image"
+      "expo-image",
+      "./plugins/withReleaseSigning"
     ],
     "experiments": {
       "typedRoutes": true,

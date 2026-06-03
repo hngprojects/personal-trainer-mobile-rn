@@ -5,6 +5,7 @@ import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 import { Button, LogoRefreshScrollView, toast, Typography } from '@/shared/components';
 import { palette, useTheme } from '@/shared/theme';
+import { buildLocalDateTimeIso, formatDisplayTime } from '@/shared/utils/dateTime';
 
 const DAY_LABELS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 const MONTH_NAMES = [
@@ -122,6 +123,10 @@ export function DateTimeStep({
   const { colors, spacing, isDark } = useTheme();
   const glassSurface = isDark ? 'rgba(0,0,0,0.48)' : 'rgba(255,255,255,0.78)';
   const glassBorder = isDark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.58)';
+  const glassReadableText = glass ? '#FFFFFF' : colors.text;
+  const glassMutedText = glass ? 'rgba(255,255,255,0.70)' : colors.textSecondary;
+  const glassTimeBorder = glass ? 'rgba(255,255,255,0.82)' : colors.border;
+  const glassUnavailableText = glass ? 'rgba(255,255,255,0.46)' : colors.textSecondary;
   const today = new Date();
   const todayMidnight = startOfDay(today);
   const futureAvailableSlots = useMemo(() => {
@@ -348,10 +353,10 @@ export function DateTimeStep({
           <Ionicons
             name="globe-outline"
             size={15}
-            color={colors.textSecondary}
+            color={glassMutedText}
             style={styles.globeIcon}
           />
-          <Typography variant="body2" color={colors.textSecondary}>
+          <Typography variant="body2" color={glassMutedText}>
             Available Times in your timezone ({timezoneLabel})
           </Typography>
         </Animated.View>
@@ -388,14 +393,18 @@ export function DateTimeStep({
                     styles.timeSlot,
                     unavail && styles.timeSlotUnavail,
                     !unavail &&
-                      !selected && { borderWidth: 1, borderColor: colors.border, borderRadius: 10 },
+                      !selected && {
+                        borderWidth: 1,
+                        borderColor: glassTimeBorder,
+                        borderRadius: 10,
+                      },
                     selected && { backgroundColor: colors.primary, borderRadius: 10 },
                   ]}
                   disabled={unavail}
                 >
                   <Typography
                     variant="body2"
-                    color={selected ? '#fff' : unavail ? colors.textSecondary : colors.text}
+                    color={selected ? '#fff' : unavail ? glassUnavailableText : glassReadableText}
                     style={[styles.timeText, selected && { fontWeight: '600' }]}
                   >
                     {selected ? `✓ ${slot}` : slot}
@@ -461,24 +470,11 @@ export function DateTimeStep({
 }
 
 function buildDateFromSlot(date: Date, time: string): Date {
-  const [rawTime, period] = time.trim().split(/\s+/);
-  const [rawHour, rawMinute] = rawTime.split(':').map(Number);
-  let hour = rawHour;
-
-  if (period === 'PM' && hour !== 12) hour += 12;
-  if (period === 'AM' && hour === 12) hour = 0;
-
-  const selected = new Date(date);
-  selected.setHours(hour, rawMinute ?? 0, 0, 0);
-  return selected;
+  return new Date(buildLocalDateTimeIso(date, time));
 }
 
 function formatSlotTime(date: Date) {
-  return date.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  });
+  return formatDisplayTime(date);
 }
 
 function getMonthCalendarCells(month: Date): (Date | null)[] {

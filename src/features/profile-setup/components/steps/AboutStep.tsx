@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useVideoPlayer, VideoView } from 'expo-video';
-import React, { useRef } from 'react';
+import { VideoView } from 'expo-video';
+import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp, SharedValue } from 'react-native-reanimated';
 
+import { FALLBACK_VIDEO_URL, useMediaVideos, useSequentialVideoPlayer } from '@/features/media';
 import { Typography } from '@/shared/components';
 import { fonts, palette, useTheme } from '@/shared/theme';
 
@@ -21,26 +22,34 @@ const HIGHLIGHTS = [
   { title: 'Flexible Workouts' },
 ];
 
-const VIDEO_SOURCE = 'https://videos.pexels.com/video-files/5528012/5528012-hd_1080_1920_25fps.mp4';
+// Isolated so the card can remount it (via `key`) when the resolved source list
+// changes — the sequential player only reads its sources on first construction.
+function AboutStepVideo({ sources }: { sources: string[] }) {
+  const player = useSequentialVideoPlayer(sources, { autoPlay: false });
+
+  return (
+    <VideoView
+      player={player}
+      style={styles.video}
+      nativeControls
+      allowsPictureInPicture
+      contentFit="cover"
+    />
+  );
+}
 
 export function AboutStep({ index, scrollX, slideWidth }: AboutStepProps) {
   const { colors } = useTheme();
-  const videoRef = useRef<VideoView>(null);
-  const player = useVideoPlayer(VIDEO_SOURCE, (instance) => {
-    instance.loop = false;
-  });
+  const { data: videos } = useMediaVideos();
+
+  // Play through every ready video from the org media library; placeholder
+  // while the request is loading or empty so the card is never black.
+  const sources = videos?.length ? videos.map((item) => item.url) : [FALLBACK_VIDEO_URL];
 
   return (
     <StepShell index={index} scrollX={scrollX} slideWidth={slideWidth}>
       <Animated.View entering={FadeInUp.delay(80).duration(420)} style={styles.videoCard}>
-        <VideoView
-          ref={videoRef}
-          player={player}
-          style={styles.video}
-          nativeControls
-          allowsPictureInPicture
-          contentFit="cover"
-        />
+        <AboutStepVideo key={sources.join('|')} sources={sources} />
       </Animated.View>
 
       <View style={styles.highlights}>

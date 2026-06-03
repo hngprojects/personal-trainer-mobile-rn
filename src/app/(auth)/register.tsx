@@ -2,15 +2,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
-import { Image, ImageBackground, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AuthForm, AuthLegalNotice } from '@/features/auth';
+import { AuthBackground, AuthForm, AuthLegalNotice } from '@/features/auth';
 import { Typography } from '@/shared/components';
 import { fonts, useTheme } from '@/shared/theme';
 
 const LOGO = require('../../../assets/images/logo.png');
-const AUTH_BG = require('../../../assets/images/auth-bg.jpg');
 
 export default function RegisterScreen() {
   const { spacing } = useTheme();
@@ -19,9 +18,10 @@ export default function RegisterScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <StatusBar style="light" />
-      <ImageBackground source={AUTH_BG} style={styles.root} imageStyle={styles.backgroundImage}>
+      <View style={styles.root}>
+        <AuthBackground />
         <LinearGradient
-          colors={['rgba(0,0,0,0.58)', 'rgba(0,0,0,0.14)', 'rgba(0,0,0,0.16)', 'rgba(0,0,0,0.68)']}
+          colors={['rgba(0,0,0,0.72)', 'rgba(0,0,0,0.34)', 'rgba(0,0,0,0.42)', 'rgba(0,0,0,0.84)']}
           locations={[0, 0.24, 0.58, 1]}
           style={StyleSheet.absoluteFill}
         />
@@ -48,7 +48,7 @@ export default function RegisterScreen() {
             </View>
           </ScrollView>
         </SafeAreaView>
-      </ImageBackground>
+      </View>
     </>
   );
 }
@@ -57,10 +57,6 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: '#000',
-  },
-  backgroundImage: {
-    width: '100%',
-    height: '100%',
   },
   safe: {
     flex: 1,
@@ -86,11 +82,17 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bold,
     textAlign: 'center',
     color: '#FFFFFF',
+    textShadowColor: 'rgba(0,0,0,0.55)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 6,
   },
   subtitle: {
     fontSize: 14,
     fontFamily: fonts.regular,
     textAlign: 'center',
-    color: 'rgba(255,255,255,0.78)',
+    color: 'rgba(255,255,255,0.88)',
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 5,
   },
 });
