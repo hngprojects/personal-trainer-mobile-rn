@@ -13,21 +13,21 @@ import Animated, {
 import { OnboardingSlideData } from '../data/slides';
 import { OnboardingSlide } from './OnboardingSlide';
 
-const ONBOARDING_VIDEOS = [
-  require('../../../../assets/videos/onboarding-video1.mp4'),
-  require('../../../../assets/videos/onbaording-video2.mp4'),
-  require('../../../../assets/videos/onboarding-video3.mp4'),
-] as const;
-
 const VIDEO_FADE_DURATION = 420;
 
 interface OnboardingPagerProps {
   slides: OnboardingSlideData[];
+  /**
+   * Background videos to cycle through, sourced from the org media library.
+   * May be empty while the media request is loading — the background simply
+   * stays dark until the real videos arrive (no placeholder).
+   */
+  videos: string[];
   onLogin: () => void;
   onRegister: () => void;
 }
 
-export function OnboardingPager({ slides, onLogin, onRegister }: OnboardingPagerProps) {
+export function OnboardingPager({ slides, videos, onLogin, onRegister }: OnboardingPagerProps) {
   const { width } = useWindowDimensions();
   const scrollX = useSharedValue(0);
   const videoFade = useSharedValue(0);
@@ -35,7 +35,7 @@ export function OnboardingPager({ slides, onLogin, onRegister }: OnboardingPager
   const isTransitioningRef = useRef(false);
   const transitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const player = useVideoPlayer(ONBOARDING_VIDEOS[0], (instance) => {
+  const player = useVideoPlayer(videos[0] ?? null, (instance) => {
     instance.loop = false;
     instance.muted = true;
     instance.play();
@@ -48,16 +48,17 @@ export function OnboardingPager({ slides, onLogin, onRegister }: OnboardingPager
   });
 
   const transitionToNextVideo = useCallback(() => {
-    if (isTransitioningRef.current) return;
+    if (isTransitioningRef.current || !videos.length) return;
 
     isTransitioningRef.current = true;
     videoFade.value = withTiming(1, { duration: VIDEO_FADE_DURATION });
 
     transitionTimeoutRef.current = setTimeout(async () => {
-      const nextIndex = (videoIndexRef.current + 1) % ONBOARDING_VIDEOS.length;
+      // Single video → just loop it; nothing to cross-fade to.
+      const nextIndex = videos.length > 1 ? (videoIndexRef.current + 1) % videos.length : 0;
 
       try {
-        await player.replaceAsync(ONBOARDING_VIDEOS[nextIndex]);
+        await player.replaceAsync(videos[nextIndex]);
         player.loop = false;
         player.muted = true;
         player.play();
@@ -67,7 +68,7 @@ export function OnboardingPager({ slides, onLogin, onRegister }: OnboardingPager
         isTransitioningRef.current = false;
       }
     }, VIDEO_FADE_DURATION);
-  }, [player, videoFade]);
+  }, [player, videoFade, videos]);
 
   useEventListener(player, 'playToEnd', transitionToNextVideo);
   useEventListener(player, 'statusChange', ({ status }) => {

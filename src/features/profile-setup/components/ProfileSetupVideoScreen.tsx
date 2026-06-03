@@ -1,19 +1,41 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useVideoPlayer, VideoView } from 'expo-video';
+import { VideoView } from 'expo-video';
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const VIDEO_SOURCE = 'https://videos.pexels.com/video-files/5528012/5528012-hd_1080_1920_25fps.mp4';
+import { FALLBACK_VIDEO_URL, useMediaVideos, useSequentialVideoPlayer } from '@/features/media';
+
+interface ProfileSetupVideoPlayerProps {
+  sources: string[];
+}
+
+// Isolated so the screen can remount it (via `key`) when the resolved source
+// list changes — the sequential player only reads its sources on first
+// construction.
+function ProfileSetupVideoPlayer({ sources }: ProfileSetupVideoPlayerProps) {
+  const player = useSequentialVideoPlayer(sources);
+
+  return (
+    <VideoView
+      player={player}
+      style={styles.video}
+      nativeControls
+      contentFit="contain"
+      allowsPictureInPicture
+    />
+  );
+}
 
 export function ProfileSetupVideoScreen() {
   const insets = useSafeAreaInsets();
-  const player = useVideoPlayer(VIDEO_SOURCE, (instance) => {
-    instance.loop = false;
-    instance.play();
-  });
+  const { data: videos, isLoading } = useMediaVideos();
+
+  // Play through every ready video from the org library; fall back to a
+  // placeholder if the library is empty or the request failed.
+  const sources = videos?.length ? videos.map((item) => item.url) : [FALLBACK_VIDEO_URL];
 
   return (
     <View style={styles.container}>
@@ -27,13 +49,11 @@ export function ProfileSetupVideoScreen() {
         <Ionicons name="arrow-back" size={24} color="#fff" />
       </Pressable>
 
-      <VideoView
-        player={player}
-        style={styles.video}
-        nativeControls
-        contentFit="contain"
-        allowsPictureInPicture
-      />
+      {isLoading ? (
+        <ActivityIndicator color="#fff" />
+      ) : (
+        <ProfileSetupVideoPlayer key={sources.join('|')} sources={sources} />
+      )}
     </View>
   );
 }

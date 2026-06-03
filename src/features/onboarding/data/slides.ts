@@ -1,4 +1,4 @@
-import { ImageSourcePropType, ViewStyle } from 'react-native';
+import { ViewStyle } from 'react-native';
 
 export type OnboardingCalloutVariant = 'icon' | 'person';
 
@@ -18,7 +18,6 @@ export interface OnboardingSlideData {
   id: string;
   title: string;
   subtitle: string;
-  image: ImageSourcePropType;
   callout: OnboardingCalloutData;
 }
 
@@ -28,7 +27,6 @@ export const SLIDES: OnboardingSlideData[] = [
     title: 'Finally Stay Consistent With Your Workouts',
     subtitle:
       'A real trainer calls you at your scheduled time and guides you through every step. No more excuses.',
-    image: require('../../../../assets/images/phone1.png'),
     callout: {
       variant: 'icon',
       iconEmoji: '📅',
@@ -43,7 +41,6 @@ export const SLIDES: OnboardingSlideData[] = [
     title: 'Choose From Curated Expert Trainers',
     subtitle:
       'Certified Nigerian coaches across strength, mobility, fat loss and HIIT. Find the one who gets you.',
-    image: require('../../../../assets/images/phone2.png'),
     callout: {
       variant: 'person',
       initials: 'CE',
@@ -58,7 +55,6 @@ export const SLIDES: OnboardingSlideData[] = [
     title: 'Your Trainer Shows Up For You',
     subtitle:
       'Real calls. Real coaching. Someone is counting on you to show up, every single session.',
-    image: require('../../../../assets/images/phone3.png'),
     callout: {
       variant: 'person',
       initials: 'CE',

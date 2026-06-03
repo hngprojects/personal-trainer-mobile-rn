@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
 import { FlashList, type FlashListProps, type FlashListRef } from '@shopify/flash-list';
-import { Image as CachedImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Href, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -24,6 +23,7 @@ import Animated, {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ClientAvatarStack } from '@/features/trainers/components/ClientAvatarStack';
+import { TrainerImageSlider } from '@/features/trainers/components/TrainerImageSlider';
 import { useInfiniteTrainers } from '@/features/trainers/hooks/useInfiniteTrainers';
 import type { Trainer } from '@/features/trainers/types/trainer.types';
 import { Avatar, Typography } from '@/shared/components';
@@ -117,12 +117,10 @@ const TrainerListItem = React.memo(function TrainerListItem({ trainer }: Trainer
           } as never)
         }
       >
-        <CachedImage
-          source={{ uri: trainer.image }}
+        <TrainerImageSlider
+          trainerId={trainer.id}
+          fallbackImage={trainer.image}
           style={styles.trainerImage}
-          contentFit="cover"
-          transition={180}
-          cachePolicy="memory-disk"
         />
         <LinearGradient
           colors={['rgba(0,0,0,0.02)', 'rgba(0,0,0,0.14)', 'rgba(0,0,0,0.88)']}
