@@ -15,6 +15,7 @@ import {
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useBookingGate } from '@/features/subscription/hooks/useBookingGate';
 import { ImagePreviewModal } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
@@ -26,9 +27,9 @@ export function TrainerProfileScreen() {
   const { trainerId } = useLocalSearchParams<{ trainerId?: string }>();
   const { data: trainer, isLoading, isError, refetch } = useTrainer(trainerId);
   const { data: galleryImages = [] } = useTrainerImages(trainerId);
-  const [tab, setTab] = useState('Coach');
   const [expandedImageIndex, setExpandedImageIndex] = useState<number | null>(null);
   const { colors, isDark } = useTheme();
+  const { startBooking, checking } = useBookingGate();
 
   if (isLoading) {
     return (
@@ -158,178 +159,112 @@ export function TrainerProfileScreen() {
             </View>
           </Animated.View>
 
-          {/* TABS */}
-          <Animated.View
-            entering={FadeInUp.delay(220).duration(420)}
-            style={[styles.tabs, { backgroundColor: colors.surfaceMuted }]}
-          >
-            {['Coach', 'Benefits', 'Ratings'].map((item) => (
-              <Pressable
-                key={item}
-                onPress={() => setTab(item)}
-                style={[styles.tabButton, tab === item && styles.activeTab]}
-              >
-                <Text
-                  style={[
-                    styles.tabText,
-                    { color: colors.textSecondary },
-                    tab === item && styles.activeText,
-                  ]}
-                >
-                  {item}
-                </Text>
-              </Pressable>
-            ))}
-          </Animated.View>
+          {/* COACH */}
+          <Animated.View entering={FadeInUp.delay(220).duration(420)}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>About {trainer.name}</Text>
+            <Text style={[styles.description, { color: colors.textSecondary }]}>{trainer.bio}</Text>
 
-          {/* COACH TAB */}
-          {tab === 'Coach' && (
-            <Animated.View key="Coach" entering={FadeInUp.duration(360)}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                About {trainer.name}
-              </Text>
-              <Text style={[styles.description, { color: colors.textSecondary }]}>
-                {trainer.bio}
-              </Text>
-
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Training Style</Text>
-              <View style={styles.trainingStyles}>
-                {(trainer.trainingStyles.length > 0 ? trainer.trainingStyles : trainer.tags).map(
-                  (style) => (
-                    <View
-                      key={style}
-                      style={[
-                        styles.trainingStylePill,
-                        { backgroundColor: colors.surfaceMuted, borderColor: colors.border },
-                      ]}
-                    >
-                      <Text style={[styles.trainingStyleText, { color: colors.textSecondary }]}>
-                        {style}
-                      </Text>
-                    </View>
-                  ),
-                )}
-              </View>
-              <View style={styles.gallery}>
-                {visibleGalleryImages.slice(0, 5).map((image, index) => (
-                  <Pressable
-                    key={image.id}
-                    style={styles.galleryImage}
-                    onPress={() => setExpandedImageIndex(index + 1)}
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Training Style</Text>
+            <View style={styles.trainingStyles}>
+              {(trainer.trainingStyles.length > 0 ? trainer.trainingStyles : trainer.tags).map(
+                (style) => (
+                  <View
+                    key={style}
+                    style={[
+                      styles.trainingStylePill,
+                      { backgroundColor: colors.surfaceMuted, borderColor: colors.border },
+                    ]}
                   >
-                    <Image source={{ uri: image.imageUrl }} style={styles.galleryImageInner} />
-                  </Pressable>
-                ))}
-              </View>
-
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                See Trainer In Action
-              </Text>
-              <Pressable
-                onPress={() =>
-                  router.push({
-                    pathname: '/(main)/trainer-video',
-                    params: {
-                      returnTo: 'trainer-profile',
-                      trainerId: trainer.id,
-                      videoUrl: trainer.videoUrl,
-                    },
-                  } as never)
-                }
-                style={styles.videoWrap}
-              >
-                <Image source={{ uri: trainer.image }} style={styles.video} />
-                <View style={styles.videoOverlay} />
-                <View style={styles.playButton}>
-                  <Ionicons name="play" size={22} color="#0F2E5C" />
-                </View>
-              </Pressable>
-            </Animated.View>
-          )}
-
-          {/* BENEFITS TAB */}
-          {tab === 'Benefits' && (
-            <Animated.View key="Benefits" entering={FadeInUp.duration(360)}>
-              {trainer.benefits.map((item) => (
-                <View
-                  key={item.id}
-                  style={[styles.benefitCard, { backgroundColor: colors.surface }]}
-                >
-                  <View style={styles.iconWrapper}>
-                    <View style={styles.iconInner} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.benefitTitle, { color: colors.text }]}>{item.title}</Text>
-                    <Text style={[styles.benefitText, { color: colors.textSecondary }]}>
-                      {item.text}
+                    <Text style={[styles.trainingStyleText, { color: colors.textSecondary }]}>
+                      {style}
                     </Text>
                   </View>
-                </View>
+                ),
+              )}
+            </View>
+            <View style={styles.gallery}>
+              {visibleGalleryImages.slice(0, 5).map((image, index) => (
+                <Pressable
+                  key={image.id}
+                  style={styles.galleryImage}
+                  onPress={() => setExpandedImageIndex(index + 1)}
+                >
+                  <Image source={{ uri: image.imageUrl }} style={styles.galleryImageInner} />
+                </Pressable>
               ))}
-            </Animated.View>
-          )}
+            </View>
 
-          {/* RATINGS TAB */}
-          {tab === 'Ratings' && (
-            <Animated.View key="Ratings" entering={FadeInUp.duration(360)}>
-              <View style={styles.ratingHeader}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>Trainer Ratings</Text>
-                <Text style={[styles.mostRecent, { color: colors.textSecondary }]}>
-                  Most Recent
-                </Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>See Trainer In Action</Text>
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: '/(main)/trainer-video',
+                  params: {
+                    returnTo: 'trainer-profile',
+                    trainerId: trainer.id,
+                    videoUrl: trainer.videoUrl,
+                  },
+                } as never)
+              }
+              style={styles.videoWrap}
+            >
+              <Image source={{ uri: trainer.image }} style={styles.video} />
+              <View style={styles.videoOverlay} />
+              <View style={styles.playButton}>
+                <Ionicons name="play" size={22} color="#0F2E5C" />
               </View>
-
-              {[1, 2, 3].map((item) => (
-                <View key={item} style={[styles.ratingCard, { backgroundColor: colors.surface }]}>
-                  <View style={styles.ratingTop}>
-                    <View style={[styles.userAvatar, { backgroundColor: colors.surfaceMuted }]} />
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.reviewer, { color: colors.text }]}>Sarah Adams</Text>
-                      <Text style={[styles.reviewDate, { color: colors.textSecondary }]}>
-                        2 days ago
-                      </Text>
-                    </View>
-                    <Text style={styles.star}>⭐ 4.5</Text>
-                  </View>
-                  <Text style={[styles.reviewText, { color: colors.textSecondary }]}>
-                    Charles helped me stay disciplined and finally hit my fitness goals.
-                  </Text>
-                </View>
-              ))}
-            </Animated.View>
-          )}
+            </Pressable>
+          </Animated.View>
         </View>
       </ScrollView>
+      {/* Scrim so scroll content fades out behind the action buttons instead of
+          showing through the translucent glass. Solid at the bottom (matches the
+          footer), transparent at the top for a soft fade. */}
+      <LinearGradient
+        pointerEvents="none"
+        colors={['transparent', colors.background]}
+        locations={[0, 0.7]}
+        style={[styles.footerScrim, { height: insets.bottom + 150 }]}
+      />
       <Animated.View
         entering={FadeInUp.delay(300).duration(420)}
         style={[
           styles.actionFooter,
           {
+            backgroundColor: colors.background,
             paddingBottom: insets.bottom + 12,
           },
         ]}
       >
         <Pressable
           style={styles.glassBtn}
+          disabled={checking}
           onPress={() =>
-            router.push({
-              pathname: '/book-a-session',
-              params: { trainerId: trainer.id },
-            } as never)
+            startBooking({
+              trainerId: trainer.id,
+              trainerName: trainer.name,
+              trainerImage: trainer.image,
+            })
           }
         >
           <View style={styles.glassButtonHighlight} />
-          <Text
-            style={styles.glassPrimaryText}
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.82}
-          >
-            Work With {trainer.name.split(' ')[0]}
-          </Text>
-          <View style={styles.glassIcon}>
-            <Ionicons name="arrow-forward" size={15} color="#FFFFFF" />
-          </View>
+          {checking ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <>
+              <Text
+                style={styles.glassPrimaryText}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.82}
+              >
+                Work With {trainer.name.split(' ')[0]}
+              </Text>
+              <View style={styles.glassIcon}>
+                <Ionicons name="arrow-forward" size={15} color="#FFFFFF" />
+              </View>
+            </>
+          )}
         </Pressable>
         <Pressable
           style={styles.glassBtn}
@@ -546,16 +481,6 @@ const styles = StyleSheet.create({
   statItem: { flex: 1, alignItems: 'center' },
   statValue: { fontSize: 11 },
   statNumber: { marginTop: 4, fontWeight: '700', fontSize: 14 },
-  tabs: {
-    flexDirection: 'row',
-    borderRadius: 12,
-    marginTop: 18,
-    padding: 4,
-  },
-  tabButton: { flex: 1, paddingVertical: 10, borderRadius: 10 },
-  activeTab: { backgroundColor: '#0D6EFD' },
-  tabText: { textAlign: 'center', fontSize: 12, fontWeight: '600' },
-  activeText: { color: '#fff' },
   sectionTitle: { marginTop: 18, marginBottom: 10, fontWeight: '700', fontSize: 13 },
   description: { fontSize: 11, lineHeight: 18 },
   trainingStyles: {
@@ -596,44 +521,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconWrapper: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
-    backgroundColor: '#F0F4FF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  iconInner: { width: 18, height: 18, borderRadius: 6, backgroundColor: '#DCE7FF' },
-  benefitCard: {
-    borderRadius: 14,
-    padding: 14,
-    marginTop: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  benefitTitle: { fontWeight: '700', fontSize: 12 },
-  benefitText: { fontSize: 10, marginTop: 4 },
-  ratingHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 18,
-  },
-  mostRecent: { fontSize: 10 },
-  ratingCard: { borderRadius: 14, padding: 14, marginTop: 10 },
-  ratingTop: { flexDirection: 'row', alignItems: 'center' },
-  userAvatar: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    marginRight: 10,
-  },
-  reviewer: { fontWeight: '700', fontSize: 12 },
-  reviewDate: { fontSize: 10, marginTop: 2 },
-  star: { color: '#F4A100', fontSize: 12, fontWeight: '700' },
-  reviewText: { fontSize: 11, marginTop: 10, lineHeight: 18 },
   actionFooter: {
     position: 'absolute',
     left: 0,
@@ -645,7 +532,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 10,
     borderTopWidth: 0,
-    backgroundColor: 'rgba(0,0,0,0.10)',
+  },
+  footerScrim: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 19,
   },
   primaryBtn: {
     flex: 1,

@@ -1,23 +1,28 @@
+import { Ionicons } from '@expo/vector-icons';
 import {
   GoogleSignin,
   isErrorWithCode,
   isSuccessResponse,
   statusCodes,
 } from '@react-native-google-signin/google-signin';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { Href, router } from 'expo-router';
 import React, { useState } from 'react';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { Image, Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { ApiError } from '@/shared/api/types';
 import { SocialButton, toast, Typography } from '@/shared/components';
 import { fonts, palette, useTheme } from '@/shared/theme';
 
+import { useAppleAuth } from '../hooks/useAppleAuth';
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
 
 const MESSAGES = {
   noIdToken: "We couldn't get a sign-in token from Google. Please try again.",
   playServicesMissing: 'Google Play Services is unavailable on this device.',
   googleGeneric: "Google sign-in didn't work. Please try again.",
+  noAppleToken: "We couldn't get a sign-in token from Apple. Please try again.",
+  appleGeneric: "Apple sign-in didn't work. Please try again.",
   apiUnauthorized: "We couldn't verify your Google account. Please try again.",
   apiUnavailable: 'Sign-in is temporarily unavailable. Please try again in a few minutes.',
   apiServerError: "Something went wrong on our end. We're on it — please try again shortly.",
@@ -54,7 +59,9 @@ export function AuthForm({ variant, onDark }: AuthFormProps) {
   const secondaryColor = onDark ? 'rgba(255,255,255,0.78)' : colors.textSecondary;
   const linkColor = onDark ? '#FFFFFF' : palette.highlightBlue['5'];
   const googleAuth = useGoogleAuth();
+  const appleAuth = useAppleAuth();
   const [isGoogleFlowPending, setIsGoogleFlowPending] = useState(false);
+  const [isAppleFlowPending, setIsAppleFlowPending] = useState(false);
 
   const verb = variant === 'signup' ? 'Sign Up' : 'Sign In';
   const footerText = variant === 'signup' ? 'Already have an account? ' : "Don't have an account? ";
@@ -100,6 +107,51 @@ export function AuthForm({ variant, onDark }: AuthFormProps) {
     }
   };
 
+  const handleApple = async () => {
+    if (isAppleFlowPending || appleAuth.isPending) return;
+
+    setIsAppleFlowPending(true);
+    try {
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      const identityToken = credential.identityToken;
+      if (!identityToken) {
+        toast.error(MESSAGES.noAppleToken);
+        return;
+      }
+
+      // Apple only returns the name on the first authorization; forward it when
+      // present so the backend can persist it.
+      const fullName =
+        [credential.fullName?.givenName, credential.fullName?.familyName]
+          .filter(Boolean)
+          .join(' ')
+          .trim() || null;
+
+      appleAuth.mutate(
+        { identityToken, fullName },
+        {
+          onError: (error) => {
+            toast.error(friendlyApiMessage(error));
+          },
+        },
+      );
+    } catch (error) {
+      // User dismissed the native sheet — not an error worth surfacing.
+      if ((error as { code?: string }).code === 'ERR_REQUEST_CANCELED') {
+        return;
+      }
+      toast.error(MESSAGES.appleGeneric);
+    } finally {
+      setIsAppleFlowPending(false);
+    }
+  };
+
   return (
     <View style={[styles.container, { gap: spacing.md }]}>
       <SocialButton
@@ -108,6 +160,15 @@ export function AuthForm({ variant, onDark }: AuthFormProps) {
         onPress={handleGoogle}
         disabled={googleAuth.isPending || isGoogleFlowPending}
       />
+
+      {Platform.OS === 'ios' ? (
+        <SocialButton
+          icon={<Ionicons name="logo-apple" size={20} color="#FFFFFF" />}
+          label={`${verb} with Apple`}
+          onPress={handleApple}
+          disabled={appleAuth.isPending || isAppleFlowPending}
+        />
+      ) : null}
 
       <View style={[styles.footer, { marginTop: spacing.md }]}>
         <Typography style={[styles.footerText, { color: secondaryColor }]}>{footerText}</Typography>

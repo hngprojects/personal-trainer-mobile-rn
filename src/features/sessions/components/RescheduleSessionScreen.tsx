@@ -218,6 +218,16 @@ export function RescheduleSessionScreen() {
         ) : null}
       </KeyboardAwareScrollView>
 
+      {/* Scrim so scroll content fades out behind the button instead of showing
+          through the translucent glass — matches the trainer profile footer.
+          Fades to black to sit on this screen's dark image backdrop. */}
+      <LinearGradient
+        pointerEvents="none"
+        colors={['transparent', 'rgba(0,0,0,0.92)', '#000000']}
+        locations={[0, 0.6, 1]}
+        style={[styles.footerScrim, { height: insets.bottom + 150 }]}
+      />
+
       <View
         style={[
           styles.footer,
@@ -678,11 +688,19 @@ const styles = StyleSheet.create({
   activeTimeText: {
     fontFamily: fonts.semibold,
   },
+  footerScrim: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1,
+  },
   footer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
+    zIndex: 2,
   },
   glassButton: {
     backgroundColor: 'rgba(255,255,255,0.22)',

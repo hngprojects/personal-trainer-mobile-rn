@@ -2,6 +2,8 @@ import { client } from '@/shared/api/client';
 import type { ApiEnvelope } from '@/shared/api/types';
 import type { TrainerAvailability } from '@/features/trainers/types/trainer.types';
 
+import type { OutreachMethod } from '../constants/outreach';
+
 export type BookingType = 'session' | 'discovery';
 
 export interface DiscoverySlot {
@@ -50,14 +52,16 @@ export async function fetchDiscoverySlots(timezone = getTimezone()): Promise<Dis
   return extractArray(response.data.data).map(mapDiscoverySlot).filter(Boolean) as DiscoverySlot[];
 }
 
-export type SessionBookingPlatform = 'zoom' | 'google_meet' | 'whatsapp' | 'phone_call';
-
 export interface CreateSessionBookingRequest {
   trainer_id: string;
   scheduled_start: string;
   scheduled_end: string;
-  session_platform: SessionBookingPlatform;
+  session_platform: OutreachMethod;
   timezone: string;
+  /** Required for `phone_callback` and `imessage` (E.164). */
+  phone_number?: string;
+  /** Required for `messenger`. */
+  messenger_handle?: string;
 }
 
 export interface CreatedSessionBooking {

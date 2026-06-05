@@ -41,6 +41,19 @@ async function googleAuth(idToken: string): Promise<AuthResponse> {
   return unwrap(res.data.data);
 }
 
+// Apple returns the user's name only on the FIRST authorization, so we forward
+// it when present; the identity token (a JWT) is what the backend verifies.
+async function appleAuth(payload: {
+  identityToken: string;
+  fullName?: string | null;
+}): Promise<AuthResponse> {
+  const res = await authClient.post<ApiEnvelope<RawAuthData>>('/auth/apple/mobile', {
+    identity_token: payload.identityToken,
+    ...(payload.fullName ? { full_name: payload.fullName } : {}),
+  });
+  return unwrap(res.data.data);
+}
+
 async function refreshTokens(refreshToken: string, accessToken: string): Promise<AuthTokens> {
   try {
     const response = await fetch(`${env.API_BASE_URL}/auth/refresh`, {
@@ -107,7 +120,7 @@ async function logout(refreshToken: string, accessToken?: string | null): Promis
   );
 }
 
-export const authApi = { googleAuth, refreshTokens, logout };
+export const authApi = { googleAuth, appleAuth, refreshTokens, logout };
 
 function toApiError(error: unknown): ApiError {
   if (isAxiosError(error)) {

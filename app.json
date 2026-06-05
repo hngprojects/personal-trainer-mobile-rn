@@ -8,7 +8,9 @@
     "scheme": "fitcall",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "net.emerj.fitcall",
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
@@ -38,6 +40,7 @@
       ],
       "expo-font",
       "@react-native-google-signin/google-signin",
+      "expo-apple-authentication",
       "expo-video",
       [
         "expo-location",
@@ -53,6 +56,7 @@
         }
       ],
       "expo-image",
+      "react-native-iap",
       "./plugins/withReleaseSigning"
     ],
     "experiments": {
