@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -52,7 +51,7 @@ export function AccountSettingsScreen() {
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Animated.View entering={FadeIn.duration(280)}>
-          <ScreenHeader title="Account Setting" />
+          <ScreenHeader title="Account Settings" />
         </Animated.View>
 
         <Animated.View entering={FadeInUp.delay(80).duration(360)} style={styles.section}>
@@ -67,16 +66,6 @@ export function AccountSettingsScreen() {
                 Connected
               </Typography>
             }
-          />
-        </Animated.View>
-
-        <Animated.View entering={FadeInUp.delay(140).duration(360)} style={styles.section}>
-          <Typography style={[styles.sectionTitle, { color: colors.text }]}>Security</Typography>
-          <SettingsRow
-            icon={<Ionicons name="phone-portrait-outline" size={18} color={colors.icon} />}
-            label="Active Sessions & Devices"
-            subtitle="1 device currently logged in"
-            onPress={() => {}}
           />
         </Animated.View>
 
