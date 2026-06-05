@@ -20,22 +20,22 @@ import { DateTimeStep } from '@/features/book-a-call/components/DateTimeStep';
 import {
   getTimezone,
   getTrainerAvailabilityDates,
+  outreachRequires,
   useCreateSessionBooking,
   useUpcomingBookings,
-  type SessionBookingPlatform,
 } from '@/features/bookings';
 import { trainers } from '@/features/trainers/data/trainers.data';
 import { useTrainer } from '@/features/trainers/hooks/useTrainer';
 import { useTrainerAvailability } from '@/features/trainers/hooks/useTrainerAvailability';
 import { ApiError } from '@/shared/api/types';
-import { Typography } from '@/shared/components';
+import { toPhoneE164, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 import { buildLocalDateTimeIso } from '@/shared/utils/dateTime';
 
 import { PlatformStep } from '../components/PlatformStep';
 import { SuccessView } from '../components/SuccessView';
 import { SummaryStep } from '../components/SummaryStep';
-import { SessionDraft, SessionPlatform } from '../types/book-a-session.types';
+import { SessionDraft } from '../types/book-a-session.types';
 
 type Step = 1 | 2 | 3 | 'success';
 
@@ -84,6 +84,7 @@ export function BookASessionScreen() {
     platform: null,
     phoneNumber: '',
     phoneCountry: 'US',
+    messengerHandle: '',
     date: null,
     time: null,
   });
@@ -126,14 +127,19 @@ export function BookASessionScreen() {
 
     const scheduledStart = buildSelectedDateTime(draft.date, draft.time);
     const scheduledEnd = new Date(new Date(scheduledStart).getTime() + 60 * 60_000).toISOString();
+    const requires = outreachRequires(draft.platform);
 
     try {
       await createSessionBooking.mutateAsync({
         trainer_id: trainer.id,
         scheduled_start: scheduledStart,
         scheduled_end: scheduledEnd,
-        session_platform: toSessionBookingPlatform(draft.platform),
+        session_platform: draft.platform,
         timezone,
+        ...(requires === 'phone'
+          ? { phone_number: toPhoneE164(draft.phoneNumber, draft.phoneCountry) ?? '' }
+          : {}),
+        ...(requires === 'messenger' ? { messenger_handle: draft.messengerHandle.trim() } : {}),
       });
       advance();
     } catch (error) {
@@ -277,8 +283,4 @@ const styles = StyleSheet.create({
 
 function buildSelectedDateTime(date: Date, time: string): string {
   return buildLocalDateTimeIso(date, time);
-}
-
-function toSessionBookingPlatform(platform: SessionPlatform): SessionBookingPlatform {
-  return platform === 'whatsapp' ? 'whatsapp' : 'zoom';
 }
