@@ -4,6 +4,8 @@ import { getJwtType, hasJwtExp } from '@/shared/api/jwt';
 import { ApiError } from '@/shared/api/types';
 import { env } from '@/shared/constants/env';
 
+import { deactivatedFromUser } from '../lib/deactivation';
+
 import type { ApiEnvelope, AuthResponse, AuthTokens, RawAuthData } from './auth.types';
 
 const authClient = create({
@@ -20,6 +22,7 @@ function unwrap(data: RawAuthData): AuthResponse {
       name: data.user.name,
       userType: data.user.user_type,
       profileComplete: data.user.profile_complete,
+      isActive: !deactivatedFromUser(data.user),
       gender: data.user.gender ?? null,
       fitnessGoals: data.user.fitness_goals ?? null,
       fitnessLevel: data.user.fitness_level ?? null,

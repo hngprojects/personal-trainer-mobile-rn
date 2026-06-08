@@ -4,7 +4,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 import { PLATFORM_LOGOS } from '@/features/book-a-call/data/platform-logos';
-import { OUTREACH_OPTIONS, outreachRequires } from '@/features/bookings';
+import { SESSION_OUTREACH_OPTIONS, outreachRequires } from '@/features/bookings';
 import { Trainer } from '@/features/trainers/types/trainer.types';
 import { Button, isPhoneComplete, PhoneInput, TextInput, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
@@ -75,7 +75,7 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
           </View>
         </Animated.View>
 
-        {OUTREACH_OPTIONS.map((p, i) => {
+        {SESSION_OUTREACH_OPTIONS.map((p, i) => {
           const selected = draft.platform === p.id;
           return (
             <Animated.View key={p.id} entering={FadeInUp.delay(160 + i * 60).duration(360)}>

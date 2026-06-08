@@ -78,7 +78,7 @@ export function ProfileScreen() {
         onRefresh={refetch}
       >
         <Animated.View entering={FadeInDown.duration(360)}>
-          <ScreenHeader title="Profile Setting" />
+          <ScreenHeader title="Profile Settings" />
         </Animated.View>
 
         {isError ? (
