@@ -12,6 +12,10 @@ interface AuthState {
   user: UserProfile | null;
   isNewUser: boolean;
   showWelcome: boolean;
+  // True when the logged-in account is deactivated (soft-deleted). The user can
+  // still authenticate but is blocked on protected routes until they reactivate;
+  // drives the post-login reactivation prompt.
+  isDeactivated: boolean;
 }
 
 interface SetSessionOptions {
@@ -24,6 +28,7 @@ interface AuthActions {
   setTokens: (tokens: AuthTokens) => void;
   hydrate: (data: { tokens?: AuthTokens | null; user?: UserProfile | null }) => void;
   updateUser: (patch: Partial<UserProfile>) => void;
+  setDeactivated: (value: boolean) => void;
   clearSession: () => void;
   dismissWelcome: () => void;
 }
@@ -42,6 +47,7 @@ export const useAuthStore = createStore<AuthState & AuthActions>((set) => ({
   user: null,
   isNewUser: false,
   showWelcome: false,
+  isDeactivated: false,
 
   setSession: (tokens, user, opts) => {
     set({
@@ -49,10 +55,15 @@ export const useAuthStore = createStore<AuthState & AuthActions>((set) => ({
       user,
       isNewUser: opts?.isNewUser ?? false,
       showWelcome: opts?.withWelcome ?? false,
+      // Seed the deactivation flag from the login response when it carries the
+      // status; the API interceptor flips it too if a protected route blocks.
+      isDeactivated: user.isActive === false,
     });
     secureStorage.saveTokens(tokens).catch(() => undefined);
     persistUser(user);
   },
+
+  setDeactivated: (value) => set({ isDeactivated: value }),
 
   setTokens: (tokens) => {
     set({ ...tokens });
@@ -81,6 +92,7 @@ export const useAuthStore = createStore<AuthState & AuthActions>((set) => ({
       user: null,
       isNewUser: false,
       showWelcome: false,
+      isDeactivated: false,
     });
     secureStorage.clearTokens().catch(() => undefined);
     asyncStorage.removeItem(STORAGE_KEYS.USER_PROFILE).catch(() => undefined);
@@ -95,4 +107,5 @@ registerAuthStore(() => ({
   refreshToken: useAuthStore.getState().refreshToken,
   setTokens: useAuthStore.getState().setTokens,
   clearSession: useAuthStore.getState().clearSession,
+  setDeactivated: useAuthStore.getState().setDeactivated,
 }));

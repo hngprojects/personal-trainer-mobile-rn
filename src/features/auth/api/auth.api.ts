@@ -4,6 +4,8 @@ import { getJwtType, hasJwtExp } from '@/shared/api/jwt';
 import { ApiError } from '@/shared/api/types';
 import { env } from '@/shared/constants/env';
 
+import { deactivatedFromUser } from '../lib/deactivation';
+
 import type { ApiEnvelope, AuthResponse, AuthTokens, RawAuthData } from './auth.types';
 
 const authClient = create({
@@ -20,6 +22,7 @@ function unwrap(data: RawAuthData): AuthResponse {
       name: data.user.name,
       userType: data.user.user_type,
       profileComplete: data.user.profile_complete,
+      isActive: !deactivatedFromUser(data.user),
       gender: data.user.gender ?? null,
       fitnessGoals: data.user.fitness_goals ?? null,
       fitnessLevel: data.user.fitness_level ?? null,
@@ -37,6 +40,19 @@ function unwrap(data: RawAuthData): AuthResponse {
 async function googleAuth(idToken: string): Promise<AuthResponse> {
   const res = await authClient.post<ApiEnvelope<RawAuthData>>('/auth/google/mobile', {
     id_token: idToken,
+  });
+  return unwrap(res.data.data);
+}
+
+// Apple returns the user's name only on the FIRST authorization, so we forward
+// it when present; the identity token (a JWT) is what the backend verifies.
+async function appleAuth(payload: {
+  identityToken: string;
+  fullName?: string | null;
+}): Promise<AuthResponse> {
+  const res = await authClient.post<ApiEnvelope<RawAuthData>>('/auth/apple/mobile', {
+    identity_token: payload.identityToken,
+    ...(payload.fullName ? { full_name: payload.fullName } : {}),
   });
   return unwrap(res.data.data);
 }
@@ -107,7 +123,7 @@ async function logout(refreshToken: string, accessToken?: string | null): Promis
   );
 }
 
-export const authApi = { googleAuth, refreshTokens, logout };
+export const authApi = { googleAuth, appleAuth, refreshTokens, logout };
 
 function toApiError(error: unknown): ApiError {
   if (isAxiosError(error)) {

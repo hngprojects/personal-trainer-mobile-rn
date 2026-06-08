@@ -1,40 +1,20 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Image, ImageSourcePropType, Pressable, StyleSheet, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
+import { OUTREACH_OPTIONS, outreachRequires } from '@/features/bookings';
 import { Trainer } from '@/features/trainers/types/trainer.types';
-import { Button, isPhoneComplete, PhoneInput, Typography } from '@/shared/components';
+import { Button, isPhoneComplete, PhoneInput, TextInput, Typography } from '@/shared/components';
 import { palette, useTheme } from '@/shared/theme';
 
 import { PLATFORM_LOGOS } from '../data/platform-logos';
-import { CallContactMode, CallDraft } from '../types/book-a-call.types';
+import { CallDraft } from '../types/book-a-call.types';
 
 const AGENT_BULLETS = [
   'Answer any questions you have about FitCall',
   'Walk you through how sessions work',
   "Guide you through getting started if you're ready",
-];
-
-const CONTACT_OPTIONS: {
-  id: CallContactMode;
-  name: string;
-  description: string;
-  logo?: ImageSourcePropType;
-  icon?: keyof typeof Ionicons.glyphMap;
-}[] = [
-  {
-    id: 'zoom_meeting',
-    name: 'Zoom Meeting',
-    description: 'We will send a Zoom link for your discovery call.',
-    logo: PLATFORM_LOGOS.zoom,
-  },
-  {
-    id: 'phone_callback',
-    name: 'WhatsApp Call',
-    description: 'A FitCall rep will call your WhatsApp number.',
-    icon: 'logo-whatsapp',
-  },
 ];
 
 interface PlatformStepProps {
@@ -48,9 +28,15 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
   const { colors, spacing, isDark } = useTheme();
   const glassSurface = isDark ? 'rgba(0,0,0,0.48)' : 'rgba(255,255,255,0.78)';
   const glassBorder = isDark ? 'rgba(255,255,255,0.20)' : 'rgba(255,255,255,0.46)';
-  const requiresPhone = draft.contactMode === 'phone_callback';
+  const requires = draft.contactMode ? outreachRequires(draft.contactMode) : null;
+  const requiresPhone = requires === 'phone';
+  const requiresMessenger = requires === 'messenger';
   const phoneValid = isPhoneComplete(draft.phoneNumber, draft.phoneCountry);
-  const canContinue = draft.contactMode !== null && (!requiresPhone || phoneValid);
+  const messengerValid = draft.messengerHandle.trim().length > 0;
+  const canContinue =
+    draft.contactMode !== null &&
+    (!requiresPhone || phoneValid) &&
+    (!requiresMessenger || messengerValid);
 
   return (
     <View style={styles.container}>
@@ -67,7 +53,7 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
             Got questions? Let&apos;s answer them.
           </Typography>
           <Typography variant="body2" color="rgba(255,255,255,0.76)" style={styles.subtitle}>
-            One of our agents will reach out to you by Zoom or WhatsApp.
+            Choose how one of our agents should reach out to you.
           </Typography>
         </Animated.View>
 
@@ -125,10 +111,10 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
           </Typography>
         </Animated.View>
 
-        {CONTACT_OPTIONS.map((p, i) => {
+        {OUTREACH_OPTIONS.map((p, i) => {
           const selected = draft.contactMode === p.id;
           return (
-            <Animated.View key={p.id} entering={FadeInUp.delay(300 + i * 80).duration(360)}>
+            <Animated.View key={p.id} entering={FadeInUp.delay(280 + i * 60).duration(360)}>
               <Pressable
                 onPress={() => onUpdate({ contactMode: p.id })}
                 style={[
@@ -141,8 +127,8 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
                 ]}
               >
                 <View style={styles.platformLogoBox}>
-                  {p.logo ? (
-                    <Image source={p.logo} style={styles.platformLogo} />
+                  {p.usesZoomLogo ? (
+                    <Image source={PLATFORM_LOGOS.zoom} style={styles.platformLogo} />
                   ) : (
                     <Ionicons name={p.icon} size={24} color={colors.primary} />
                   )}
@@ -166,29 +152,43 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
                   )}
                 </View>
               </Pressable>
+
+              {selected && p.requires === 'phone' && (
+                <Animated.View entering={FadeInUp.duration(260)} style={styles.inlineField}>
+                  <Typography variant="body1" style={styles.sectionHeader}>
+                    Your phone number
+                  </Typography>
+                  <PhoneInput
+                    value={draft.phoneNumber}
+                    onChangeText={(phoneNumber) => onUpdate({ phoneNumber })}
+                    country={draft.phoneCountry}
+                    onCountryChange={(phoneCountry) => onUpdate({ phoneCountry, phoneNumber: '' })}
+                    placeholder="555 123 4567"
+                    style={styles.phoneInput}
+                  />
+                </Animated.View>
+              )}
+
+              {selected && p.requires === 'messenger' && (
+                <Animated.View entering={FadeInUp.duration(260)} style={styles.inlineField}>
+                  <Typography variant="body1" style={styles.sectionHeader}>
+                    Your Facebook Messenger handle
+                  </Typography>
+                  <TextInput
+                    value={draft.messengerHandle}
+                    onChangeText={(messengerHandle) => onUpdate({ messengerHandle })}
+                    placeholder="jane.doe.42"
+                    autoCapitalize="none"
+                  />
+                </Animated.View>
+              )}
             </Animated.View>
           );
         })}
 
-        {requiresPhone && (
-          <Animated.View entering={FadeInUp.duration(260)}>
-            <Typography variant="body1" style={styles.sectionHeader}>
-              Your WhatsApp number
-            </Typography>
-            <PhoneInput
-              value={draft.phoneNumber}
-              onChangeText={(phoneNumber) => onUpdate({ phoneNumber })}
-              country={draft.phoneCountry}
-              onCountryChange={(phoneCountry) => onUpdate({ phoneCountry, phoneNumber: '' })}
-              placeholder="555 123 4567"
-              style={styles.phoneInput}
-            />
-          </Animated.View>
-        )}
-
         {/* Info banner */}
         <Animated.View
-          entering={FadeInUp.delay(480).duration(360)}
+          entering={FadeInUp.delay(560).duration(360)}
           style={[styles.infoBanner, { backgroundColor: glassSurface, borderColor: glassBorder }]}
         >
           <Ionicons
@@ -199,8 +199,10 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
           />
           <Typography variant="body2" color={colors.primary} style={styles.infoText}>
             {requiresPhone
-              ? 'Use the WhatsApp number where our team can reach you.'
-              : 'Make sure you have Zoom installed before your discovery call.'}
+              ? 'Use the number where our team can reach you.'
+              : requiresMessenger
+                ? 'Our team will message this Messenger handle.'
+                : 'We will send the meeting link before your discovery call.'}
           </Typography>
         </Animated.View>
 
@@ -249,6 +251,9 @@ const styles = StyleSheet.create({
   trainerNameRow: { flexDirection: 'row', alignItems: 'center' },
   trainerName: { fontWeight: '700', marginRight: 6 },
   verifiedIcon: {},
+  // Pulls the revealed input up against the selected card so it reads as
+  // attached to that option, with room before the next card.
+  inlineField: { marginTop: -4, marginBottom: 12 },
   sectionHeader: { fontWeight: '700', marginTop: 8, marginBottom: 12 },
   phoneInput: { fontSize: 15 },
   platformCard: {

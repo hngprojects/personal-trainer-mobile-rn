@@ -18,6 +18,7 @@ import { useAuthStore } from '@/features/auth/store/auth.store';
 import {
   getDiscoverySlotDates,
   getTimezone,
+  outreachRequires,
   useDiscoverySlots,
   useUpcomingBookings,
 } from '@/features/bookings';
@@ -82,6 +83,7 @@ export function BookACallScreen() {
     contactMode: null,
     phoneNumber: '',
     phoneCountry: 'US',
+    messengerHandle: '',
     date: null,
     time: null,
   });
@@ -124,10 +126,9 @@ export function BookACallScreen() {
 
     setSubmitError(null);
 
+    const requires = outreachRequires(draft.contactMode);
     const phoneNumber =
-      draft.contactMode === 'phone_callback'
-        ? (toPhoneE164(draft.phoneNumber, draft.phoneCountry) ?? '')
-        : '';
+      requires === 'phone' ? (toPhoneE164(draft.phoneNumber, draft.phoneCountry) ?? '') : '';
 
     try {
       await bookDiscoveryCall.mutateAsync({
@@ -138,6 +139,7 @@ export function BookACallScreen() {
         trainer_id: trainer.id,
         selected_datetime: buildSelectedDateTime(draft.date, draft.time),
         timezone,
+        ...(requires === 'messenger' ? { messenger_handle: draft.messengerHandle.trim() } : {}),
       });
       advance();
     } catch (error) {

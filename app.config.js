@@ -9,11 +9,27 @@ module.exports = ({ config }) => {
   const fromEnv = parseInt(process.env.ANDROID_VERSION_CODE ?? '', 10);
   const versionCode = Number.isFinite(fromEnv) ? fromEnv : (config.android?.versionCode ?? 1);
 
+  // Google Sign-In on iOS needs the reversed iOS client ID as a URL scheme.
+  // Derive it from the iOS client ID env so it isn't hardcoded; when unset the
+  // plugin is left as-is (Android/dev unaffected).
+  const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? '';
+  const iosUrlScheme = iosClientId
+    ? `com.googleusercontent.apps.${iosClientId.replace('.apps.googleusercontent.com', '')}`
+    : '';
+  const plugins = (config.plugins ?? []).map((plugin) => {
+    const name = Array.isArray(plugin) ? plugin[0] : plugin;
+    if (name === '@react-native-google-signin/google-signin' && iosUrlScheme) {
+      return [name, { iosUrlScheme }];
+    }
+    return plugin;
+  });
+
   return {
     ...config,
     android: {
       ...config.android,
       versionCode,
     },
+    plugins,
   };
 };

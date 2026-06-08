@@ -3,11 +3,12 @@ import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 import { PLATFORM_LOGOS } from '@/features/book-a-call/data/platform-logos';
+import { outreachOption, outreachRequires } from '@/features/bookings';
 import { Trainer } from '@/features/trainers/types/trainer.types';
 import { Button, toPhoneE164, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
-import { SessionDraft, SessionPlatform } from '../types/book-a-session.types';
+import { SessionDraft } from '../types/book-a-session.types';
 
 const MONTH_NAMES = [
   'January',
@@ -24,10 +25,6 @@ const MONTH_NAMES = [
   'December',
 ];
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-function platformLabel(p: SessionPlatform): string {
-  return p === 'whatsapp' ? 'WhatsApp Call' : 'Zoom';
-}
 
 function formatDate(d: Date): string {
   return `${DAY_NAMES[d.getDay()]}, ${MONTH_NAMES[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
@@ -64,6 +61,8 @@ export function SummaryStep({
   const glassBorder = isDark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.58)';
 
   const platform = draft.platform!;
+  const option = outreachOption(platform);
+  const requires = outreachRequires(platform);
   const date = draft.date!;
   const time = draft.time!;
   const endTime = addOneHour(time);
@@ -133,37 +132,48 @@ export function SummaryStep({
               valueNode: null,
             },
             {
-              icon:
-                platform === 'whatsapp'
-                  ? ('logo-whatsapp' as const)
-                  : ('videocam-outline' as const),
+              icon: option?.icon ?? ('videocam-outline' as const),
               label: 'Platform',
               value: null,
               valueNode: (
                 <View style={styles.platformValueRow}>
-                  {platform === 'whatsapp' ? (
-                    <Ionicons name="logo-whatsapp" size={18} color={colors.primary} />
-                  ) : (
+                  {option?.usesZoomLogo ? (
                     <Image
                       source={PLATFORM_LOGOS.zoom}
                       style={styles.platformValueLogo}
                       resizeMode="contain"
                     />
+                  ) : (
+                    <Ionicons
+                      name={option?.icon ?? 'videocam-outline'}
+                      size={18}
+                      color={colors.primary}
+                    />
                   )}
                   <Typography variant="body2" color={colors.textSecondary}>
-                    {platformLabel(platform)}
+                    {option?.name ?? platform}
                   </Typography>
                 </View>
               ),
             },
-            ...(platform === 'whatsapp' && draft.phoneNumber.trim()
+            ...(requires === 'phone' && draft.phoneNumber.trim()
               ? [
                   {
-                    icon: 'logo-whatsapp' as const,
-                    label: 'WhatsApp',
+                    icon: 'call-outline' as const,
+                    label: 'Phone',
                     value:
                       toPhoneE164(draft.phoneNumber, draft.phoneCountry) ??
                       draft.phoneNumber.trim(),
+                    valueNode: null,
+                  },
+                ]
+              : []),
+            ...(requires === 'messenger' && draft.messengerHandle.trim()
+              ? [
+                  {
+                    icon: 'logo-facebook' as const,
+                    label: 'Messenger',
+                    value: draft.messengerHandle.trim(),
                     valueNode: null,
                   },
                 ]

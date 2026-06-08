@@ -78,7 +78,7 @@ export function ProfileScreen() {
         onRefresh={refetch}
       >
         <Animated.View entering={FadeInDown.duration(360)}>
-          <ScreenHeader title="Profile Setting" />
+          <ScreenHeader title="Profile Settings" />
         </Animated.View>
 
         {isError ? (
@@ -144,17 +144,6 @@ export function ProfileScreen() {
           <Typography style={[styles.sectionTitle, { color: colors.text }]}>
             Preferences and Subscriptions
           </Typography>
-          {/*
-            Subscription Overview is intentionally hidden for now.
-            Restore this row when the subscription experience is ready.
-          */}
-          {/*
-            <SettingsRow
-              icon={<Ionicons name="card-outline" size={18} color={colors.icon} />}
-              label="Subscription Overview"
-              onPress={navigate('/subscription')}
-            />
-          */}
           <SettingsRow
             icon={<Ionicons name="barbell-outline" size={18} color={colors.icon} />}
             label="Fitness Goals & Preferences"

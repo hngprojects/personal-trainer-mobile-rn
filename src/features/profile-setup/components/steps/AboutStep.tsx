@@ -33,7 +33,9 @@ function AboutStepVideo({ sources }: { sources: string[] }) {
       style={styles.video}
       nativeControls
       allowsPictureInPicture
-      contentFit="cover"
+      // `contain` so the whole frame is always visible — the trainer videos are
+      // portrait and `cover` was cropping the top/bottom, cutting off the face.
+      contentFit="contain"
     />
   );
 }
@@ -72,7 +74,11 @@ export function AboutStep({ index, scrollX, slideWidth }: AboutStepProps) {
 
 const styles = StyleSheet.create({
   videoCard: {
-    height: 200,
+    // Portrait card so the (portrait) trainer videos fill it with minimal bars;
+    // aspectRatio scales to the device width. `contain` keeps faces uncropped.
+    width: '100%',
+    aspectRatio: 3 / 4,
+    maxHeight: 420,
     borderRadius: 14,
     overflow: 'hidden',
     backgroundColor: '#000',

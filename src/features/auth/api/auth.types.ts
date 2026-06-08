@@ -17,6 +17,9 @@ export interface UserProfile {
   name: string;
   userType: string;
   profileComplete: boolean;
+  // False when the account is deactivated (soft-deleted). Undefined when the
+  // response doesn't carry the flag — treated as active. See `deactivatedFromUser`.
+  isActive?: boolean;
   // Onboarding fields — populated by GET /users/me/profile and the
   // profile-setup PATCH. Optional because the auth response doesn't include them.
   gender?: string | null;
@@ -39,6 +42,11 @@ export interface RawAuthData {
     name: string;
     user_type: string;
     profile_complete: boolean;
+    // Deactivation flag(s) — the backend may signal a soft-deleted account via
+    // any of these; all optional/defensive since the exact shape isn't fixed.
+    is_active?: boolean | null;
+    active?: boolean | null;
+    status?: string | null;
     // Onboarding-saved fields the backend echoes on login. Optional because
     // older responses or partially-onboarded users may omit them.
     gender?: string | null;

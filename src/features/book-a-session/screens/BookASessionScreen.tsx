@@ -20,9 +20,9 @@ import { DateTimeStep } from '@/features/book-a-call/components/DateTimeStep';
 import {
   getTimezone,
   getTrainerAvailabilityDates,
+  sessionPlatformFor,
   useCreateSessionBooking,
   useUpcomingBookings,
-  type SessionBookingPlatform,
 } from '@/features/bookings';
 import { trainers } from '@/features/trainers/data/trainers.data';
 import { useTrainer } from '@/features/trainers/hooks/useTrainer';
@@ -35,7 +35,7 @@ import { buildLocalDateTimeIso } from '@/shared/utils/dateTime';
 import { PlatformStep } from '../components/PlatformStep';
 import { SuccessView } from '../components/SuccessView';
 import { SummaryStep } from '../components/SummaryStep';
-import { SessionDraft, SessionPlatform } from '../types/book-a-session.types';
+import { SessionDraft } from '../types/book-a-session.types';
 
 type Step = 1 | 2 | 3 | 'success';
 
@@ -84,6 +84,7 @@ export function BookASessionScreen() {
     platform: null,
     phoneNumber: '',
     phoneCountry: 'US',
+    messengerHandle: '',
     date: null,
     time: null,
   });
@@ -126,14 +127,24 @@ export function BookASessionScreen() {
 
     const scheduledStart = buildSelectedDateTime(draft.date, draft.time);
     const scheduledEnd = new Date(new Date(scheduledStart).getTime() + 60 * 60_000).toISOString();
+    // POST /bookings accepts only zoom / google_meet / messenger; the platform
+    // step only offers those, so this is always defined here.
+    const sessionPlatform = sessionPlatformFor(draft.platform);
+    if (!sessionPlatform) {
+      setSubmitError('This contact method is not available for session bookings.');
+      return;
+    }
 
     try {
       await createSessionBooking.mutateAsync({
         trainer_id: trainer.id,
         scheduled_start: scheduledStart,
         scheduled_end: scheduledEnd,
-        session_platform: toSessionBookingPlatform(draft.platform),
+        session_platform: sessionPlatform,
         timezone,
+        ...(sessionPlatform === 'messenger'
+          ? { messenger_handle: draft.messengerHandle.trim() }
+          : {}),
       });
       advance();
     } catch (error) {
@@ -277,8 +288,4 @@ const styles = StyleSheet.create({
 
 function buildSelectedDateTime(date: Date, time: string): string {
   return buildLocalDateTimeIso(date, time);
-}
-
-function toSessionBookingPlatform(platform: SessionPlatform): SessionBookingPlatform {
-  return platform === 'whatsapp' ? 'whatsapp' : 'zoom';
 }
