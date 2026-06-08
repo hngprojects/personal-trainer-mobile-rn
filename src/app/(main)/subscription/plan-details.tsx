@@ -1,21 +1,33 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
-import { Alert } from 'react-native';
 
 import { PlanDetailsScreen } from '@/features/subscription/components/PlanDetailsScreen';
 
 export default function SubscriptionPlanDetailsRoute() {
   const router = useRouter();
-  const { planId } = useLocalSearchParams<{ planId: string }>();
+  const { planId, trainerId, trainerName, trainerImage } = useLocalSearchParams<{
+    planId: string;
+    trainerId?: string;
+    trainerName?: string;
+    trainerImage?: string;
+  }>();
 
   return (
     <PlanDetailsScreen
       planId={planId as string}
+      trainerId={trainerId}
+      trainerName={trainerName}
+      trainerImage={trainerImage}
       onBack={() => router.back()}
+      // Called only after the purchase is verified by the backend. Continue into
+      // the booking flow (Pick Availability → Confirm Booking) for this trainer.
       onSubscribe={() => {
-        Alert.alert('Subscribed!', 'Welcome to your 7-day trial.');
         router.dismissAll();
-        router.replace('/(main)/(tabs)');
+        if (trainerId) {
+          router.replace({ pathname: '/book-a-session', params: { trainerId } } as never);
+        } else {
+          router.replace('/(main)/(tabs)');
+        }
       }}
     />
   );

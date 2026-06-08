@@ -5,6 +5,13 @@ import { env } from '@/shared/constants/env';
 import { getJwtType, hasJwtExp, isJwtExpired } from './jwt';
 import { ApiError } from './types';
 
+// A protected route blocked by the deactivation middleware looks like a 403 whose
+// code/message mentions deactivation. Kept here (not imported from a feature) so
+// the shared API layer doesn't depend on features.
+function isDeactivationBlock(code?: string, message?: string): boolean {
+  return /deactiv|inactive|reactiv/.test(`${code ?? ''} ${message ?? ''}`.toLowerCase());
+}
+
 export const client = create({
   baseURL: env.API_BASE_URL,
   timeout: 15_000,
@@ -17,6 +24,7 @@ type AuthStateAccessor = () => {
   refreshToken: string | null;
   setTokens: (tokens: { accessToken: string; refreshToken: string }) => void;
   clearSession: () => void;
+  setDeactivated: (value: boolean) => void;
 };
 
 let getAuthState: AuthStateAccessor | null = null;
@@ -52,6 +60,16 @@ client.interceptors.response.use(
     // even on 401 — they need to fail fast so the caller can react.
     if (original?._skipAuthRefresh) {
       return Promise.reject(toApiError(error));
+    }
+
+    // Deactivation middleware blocks protected routes with a 403. Flag it so the
+    // app surfaces the reactivation prompt; the user stays logged in (the
+    // reactivate endpoint is exempt), so we don't clear the session here.
+    if (error.response?.status === 403 && getAuthState) {
+      const body = error.response.data as { code?: string; message?: string } | undefined;
+      if (isDeactivationBlock(body?.code, body?.message)) {
+        getAuthState().setDeactivated(true);
+      }
     }
 
     if (error.response?.status === 401 && !original._retry && getAuthState) {

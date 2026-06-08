@@ -40,7 +40,7 @@ export const SLIDES: OnboardingSlideData[] = [
     id: 'curated',
     title: 'Choose From Curated Expert Trainers',
     subtitle:
-      'Certified Nigerian coaches across strength, mobility, fat loss and HIIT. Find the one who gets you.',
+      'Certified coaches across strength, mobility, fat loss and HIIT. Find the one who gets you.',
     callout: {
       variant: 'person',
       initials: 'CE',

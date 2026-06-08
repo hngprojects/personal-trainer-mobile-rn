@@ -2,10 +2,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
+import { outreachOption, outreachRequires } from '@/features/bookings';
 import { Button, toPhoneE164, Typography } from '@/shared/components';
 import { palette, useTheme } from '@/shared/theme';
 
-import { CallContactMode, CallDraft } from '../types/book-a-call.types';
+import { CallDraft } from '../types/book-a-call.types';
 
 const MONTH_NAMES = [
   'January',
@@ -22,10 +23,6 @@ const MONTH_NAMES = [
   'December',
 ];
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-function contactModeLabel(mode: CallContactMode): string {
-  return mode === 'phone_callback' ? 'WhatsApp Call' : 'Zoom Meeting';
-}
 
 function formatDate(d: Date): string {
   return `${DAY_NAMES[d.getDay()]}, ${MONTH_NAMES[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
@@ -60,13 +57,16 @@ export function SummaryStep({
   const glassBorder = isDark ? 'rgba(255,255,255,0.20)' : 'rgba(255,255,255,0.46)';
 
   const contactMode = draft.contactMode!;
+  const option = outreachOption(contactMode);
+  const requires = outreachRequires(contactMode);
+  const contactLabel = option?.name ?? contactMode;
   const date = draft.date!;
   const time = draft.time!;
   const endTime = addOneHour(time);
 
   const whatHappensNext = [
     'One of our agents reviews your request',
-    `Agent contacts you by ${contactModeLabel(contactMode)} at your preferred time`,
+    `Agent contacts you by ${contactLabel} at your preferred time`,
     'Agent answers questions and helps you get started',
   ];
 
@@ -110,23 +110,30 @@ export function SummaryStep({
               value: '60 mins',
               valueNode: null,
             },
-            ...(contactMode === 'phone_callback'
+            ...(requires === 'phone'
               ? [
                   {
-                    icon: 'logo-whatsapp' as const,
-                    label: 'WhatsApp',
+                    icon: 'call-outline' as const,
+                    label: 'Phone',
                     value: toPhoneE164(draft.phoneNumber, draft.phoneCountry) ?? draft.phoneNumber,
                     valueNode: null,
                   },
                 ]
               : []),
+            ...(requires === 'messenger' && draft.messengerHandle.trim()
+              ? [
+                  {
+                    icon: 'logo-facebook' as const,
+                    label: 'Messenger',
+                    value: draft.messengerHandle.trim(),
+                    valueNode: null,
+                  },
+                ]
+              : []),
             {
-              icon:
-                contactMode === 'phone_callback'
-                  ? ('logo-whatsapp' as const)
-                  : ('videocam-outline' as const),
+              icon: option?.icon ?? ('videocam-outline' as const),
               label: 'Contact',
-              value: contactModeLabel(contactMode),
+              value: contactLabel,
               valueNode: null,
             },
           ].map(({ icon, label, value, valueNode }, idx, arr) => (

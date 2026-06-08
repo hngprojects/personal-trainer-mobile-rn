@@ -1,11 +1,15 @@
 import { client } from '@/shared/api/client';
 import type { ApiEnvelope } from '@/shared/api/types';
+import type { OutreachMethod } from '@/features/bookings';
 
 export interface BookDiscoveryCallRequest {
   name: string;
   email: string;
-  contact_mode: 'zoom_meeting' | 'phone_callback';
+  contact_mode: OutreachMethod;
+  /** Required for `phone_callback` and `imessage` (E.164). */
   phone_number: string;
+  /** Required for `messenger`. */
+  messenger_handle?: string;
   trainer_id: string;
   selected_datetime: string;
   timezone: string;

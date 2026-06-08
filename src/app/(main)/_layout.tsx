@@ -11,6 +11,7 @@ import Animated, {
 
 import { useAuthSession } from '@/features/auth';
 import { useProfile } from '@/features/profile';
+import { ReactivateAccountOverlay } from '@/features/profile/components/ReactivateAccountOverlay';
 import { useTheme } from '@/shared/theme';
 
 const LOGO = require('../../../assets/images/logo.png');
@@ -62,19 +63,23 @@ export default function MainLayout() {
   }
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        animation: 'slide_from_right',
-        contentStyle: { backgroundColor: colors.background },
-      }}
-    >
-      {/* Per-screen overrides only — expo-router auto-detects the (tabs) group
-          and the trainer-profile route. Declaring (tabs) explicitly triggers a
-          "no route named (tabs) exists" warning because the bundler flattens
-          group folders into the parent's child list. */}
-      <Stack.Screen name="trainer-video" options={{ animation: 'fade' }} />
-    </Stack>
+    <>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: 'slide_from_right',
+          contentStyle: { backgroundColor: colors.background },
+        }}
+      >
+        {/* Per-screen overrides only — expo-router auto-detects the (tabs) group
+            and the trainer-profile route. Declaring (tabs) explicitly triggers a
+            "no route named (tabs) exists" warning because the bundler flattens
+            group folders into the parent's child list. */}
+        <Stack.Screen name="trainer-video" options={{ animation: 'fade' }} />
+      </Stack>
+      {/* Takes over the app when the account is deactivated (blocked everywhere). */}
+      <ReactivateAccountOverlay />
+    </>
   );
 }
 

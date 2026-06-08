@@ -8,7 +8,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 /**
- * Full-bleed background that crossfades between the auth photos. Each image is
+ * Full-bleed background that crossfades between the coach photos. Each image is
  * stacked absolutely and fills the whole screen (`cover`); only the active
  * layer fades to opaque while the rest fade out, so transitions never flash to
  * black. The screens render their scrim gradient + content on top of this.
@@ -18,18 +18,32 @@ import Animated, {
  * dimensions seed the first paint; onLayout then corrects to the real painted
  * area so the photo fills edge-to-edge on any device — including under
  * translucent status / navigation bars where window height falls short.
+ *
+ * Sources are loaded dynamically from assets/coaches via Metro's
+ * require.context, so the slideshow plays through whatever images live in that
+ * folder — drop a file in (or remove one) and it's picked up on the next build,
+ * no code change needed. Keys are sorted for a stable, deterministic order.
  */
-const AUTH_BACKGROUNDS = [
-  require('../../../../assets/images/auth-bg-1.webp'),
-  require('../../../../assets/images/auth-bg-2.jpg'),
-  require('../../../../assets/images/auth-bg-3.jpg'),
-] as const;
+const coachesContext = (
+  require as unknown as {
+    context: (
+      dir: string,
+      useSubdirs: boolean,
+      regExp: RegExp,
+    ) => { keys(): string[]; (id: string): number };
+  }
+).context('../../../../assets/coaches', false, /\.(png|jpe?g|webp)$/);
+
+const AUTH_BACKGROUNDS: number[] = coachesContext
+  .keys()
+  .sort()
+  .map((key) => coachesContext(key));
 
 const HOLD_DURATION = 5000;
 const FADE_DURATION = 1100;
 
 interface AuthBackgroundLayerProps {
-  source: (typeof AUTH_BACKGROUNDS)[number];
+  source: number;
   index: number;
   active: SharedValue<number>;
   width: number;

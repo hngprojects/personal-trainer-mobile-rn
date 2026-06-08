@@ -1,37 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Image, ImageSourcePropType, Pressable, StyleSheet, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 import { PLATFORM_LOGOS } from '@/features/book-a-call/data/platform-logos';
+import { SESSION_OUTREACH_OPTIONS, outreachRequires } from '@/features/bookings';
 import { Trainer } from '@/features/trainers/types/trainer.types';
-import { Button, isPhoneComplete, PhoneInput, Typography } from '@/shared/components';
+import { Button, isPhoneComplete, PhoneInput, TextInput, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 
-import { SessionDraft, SessionPlatform } from '../types/book-a-session.types';
-
-interface PlatformOption {
-  id: SessionPlatform;
-  name: string;
-  description: string;
-  logo?: ImageSourcePropType;
-  icon?: keyof typeof Ionicons.glyphMap;
-}
-
-const PLATFORMS: PlatformOption[] = [
-  {
-    id: 'zoom',
-    name: 'Zoom',
-    description: 'Your trainer will send a Zoom link before the session.',
-    logo: PLATFORM_LOGOS.zoom,
-  },
-  {
-    id: 'whatsapp',
-    name: 'WhatsApp Call',
-    description: 'Your trainer will call your WhatsApp number at the booked time.',
-    icon: 'logo-whatsapp',
-  },
-];
+import { SessionDraft } from '../types/book-a-session.types';
 
 interface PlatformStepProps {
   trainer: Trainer;
@@ -45,9 +23,15 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
   const glassSurface = isDark ? 'rgba(0,0,0,0.48)' : 'rgba(255,255,255,0.78)';
   const glassBorder = isDark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.58)';
 
-  const requiresPhone = draft.platform === 'whatsapp';
+  const requires = draft.platform ? outreachRequires(draft.platform) : null;
+  const requiresPhone = requires === 'phone';
+  const requiresMessenger = requires === 'messenger';
   const phoneValid = isPhoneComplete(draft.phoneNumber, draft.phoneCountry);
-  const canContinue = draft.platform !== null && (!requiresPhone || phoneValid);
+  const messengerValid = draft.messengerHandle.trim().length > 0;
+  const canContinue =
+    draft.platform !== null &&
+    (!requiresPhone || phoneValid) &&
+    (!requiresMessenger || messengerValid);
 
   return (
     <View style={styles.container}>
@@ -63,7 +47,7 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
             How should the session happen?
           </Typography>
           <Typography variant="body2" color="rgba(255,255,255,0.74)" style={styles.subtitle}>
-            Choose Zoom or a WhatsApp call.
+            Pick how your trainer will reach you.
           </Typography>
         </Animated.View>
 
@@ -91,10 +75,10 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
           </View>
         </Animated.View>
 
-        {PLATFORMS.map((p, i) => {
+        {SESSION_OUTREACH_OPTIONS.map((p, i) => {
           const selected = draft.platform === p.id;
           return (
-            <Animated.View key={p.id} entering={FadeInUp.delay(160 + i * 80).duration(360)}>
+            <Animated.View key={p.id} entering={FadeInUp.delay(160 + i * 60).duration(360)}>
               <Pressable
                 onPress={() => onUpdate({ platform: p.id })}
                 style={[
@@ -107,8 +91,8 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
                 ]}
               >
                 <View style={styles.platformLogoBox}>
-                  {p.logo ? (
-                    <Image source={p.logo} style={styles.platformLogo} />
+                  {p.usesZoomLogo ? (
+                    <Image source={PLATFORM_LOGOS.zoom} style={styles.platformLogo} />
                   ) : (
                     <Ionicons name={p.icon} size={24} color={colors.primary} />
                   )}
@@ -132,28 +116,43 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
                   )}
                 </View>
               </Pressable>
+
+              {selected && p.requires === 'phone' && (
+                <Animated.View entering={FadeInUp.duration(260)} style={styles.inlineField}>
+                  <Typography variant="body1" style={styles.phoneLabel}>
+                    Your phone number
+                  </Typography>
+                  <PhoneInput
+                    value={draft.phoneNumber}
+                    onChangeText={(phoneNumber) => onUpdate({ phoneNumber })}
+                    country={draft.phoneCountry}
+                    onCountryChange={(phoneCountry) => onUpdate({ phoneCountry, phoneNumber: '' })}
+                    placeholder="555 123 4567"
+                    style={styles.phoneInput}
+                  />
+                </Animated.View>
+              )}
+
+              {selected && p.requires === 'messenger' && (
+                <Animated.View entering={FadeInUp.duration(260)} style={styles.inlineField}>
+                  <Typography variant="body1" style={styles.phoneLabel}>
+                    Your Facebook Messenger handle
+                  </Typography>
+                  <TextInput
+                    value={draft.messengerHandle}
+                    onChangeText={(messengerHandle) => onUpdate({ messengerHandle })}
+                    placeholder="jane.doe.42"
+                    autoCapitalize="none"
+                    style={styles.messengerInput}
+                  />
+                </Animated.View>
+              )}
             </Animated.View>
           );
         })}
 
-        {requiresPhone && (
-          <Animated.View entering={FadeInUp.duration(260)}>
-            <Typography variant="body1" style={styles.phoneLabel}>
-              Your WhatsApp number
-            </Typography>
-            <PhoneInput
-              value={draft.phoneNumber}
-              onChangeText={(phoneNumber) => onUpdate({ phoneNumber })}
-              country={draft.phoneCountry}
-              onCountryChange={(phoneCountry) => onUpdate({ phoneCountry, phoneNumber: '' })}
-              placeholder="555 123 4567"
-              style={styles.phoneInput}
-            />
-          </Animated.View>
-        )}
-
         <Animated.View
-          entering={FadeInUp.delay(340).duration(360)}
+          entering={FadeInUp.delay(360).duration(360)}
           style={[styles.infoBanner, { backgroundColor: glassSurface, borderColor: glassBorder }]}
         >
           <Ionicons
@@ -164,8 +163,10 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
           />
           <Typography variant="body2" color={colors.primary} style={styles.infoText}>
             {requiresPhone
-              ? 'Use the WhatsApp number where your trainer can reach you at the booked time.'
-              : 'Make sure you have Zoom installed before your session.'}
+              ? 'Use the number where your trainer can reach you at the booked time.'
+              : requiresMessenger
+                ? 'Your trainer will message this Messenger handle to set up the session.'
+                : 'Your trainer will send the meeting link before your session.'}
           </Typography>
         </Animated.View>
 
@@ -240,8 +241,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   radioInner: { width: 10, height: 10, borderRadius: 5 },
+  // Pulls the revealed input up against the selected card (which has its own
+  // marginBottom) so it reads as attached to that option.
+  inlineField: { marginTop: -4, marginBottom: 4 },
   phoneLabel: { fontWeight: '700', marginTop: 4, marginBottom: 12 },
   phoneInput: { fontSize: 15, marginBottom: 12 },
+  messengerInput: { marginBottom: 12 },
   infoBanner: {
     flexDirection: 'row',
     alignItems: 'flex-start',
