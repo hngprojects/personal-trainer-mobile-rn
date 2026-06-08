@@ -7,15 +7,17 @@
 // from it rather than duplicating copy.
 //
 // Mapping confirmed with the team (2026-06-05):
-//   casual     → 1 session   · $12  · single trainer
-//   committed  → 12 sessions · $100 · any trainer
-//   consistent → 18 sessions · $150 · any trainer
-// SKUs are namespaced under the app's bundle/package id `net.emerj.fitcall`.
+//   casual     → 1 session   · $12  · single trainer   (store: single_session_product)
+//   committed  → 12 sessions · $100 · any trainer       (store: committed_session_product)
+//   consistent → 18 sessions · $150 · any trainer       (store product NOT yet created)
+// `productId` values are the exact one-time (consumable) product IDs configured
+// in the Play Console / App Store Connect. The 18-session "consistent" pack has
+// no store product yet, so it's left commented out below until it's created.
 //
-// ⚠️ Each `productId` must be created as a CONSUMABLE in-app purchase (NOT a
-// subscription) in App Store Connect / Play Console, with this exact id, else
-// the purchase sheet won't open. `displayPrice` here is only a pre-store-load
-// fallback — the authoritative localized price comes from the store (see
+// ⚠️ Each `productId` must exist as a CONSUMABLE in-app product (NOT a
+// subscription) in the store with this exact id, else the purchase sheet won't
+// open. `displayPrice` here is only a pre-store-load fallback — the
+// authoritative localized price comes from the store (see
 // useSubscriptionPurchase.priceForPlan).
 export interface SubscriptionPlan {
   /** Backend plan_id. */
@@ -41,7 +43,7 @@ export interface SubscriptionPlan {
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
     planId: 'casual',
-    productId: 'net.emerj.fitcall.pack.casual',
+    productId: 'single_session_product',
     title: 'Single Session',
     sessions: 1,
     displayPrice: '$12',
@@ -51,7 +53,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   },
   {
     planId: 'committed',
-    productId: 'net.emerj.fitcall.pack.committed',
+    productId: 'committed_session_product',
     title: 'Committed',
     sessions: 12,
     displayPrice: '$100',
@@ -64,20 +66,22 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     ],
     tag: 'BEST VALUE',
   },
-  {
-    planId: 'consistent',
-    productId: 'net.emerj.fitcall.pack.consistent',
-    title: 'Consistent',
-    sessions: 18,
-    displayPrice: '$150',
-    multiTrainer: true,
-    scope: '18 sessions across any trainer',
-    features: [
-      '18 sessions to use any time',
-      'Book with any trainer you like',
-      'Best value per session',
-    ],
-  },
+  // TODO: 18-session "consistent" pack — uncomment once its one-time product is
+  // created in the Play Console / App Store Connect and set the real productId.
+  // {
+  //   planId: 'consistent',
+  //   productId: 'consistent_session_product',
+  //   title: 'Consistent',
+  //   sessions: 18,
+  //   displayPrice: '$150',
+  //   multiTrainer: true,
+  //   scope: '18 sessions across any trainer',
+  //   features: [
+  //     '18 sessions to use any time',
+  //     'Book with any trainer you like',
+  //     'Best value per session',
+  //   ],
+  // },
 ];
 
 /** All SKUs to query from the store on connect. */

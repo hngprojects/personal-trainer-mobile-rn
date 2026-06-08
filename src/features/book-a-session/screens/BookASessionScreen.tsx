@@ -20,7 +20,7 @@ import { DateTimeStep } from '@/features/book-a-call/components/DateTimeStep';
 import {
   getTimezone,
   getTrainerAvailabilityDates,
-  outreachRequires,
+  sessionPlatformFor,
   useCreateSessionBooking,
   useUpcomingBookings,
 } from '@/features/bookings';
@@ -28,7 +28,7 @@ import { trainers } from '@/features/trainers/data/trainers.data';
 import { useTrainer } from '@/features/trainers/hooks/useTrainer';
 import { useTrainerAvailability } from '@/features/trainers/hooks/useTrainerAvailability';
 import { ApiError } from '@/shared/api/types';
-import { toPhoneE164, Typography } from '@/shared/components';
+import { Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 import { buildLocalDateTimeIso } from '@/shared/utils/dateTime';
 
@@ -127,19 +127,24 @@ export function BookASessionScreen() {
 
     const scheduledStart = buildSelectedDateTime(draft.date, draft.time);
     const scheduledEnd = new Date(new Date(scheduledStart).getTime() + 60 * 60_000).toISOString();
-    const requires = outreachRequires(draft.platform);
+    // POST /bookings accepts only zoom / google_meet / messenger; the platform
+    // step only offers those, so this is always defined here.
+    const sessionPlatform = sessionPlatformFor(draft.platform);
+    if (!sessionPlatform) {
+      setSubmitError('This contact method is not available for session bookings.');
+      return;
+    }
 
     try {
       await createSessionBooking.mutateAsync({
         trainer_id: trainer.id,
         scheduled_start: scheduledStart,
         scheduled_end: scheduledEnd,
-        session_platform: draft.platform,
+        session_platform: sessionPlatform,
         timezone,
-        ...(requires === 'phone'
-          ? { phone_number: toPhoneE164(draft.phoneNumber, draft.phoneCountry) ?? '' }
+        ...(sessionPlatform === 'messenger'
+          ? { messenger_handle: draft.messengerHandle.trim() }
           : {}),
-        ...(requires === 'messenger' ? { messenger_handle: draft.messengerHandle.trim() } : {}),
       });
       advance();
     } catch (error) {

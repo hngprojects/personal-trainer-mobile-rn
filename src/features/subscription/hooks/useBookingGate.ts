@@ -1,6 +1,8 @@
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 
+import { env } from '@/shared/constants/env';
+
 import { getMySubscription } from '../api/subscription.api';
 
 interface StartBookingOptions {
@@ -8,6 +10,12 @@ interface StartBookingOptions {
   trainerName?: string;
   trainerImage?: string;
 }
+
+// TEMPORARY: the subscription paywall is gated by EXPO_PUBLIC_PAYWALL_ENABLED,
+// which is disabled until the IAP products are live in App Store Connect / Play
+// Console. While off, "Work With X" goes straight to booking (the pre-paywall
+// behaviour). Set EXPO_PUBLIC_PAYWALL_ENABLED=true to re-enable the gate +
+// purchase pages.
 
 /**
  * Gates "Book a session" on having an active subscription. If the client already
@@ -34,6 +42,15 @@ export function useBookingGate() {
 
   const startBooking = useCallback(
     async (opts: StartBookingOptions) => {
+      // Paywall disabled — book directly, as before the subscription gate.
+      if (!env.PAYWALL_ENABLED) {
+        router.push({
+          pathname: '/book-a-session',
+          params: { trainerId: opts.trainerId },
+        } as never);
+        return;
+      }
+
       setChecking(true);
       try {
         const subscription = await getMySubscription();
