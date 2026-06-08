@@ -503,7 +503,10 @@ function DateTimeStep({
               >
                 <Typography
                   variant="label"
-                  color={isSelected ? '#FFFFFF' : '#FFFFFF'}
+                  // White on the primary fill when selected; theme text on the
+                  // glass surface otherwise (the surface is light in light mode,
+                  // so hardcoded white was invisible there).
+                  color={isSelected ? '#FFFFFF' : colors.text}
                   style={[styles.timeText, isSelected && styles.activeTimeText]}
                 >
                   {time}

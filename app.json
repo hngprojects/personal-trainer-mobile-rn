@@ -57,6 +57,18 @@
       ],
       "expo-image",
       "react-native-iap",
+      "expo-web-browser",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableProguardInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "extraProguardRules": "-dontwarn expo.modules.core.interfaces.services.KeepAwakeManager"
+          }
+        }
+      ],
+      "./plugins/withAndroidArchitectures",
       "./plugins/withReleaseSigning"
     ],
     "experiments": {

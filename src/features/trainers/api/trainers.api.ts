@@ -42,6 +42,12 @@ interface RawTrainerBenefit {
 interface RawTrainer {
   id: string;
   user_id?: string;
+  // Suspension/active flags — the backend may signal a suspended trainer via
+  // any of these; all optional/defensive since the exact shape isn't fixed.
+  status?: string | null;
+  is_suspended?: boolean | null;
+  suspended?: boolean | null;
+  is_active?: boolean | null;
   name?: string | null;
   user?: {
     name?: string | null;
@@ -157,15 +163,30 @@ export async function fetchTrainersPage({
       ...(category ? { category: category.toLowerCase() } : {}),
     },
   });
-  const trainers = response.data.data.map(mapTrainer);
+  const raw = response.data.data;
+  // Suspended trainers must not appear in the list. Filter on the raw page, but
+  // base pagination on the server's returned count (raw.length) so dropping a
+  // few locally doesn't prematurely stop the "load more" heuristic.
+  const trainers = raw.filter((t) => !isSuspendedTrainer(t)).map(mapTrainer);
   const meta = parsePaginationMeta(response.data.meta);
 
   return {
     trainers,
     page: meta.page ?? meta.current_page ?? meta.currentPage ?? page,
     limit: meta.limit ?? meta.per_page ?? meta.perPage ?? limit,
-    hasNextPage: getHasNextPage(meta, trainers.length, page, limit),
+    hasNextPage: getHasNextPage(meta, raw.length, page, limit),
   };
+}
+
+const SUSPENDED_STATUSES = new Set(['suspended', 'inactive', 'banned', 'disabled', 'deactivated']);
+
+// Defensive: a trainer is hidden if any status flag marks them suspended/inactive.
+function isSuspendedTrainer(raw: RawTrainer): boolean {
+  if (raw.is_suspended === true || raw.suspended === true || raw.is_active === false) return true;
+  if (typeof raw.status === 'string' && SUSPENDED_STATUSES.has(raw.status.toLowerCase())) {
+    return true;
+  }
+  return false;
 }
 
 export async function fetchTrainers(category?: string | null): Promise<Trainer[]> {

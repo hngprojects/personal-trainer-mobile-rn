@@ -2,7 +2,7 @@ import { client } from '@/shared/api/client';
 import type { ApiEnvelope } from '@/shared/api/types';
 import type { TrainerAvailability } from '@/features/trainers/types/trainer.types';
 
-import type { OutreachMethod } from '../constants/outreach';
+import type { SessionPlatform } from '../constants/outreach';
 
 export type BookingType = 'session' | 'discovery';
 
@@ -56,10 +56,8 @@ export interface CreateSessionBookingRequest {
   trainer_id: string;
   scheduled_start: string;
   scheduled_end: string;
-  session_platform: OutreachMethod;
+  session_platform: SessionPlatform;
   timezone: string;
-  /** Required for `phone_callback` and `imessage` (E.164). */
-  phone_number?: string;
   /** Required for `messenger`. */
   messenger_handle?: string;
 }

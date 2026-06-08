@@ -31,6 +31,14 @@ export function TrainerProfileScreen() {
   const { colors, isDark } = useTheme();
   const { startBooking, checking } = useBookingGate();
 
+  // The footer sits on a solid theme surface (not the dark hero), so the white
+  // "glass" fill + white text vanishes in light mode. In light mode give the
+  // buttons a solid primary fill so the white label/icon stay legible; keep the
+  // glass look in dark mode.
+  const footerButtonStyle = isDark
+    ? undefined
+    : { backgroundColor: colors.primary, borderColor: colors.primary };
+
   if (isLoading) {
     return (
       <View style={[styles.centered, { backgroundColor: colors.background }]}>
@@ -237,7 +245,7 @@ export function TrainerProfileScreen() {
         ]}
       >
         <Pressable
-          style={styles.glassBtn}
+          style={[styles.glassBtn, footerButtonStyle]}
           disabled={checking}
           onPress={() =>
             startBooking({
@@ -267,7 +275,7 @@ export function TrainerProfileScreen() {
           )}
         </Pressable>
         <Pressable
-          style={styles.glassBtn}
+          style={[styles.glassBtn, footerButtonStyle]}
           onPress={() =>
             router.push({
               pathname: '/book-a-call',
