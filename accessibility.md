@@ -437,11 +437,67 @@ it:
 
 ## Foundation changes (Phase 2)
 
-_Pending. Each entry will follow the form:_
+Three landed commits cover all nine shared-infra findings (S1–S9).
 
-```
-- <file:line> — <change> — <why>
-```
+**Phase 2.1 commit (Button / Typography / SettingsRow / ScreenHeader)**
+
+- `src/shared/components/Button.tsx` — added
+  `accessibilityRole="button"`, `accessibilityState={{ disabled, busy }}`,
+  `accessibilityLabel` falling back to the visible label; pinned
+  `minHeight: 48`. Fixes S1.
+- `src/shared/components/Typography.tsx` — heading variants (h1/h2/h3)
+  now cap `maxFontSizeMultiplier` to 1.6 / 1.6 / 1.8. Body and label
+  remain uncapped so users who rely on enlarged body text still get it.
+  Fixes S2.
+- `src/features/profile/components/SettingsRow.tsx` — added
+  `accessibilityRole="button"` (only when `onPress` is set), composed
+  `accessibilityLabel` from `label` + `subtitle`, marked the icon view
+  decorative via `importantForAccessibility="no"` /
+  `accessibilityElementsHidden`, pinned `minHeight: 48`. Fixes S8.
+- `src/features/profile/components/ScreenHeader.tsx` — back button
+  gets `accessibilityRole="button"` + `accessibilityLabel="Go back"`;
+  title gets `accessibilityRole="header"`. Fixes S9.
+
+**Phase 2.2 commit (TextInput / PhoneInput / ToastHost)**
+
+- `src/shared/components/TextInput.tsx` — the input gets
+  `accessibilityLabel` composed from the `label` prop with a
+  `", required"` suffix when applicable. Error text is wrapped in a
+  polite `accessibilityLiveRegion` so SR users hear it on appear.
+  Password visibility toggle gets a button role + dynamic
+  "Show/Hide password" label. Fixes S3.
+- `src/shared/components/PhoneInput.tsx` — country option rows in the
+  picker modal now have `accessibilityRole="radio"` and
+  `accessibilityState.selected`. Sheet container has
+  `accessibilityViewIsModal` so iOS traps focus. The dismiss overlay
+  gets `accessibilityRole="button"` + "Close country picker" label.
+  Sheet title gets a header role. Fixes S4.
+- `src/shared/components/ToastHost.tsx` — toast view now sets
+  `accessibilityLiveRegion` (`assertive` for errors, `polite`
+  otherwise) and `accessibilityRole="alert"` for errors. Errors also
+  fire `AccessibilityInfo.announceForAccessibility` on appear to cover
+  Android versions where live-region behaviour is inconsistent.
+  Fixes S5.
+
+**Phase 2.3 commit (useReducedMotion + colors contrast)**
+
+- New `src/shared/hooks/useReducedMotion.ts` — JS-thread subscriber
+  for the OS "reduce motion" / "remove animations" preference. Used at
+  the prop layer to short-circuit Reanimated entering animations.
+- New `src/shared/animation/entries.ts` — exports `maybeAnim(animation,
+reduce)` that returns the animation or `undefined`. Lets call sites
+  stay one-line: `entering={maybeAnim(FadeInDown.duration(360), reduce)}`.
+  Together with the hook above, addresses S7. Phase 3/4 changes thread
+  these through call sites.
+- `src/shared/theme/colors.ts` — three contrast bumps to clear WCAG AA:
+  - Light `textSecondary`: `neutral['5']` (#7E7C78, ≈ 4.2:1) →
+    `neutral['6']` (#5E5C59, ≈ 6.8:1).
+  - Light `error`: `highlightRed['5']` (#EF4444, ≈ 3.75:1) →
+    `highlightRed['6']` (#DC2626, ≈ 4.8:1).
+  - Dark `primary` / `primaryPressed` / `tabBarActive`:
+    `highlightBlue['4']` (#60A5FA, ≈ 2.6:1 vs white) →
+    `highlightBlue['5']` (#1861B8, ≈ 5.7:1 vs white).
+    Fixes S6.
 
 ## Flow A — Discovery call changes (Phase 3)
 
