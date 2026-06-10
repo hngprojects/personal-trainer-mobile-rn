@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Href, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Image, Pressable, RefreshControl, ScrollView, View } from 'react-native';
+import { Image, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import type { GestureResponderEvent } from 'react-native';
 import Animated, {
   type AnimatedProps,
