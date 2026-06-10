@@ -355,7 +355,7 @@ function EditableOptions({
   return (
     <View style={styles.editGroup}>
       <Typography style={[styles.editLabel, { color: colors.text }]}>{label}</Typography>
-      <View style={styles.chipGrid}>
+      <View style={styles.chipGrid} accessibilityRole={multi ? undefined : 'radiogroup'}>
         {options.map((option) => {
           const isSelected = selected.includes(option.value);
           return (
@@ -364,6 +364,10 @@ function EditableOptions({
               onPress={() => onPress(option.value)}
               accessibilityRole={multi ? 'checkbox' : 'radio'}
               accessibilityState={{ selected: isSelected, checked: isSelected }}
+              accessibilityLabel={option.label}
+              // The visible chip is ~36dp tall (paddingVertical 8 + fontSize 12);
+              // hitSlop expands the touch target to clear the 48dp WCAG target.
+              hitSlop={8}
               style={({ pressed }) => [
                 styles.optionChip,
                 {

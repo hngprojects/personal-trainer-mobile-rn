@@ -17,9 +17,19 @@ export function CenterModal({ visible, onClose, title, children }: CenterModalPr
   return (
     <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
       <View style={[styles.overlay, { backgroundColor: colors.modalBackdrop }]}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={[styles.card, { backgroundColor: colors.background }]}>
-          <Typography style={[styles.title, { color: colors.text }]}>{title}</Typography>
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel={`Close ${title}`}
+        />
+        <View
+          accessibilityViewIsModal
+          style={[styles.card, { backgroundColor: colors.background }]}
+        >
+          <Typography accessibilityRole="header" style={[styles.title, { color: colors.text }]}>
+            {title}
+          </Typography>
           {children}
         </View>
       </View>

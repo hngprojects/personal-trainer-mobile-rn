@@ -127,6 +127,9 @@ export function ProfileScreen() {
               <Switch
                 value={isDark}
                 onValueChange={(v) => setMode(v ? 'dark' : 'light')}
+                accessibilityRole="switch"
+                accessibilityLabel="Dark mode"
+                accessibilityState={{ checked: isDark }}
                 trackColor={{ false: palette.neutral['2'], true: palette.highlightBlue['5'] }}
                 thumbColor="#FFFFFF"
                 ios_backgroundColor={palette.neutral['2']}
