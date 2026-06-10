@@ -42,6 +42,9 @@ export function Button({
       // Key tied to disabled state forces a clean remount when validity flips,
       // bypassing the RN reconciler bailout that was caching the native bg.
       key={isDisabled ? 'disabled' : 'active'}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: isDisabled, busy: isLoading }}
+      accessibilityLabel={props.accessibilityLabel ?? label}
       style={[
         styles.base,
         { backgroundColor: background },
@@ -112,6 +115,9 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 10,
+    // WCAG / Android 48dp minimum touch target. Padding alone gets close but
+    // shrinks at smaller font scales — minHeight pins it.
+    minHeight: 48,
   },
   content: {
     flexDirection: 'row',

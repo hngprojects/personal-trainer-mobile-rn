@@ -32,14 +32,20 @@ export function SettingsRow({
       <Ionicons name="chevron-forward" size={18} color={colors.iconMuted} />
     ) : null);
 
+  const a11yLabel = subtitle ? `${label}, ${subtitle}` : label;
+
   return (
     <Pressable
       onPress={onPress}
       disabled={!onPress}
       android_ripple={onPress ? { color: colors.surfaceMuted } : undefined}
+      accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityLabel={onPress ? a11yLabel : undefined}
       style={({ pressed }) => [styles.row, pressed && onPress ? styles.pressed : null]}
     >
-      <View style={styles.iconWrap}>{icon}</View>
+      <View style={styles.iconWrap} importantForAccessibility="no" accessibilityElementsHidden>
+        {icon}
+      </View>
       <View style={styles.textCol}>
         <Typography style={[styles.label, { color: labelColor ?? colors.text }]} numberOfLines={1}>
           {label}
@@ -61,6 +67,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 14,
     gap: 14,
+    // 48dp minimum touch target (Android a11y / WCAG 2.5.5).
+    minHeight: 48,
   },
   pressed: {
     opacity: 0.6,

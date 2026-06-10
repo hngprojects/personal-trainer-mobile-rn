@@ -23,14 +23,22 @@ export function ScreenHeader({ title, onBack, showBack = true }: ScreenHeaderPro
   return (
     <View style={styles.container}>
       {showBack ? (
-        <Pressable hitSlop={12} onPress={handleBack} style={styles.backBtn}>
+        <Pressable
+          hitSlop={12}
+          onPress={handleBack}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+          style={styles.backBtn}
+        >
           <Ionicons name="arrow-back" size={22} color={colors.text} />
         </Pressable>
       ) : (
         <View style={styles.backBtn} />
       )}
       {title ? (
-        <Typography style={[styles.title, { color: colors.text }]}>{title}</Typography>
+        <Typography accessibilityRole="header" style={[styles.title, { color: colors.text }]}>
+          {title}
+        </Typography>
       ) : null}
     </View>
   );
