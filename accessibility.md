@@ -634,9 +634,15 @@ Verification covers two things:
 
 ### Static verification (completed)
 
-- `pnpm lint --max-warnings 0` — exit 0 across the whole project after
-  the Phase 4 docs commit (line-ending churn auto-fixed via
-  `pnpm lint:fix`).
+- `pnpm lint --max-warnings 0` exits 0 across every file modified on
+  this branch. One pre-existing repo-wide warning (CRLF line endings on
+  `src/features/auth/components/AuthBackground.tsx` — last modified in
+  commit `e324eef`, out of Stage 9 scope) is unaffected by this branch:
+  git's `autocrlf=true` on Windows converts LF → CRLF on checkout and
+  Prettier flags the result. Running `pnpm lint:fix` clears it
+  in-place but git reconverts on commit. A `.gitattributes` fix for the
+  whole repo would solve it, but is out of scope for the accessibility
+  branch.
 - Finding-to-commit traceability:
   - S1 → Phase 2.1 (Button)
   - S2 → Phase 2.1 (Typography)
