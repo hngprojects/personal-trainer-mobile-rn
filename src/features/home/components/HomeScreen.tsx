@@ -116,23 +116,26 @@ const TrainerListItem = React.memo(function TrainerListItem({ trainer }: Trainer
     `${trainer.name}, ${trainer.specialty}, ` +
     `${trainer.rating} star rating, ${trainer.clients} clients`;
 
+  const openProfile = () =>
+    router.push({
+      pathname: '/(main)/trainer-profile',
+      params: { trainerId: trainer.id },
+    } as never);
+
   return (
     <View style={styles.trainerCard}>
       <Pressable
         style={styles.trainerPressable}
-        onPress={() =>
-          router.push({
-            pathname: '/(main)/trainer-profile',
-            params: { trainerId: trainer.id },
-          } as never)
-        }
+        onPress={openProfile}
         accessibilityRole="button"
         accessibilityLabel={cardA11yLabel}
         accessibilityHint="Opens trainer profile"
-        accessibilityActions={[
-          { name: 'activate', label: 'Open profile' },
-          { name: 'longpress', label: `Book session with ${firstName}` },
-        ]}
+        // Longpress is the SR shortcut for booking. We intentionally do NOT
+        // declare 'activate' here — when 'activate' is in the action list,
+        // TalkBack's double-tap routes through onAccessibilityAction instead
+        // of falling back to onPress, and you have to handle it yourself.
+        // Leaving it out keeps the default double-tap → onPress wiring intact.
+        accessibilityActions={[{ name: 'longpress', label: `Book session with ${firstName}` }]}
         onAccessibilityAction={(event) => {
           if (event.nativeEvent.actionName === 'longpress') {
             router.push({
