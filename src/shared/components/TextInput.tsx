@@ -25,6 +25,11 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
     const [hidden, setHidden] = useState(isPassword);
     const hasError = !!error;
 
+    // Compose the input's accessible name from explicit label + required marker.
+    // Callers can still override by passing accessibilityLabel directly.
+    const requiredSuffix = required ? ', required' : '';
+    const a11yLabel = props.accessibilityLabel ?? (label ? `${label}${requiredSuffix}` : undefined);
+
     return (
       <View style={styles.container}>
         {label && (
@@ -50,11 +55,19 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
             placeholderTextColor={colors.textSecondary}
             autoCapitalize="none"
             autoCorrect={false}
+            accessibilityLabel={a11yLabel}
+            accessibilityState={{ disabled: !!props.editable === false }}
             style={[styles.input, { color: colors.text }, style]}
             {...props}
           />
           {isPassword && (
-            <Pressable onPress={() => setHidden((h) => !h)} hitSlop={8} style={styles.iconButton}>
+            <Pressable
+              onPress={() => setHidden((h) => !h)}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={hidden ? 'Show password' : 'Hide password'}
+              style={styles.iconButton}
+            >
               <Ionicons
                 name={hidden ? 'eye-outline' : 'eye-off-outline'}
                 size={20}
@@ -63,7 +76,14 @@ export const TextInput = forwardRef<RNTextInput, AppTextInputProps>(
             </Pressable>
           )}
         </View>
-        {error && <Typography style={[styles.error, { color: colors.error }]}>{error}</Typography>}
+        {error && (
+          <Typography
+            accessibilityLiveRegion="polite"
+            style={[styles.error, { color: colors.error }]}
+          >
+            {error}
+          </Typography>
+        )}
       </View>
     );
   },

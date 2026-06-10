@@ -133,9 +133,20 @@ export function PhoneInput({
         onRequestClose={() => setPickerVisible(false)}
       >
         <View style={[styles.overlay, { backgroundColor: colors.modalBackdrop }]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={() => setPickerVisible(false)} />
-          <View style={[styles.sheet, { backgroundColor: colors.background }]}>
-            <Typography style={[styles.sheetTitle, { color: colors.text }]}>
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={() => setPickerVisible(false)}
+            accessibilityRole="button"
+            accessibilityLabel="Close country picker"
+          />
+          <View
+            accessibilityViewIsModal
+            style={[styles.sheet, { backgroundColor: colors.background }]}
+          >
+            <Typography
+              accessibilityRole="header"
+              style={[styles.sheetTitle, { color: colors.text }]}
+            >
               Select country
             </Typography>
             {COUNTRIES.map((c) => {
@@ -144,6 +155,9 @@ export function PhoneInput({
                 <Pressable
                   key={c.code}
                   onPress={() => handlePick(c.code)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={`${c.label}, ${c.dialCode}`}
                   style={({ pressed }) => [
                     styles.optionRow,
                     {

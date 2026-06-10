@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Platform, StatusBar, StyleSheet, View } from 'react-native';
+import { AccessibilityInfo, Platform, StatusBar, StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
   runOnJS,
@@ -51,6 +51,13 @@ function ToastItem({ toast }: { toast: ToastItemType }) {
     opacity.value = withTiming(1, { duration: 220, easing: Easing.out(Easing.cubic) });
     translateY.value = withTiming(0, { duration: 220, easing: Easing.out(Easing.cubic) });
 
+    // Announce on appear. accessibilityLiveRegion on the View covers Android,
+    // but errors should be heard immediately regardless of platform, so we
+    // also fire announceForAccessibility for the error variant.
+    if (toast.variant === 'error') {
+      AccessibilityInfo.announceForAccessibility(toast.message);
+    }
+
     const timer = setTimeout(() => {
       opacity.value = withTiming(0, { duration: 200 });
       translateY.value = withTiming(-20, { duration: 200 }, (finished) => {
@@ -67,10 +74,16 @@ function ToastItem({ toast }: { toast: ToastItemType }) {
     transform: [{ translateY: translateY.value }],
   }));
 
+  // Errors are urgent and override speech; success / info are polite and
+  // queue behind whatever the user is hearing.
+  const liveRegion = toast.variant === 'error' ? 'assertive' : 'polite';
+
   return (
     <Animated.View
       style={[styles.toast, animatedStyle, { backgroundColor: variantColors.bg }]}
       pointerEvents="auto"
+      accessibilityLiveRegion={liveRegion}
+      accessibilityRole={toast.variant === 'error' ? 'alert' : undefined}
     >
       <Typography style={[styles.message, { color: variantColors.fg }]} numberOfLines={3}>
         {toast.message}
