@@ -8,6 +8,15 @@ import { palette, useTheme } from '@/shared/theme';
 import { buildLocalDateTimeIso, formatDisplayTime } from '@/shared/utils/dateTime';
 
 const DAY_LABELS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+const FULL_DAY_NAMES = [
+  'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+];
 const MONTH_NAMES = [
   'January',
   'February',
@@ -242,21 +251,37 @@ export function DateTimeStep({
         >
           {/* Month header */}
           <View style={styles.monthHeader}>
-            <Pressable onPress={prevMonth} hitSlop={12} style={styles.chevronBtn}>
+            <Pressable
+              onPress={prevMonth}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel="Previous month"
+              style={styles.chevronBtn}
+            >
               <Ionicons name="chevron-back" size={18} color={colors.text} />
             </Pressable>
-            <View style={styles.monthTitleRow}>
+            <View style={styles.monthTitleRow} accessibilityRole="header">
               <Typography variant="body1" style={styles.monthTitle}>
                 {headerLabel}
               </Typography>
+              {/* Decorative chevron-down: hint of a dropdown that doesn't exist.
+                  Hidden from a11y so SR users aren't misled. */}
               <Ionicons
                 name="chevron-down"
                 size={14}
                 color={colors.text}
                 style={styles.dropChevron}
+                accessibilityElementsHidden
+                importantForAccessibility="no"
               />
             </View>
-            <Pressable onPress={nextMonth} hitSlop={12} style={styles.chevronBtn}>
+            <Pressable
+              onPress={nextMonth}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel="Next month"
+              style={styles.chevronBtn}
+            >
               <Ionicons name="chevron-forward" size={18} color={colors.text} />
             </Pressable>
           </View>
@@ -290,10 +315,22 @@ export function DateTimeStep({
                 !blockWeekend && !isPast && (!useRemoteSlots || hasAvailableSlotForDay(date));
               const selected = draft.date ? isSameDay(date, draft.date) : false;
 
+              const dayLabel =
+                `${FULL_DAY_NAMES[date.getDay()]} ` +
+                `${MONTH_NAMES[date.getMonth()]} ${date.getDate()}` +
+                (isToday ? ', today' : '');
+              const a11yState = { selected, disabled: !avail };
+
               return (
                 <Pressable
                   key={i}
                   onPress={() => onDayPress(date)}
+                  // Keep the visible circle at 36dp but expand the touch target
+                  // to 48dp via hitSlop. WCAG 2.5.5 / Android a11y guidance.
+                  hitSlop={6}
+                  accessibilityRole="button"
+                  accessibilityLabel={dayLabel}
+                  accessibilityState={a11yState}
                   style={[styles.dayCell, !avail && { opacity: 0.3 }]}
                 >
                   {isToday && !selected ? (
@@ -389,6 +426,10 @@ export function DateTimeStep({
                 <Pressable
                   key={slot}
                   onPress={() => onTimePress(slot)}
+                  accessibilityRole="button"
+                  accessibilityLabel={slot}
+                  accessibilityState={{ selected, disabled: unavail }}
+                  hitSlop={6}
                   style={[
                     styles.timeSlot,
                     unavail && styles.timeSlotUnavail,

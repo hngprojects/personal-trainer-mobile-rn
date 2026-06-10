@@ -26,6 +26,8 @@ import { trainers } from '@/features/trainers/data/trainers.data';
 import { useTrainer } from '@/features/trainers/hooks/useTrainer';
 import { ApiError } from '@/shared/api/types';
 import { toPhoneE164, Typography } from '@/shared/components';
+import { maybeAnim } from '@/shared/animation/entries';
+import { useReducedMotion } from '@/shared/hooks/useReducedMotion';
 import { useTheme } from '@/shared/theme';
 import { buildLocalDateTimeIso } from '@/shared/utils/dateTime';
 
@@ -42,6 +44,7 @@ const STEP_DURATION = 320;
 
 export function BookACallScreen() {
   const { colors, spacing } = useTheme();
+  const reduceMotion = useReducedMotion();
   const { trainerId } = useLocalSearchParams<{ trainerId?: string }>();
   const user = useAuthStore((state) => state.user);
   const { data: fetchedTrainer, isLoading: isTrainerLoading } = useTrainer(trainerId);
@@ -191,14 +194,29 @@ export function BookACallScreen() {
           entering={FadeInDown.duration(360)}
           style={[styles.header, { paddingHorizontal: spacing.md, paddingTop: spacing.sm }]}
         >
-          <Pressable onPress={handleBack} hitSlop={12} style={styles.backBtn}>
+          <Pressable
+            onPress={handleBack}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+            style={styles.backBtn}
+          >
             <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
           </Pressable>
-          <Typography variant="h2" style={[styles.headerTitle, { color: '#FFFFFF' }]}>
+          <Typography
+            variant="h2"
+            accessibilityRole="header"
+            style={[styles.headerTitle, { color: '#FFFFFF' }]}
+          >
             {title}
           </Typography>
 
-          <View style={styles.progressTrack}>
+          <View
+            style={styles.progressTrack}
+            accessibilityRole="progressbar"
+            accessibilityLabel={`Booking progress, step ${numericStep} of 3`}
+            accessibilityValue={{ min: 0, max: 3, now: numericStep }}
+          >
             <Animated.View style={[styles.progressFill, progressStyle]} />
           </View>
           <Typography variant="body2" color="rgba(255,255,255,0.74)" style={styles.stepLabel}>
@@ -209,7 +227,10 @@ export function BookACallScreen() {
 
       <Animated.View
         key={String(step)}
-        entering={isSuccess ? FadeIn.duration(360) : entering.duration(STEP_DURATION)}
+        entering={maybeAnim(
+          isSuccess ? FadeIn.duration(360) : entering.duration(STEP_DURATION),
+          reduceMotion,
+        )}
         style={styles.content}
       >
         {step === 1 && (

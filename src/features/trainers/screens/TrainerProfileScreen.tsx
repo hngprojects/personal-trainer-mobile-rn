@@ -94,6 +94,8 @@ export function TrainerProfileScreen() {
       <Pressable
         onPress={() => router.back()}
         hitSlop={12}
+        accessibilityRole="button"
+        accessibilityLabel="Go back"
         style={[styles.backButton, { top: insets.top + 12 }]}
       >
         <Ionicons name="arrow-back" size={22} color="#fff" />

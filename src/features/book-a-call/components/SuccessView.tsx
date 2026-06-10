@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { AccessibilityInfo, StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
   FadeIn,
@@ -16,11 +16,14 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { maybeAnim } from '@/shared/animation/entries';
 import { Button, Typography } from '@/shared/components';
+import { useReducedMotion } from '@/shared/hooks/useReducedMotion';
 import { palette, useTheme } from '@/shared/theme';
 
 export function SuccessView() {
   const { colors, spacing } = useTheme();
+  const reduceMotion = useReducedMotion();
 
   const checkScale = useSharedValue(0);
   const checkOpacity = useSharedValue(0);
@@ -28,6 +31,21 @@ export function SuccessView() {
   const glowOpacity = useSharedValue(0);
 
   useEffect(() => {
+    // Announce the result on arrival so screen-reader users know the booking
+    // succeeded — visual celebration is otherwise invisible to them.
+    AccessibilityInfo.announceForAccessibility(
+      'Request submitted. An agent will reach out to you at your preferred time.',
+    );
+
+    if (reduceMotion) {
+      // Skip the entrance + indefinite pulse entirely. Snap to final state.
+      glowOpacity.value = 1;
+      glowScale.value = 1;
+      checkOpacity.value = 1;
+      checkScale.value = 1;
+      return;
+    }
+
     glowOpacity.value = withTiming(1, { duration: 380, easing: Easing.out(Easing.cubic) });
     glowScale.value = withSequence(
       withTiming(1, { duration: 420, easing: Easing.out(Easing.cubic) }),
@@ -45,7 +63,7 @@ export function SuccessView() {
     checkOpacity.value = withDelay(180, withTiming(1, { duration: 220 }));
     checkScale.value = withDelay(180, withSpring(1, { damping: 9, stiffness: 140 }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [reduceMotion]);
 
   const glowStyle = useAnimatedStyle(() => ({
     opacity: glowOpacity.value,
@@ -72,13 +90,13 @@ export function SuccessView() {
           </Animated.View>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(420).duration(360)}>
-          <Typography variant="h2" align="center" style={styles.title}>
+        <Animated.View entering={maybeAnim(FadeInDown.delay(420).duration(360), reduceMotion)}>
+          <Typography variant="h2" align="center" accessibilityRole="header" style={styles.title}>
             Request Submitted!
           </Typography>
         </Animated.View>
 
-        <Animated.View entering={FadeIn.delay(560).duration(360)}>
+        <Animated.View entering={maybeAnim(FadeIn.delay(560).duration(360), reduceMotion)}>
           <Typography
             variant="body2"
             color={colors.textSecondary}
@@ -90,7 +108,7 @@ export function SuccessView() {
           </Typography>
         </Animated.View>
 
-        <Animated.View entering={FadeIn.delay(680).duration(360)}>
+        <Animated.View entering={maybeAnim(FadeIn.delay(680).duration(360), reduceMotion)}>
           <Typography
             variant="body2"
             color={colors.textSecondary}
@@ -103,7 +121,7 @@ export function SuccessView() {
       </View>
 
       <Animated.View
-        entering={FadeInUp.delay(800).duration(420)}
+        entering={maybeAnim(FadeInUp.delay(800).duration(420), reduceMotion)}
         style={[styles.footer, { paddingBottom: spacing.lg }]}
       >
         <Button label="Back to Home" onPress={() => router.replace('/(main)/(tabs)' as never)} />

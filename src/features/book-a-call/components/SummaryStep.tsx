@@ -139,6 +139,8 @@ export function SummaryStep({
           ].map(({ icon, label, value, valueNode }, idx, arr) => (
             <View
               key={label}
+              accessible
+              accessibilityLabel={`${label}: ${value}`}
               style={[
                 styles.detailRow,
                 idx < arr.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border },

@@ -106,85 +106,102 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
 
         {/* Contact mode selection */}
         <Animated.View entering={FadeInUp.delay(220).duration(360)}>
-          <Typography variant="body1" style={styles.sectionHeader}>
+          <Typography variant="body1" accessibilityRole="header" style={styles.sectionHeader}>
             How should we contact you?
           </Typography>
         </Animated.View>
 
-        {OUTREACH_OPTIONS.map((p, i) => {
-          const selected = draft.contactMode === p.id;
-          return (
-            <Animated.View key={p.id} entering={FadeInUp.delay(280 + i * 60).duration(360)}>
-              <Pressable
-                onPress={() => onUpdate({ contactMode: p.id })}
-                style={[
-                  styles.platformCard,
-                  {
-                    backgroundColor: glassSurface,
-                    borderColor: selected ? colors.primary : glassBorder,
-                    borderWidth: selected ? 1.5 : 1,
-                  },
-                ]}
-              >
-                <View style={styles.platformLogoBox}>
-                  {p.usesZoomLogo ? (
-                    <Image source={PLATFORM_LOGOS.zoom} style={styles.platformLogo} />
-                  ) : (
-                    <Ionicons name={p.icon} size={24} color={colors.primary} />
-                  )}
-                </View>
-                <View style={styles.platformText}>
-                  <Typography variant="body1" style={styles.platformName}>
-                    {p.name}
-                  </Typography>
-                  <Typography variant="body2" color={colors.textSecondary}>
-                    {p.description}
-                  </Typography>
-                </View>
-                <View
+        <View accessibilityRole="radiogroup">
+          {OUTREACH_OPTIONS.map((p, i) => {
+            const selected = draft.contactMode === p.id;
+            return (
+              <Animated.View key={p.id} entering={FadeInUp.delay(280 + i * 60).duration(360)}>
+                <Pressable
+                  onPress={() => onUpdate({ contactMode: p.id })}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={`${p.name}. ${p.description}`}
                   style={[
-                    styles.radioOuter,
-                    { borderColor: selected ? colors.primary : colors.border },
+                    styles.platformCard,
+                    {
+                      backgroundColor: glassSurface,
+                      borderColor: selected ? colors.primary : glassBorder,
+                      borderWidth: selected ? 1.5 : 1,
+                    },
                   ]}
                 >
-                  {selected && (
-                    <View style={[styles.radioInner, { backgroundColor: colors.primary }]} />
-                  )}
-                </View>
-              </Pressable>
+                  <View
+                    style={styles.platformLogoBox}
+                    importantForAccessibility="no"
+                    accessibilityElementsHidden
+                  >
+                    {p.usesZoomLogo ? (
+                      <Image source={PLATFORM_LOGOS.zoom} style={styles.platformLogo} />
+                    ) : (
+                      <Ionicons name={p.icon} size={24} color={colors.primary} />
+                    )}
+                  </View>
+                  <View
+                    style={styles.platformText}
+                    importantForAccessibility="no"
+                    accessibilityElementsHidden
+                  >
+                    <Typography variant="body1" style={styles.platformName}>
+                      {p.name}
+                    </Typography>
+                    <Typography variant="body2" color={colors.textSecondary}>
+                      {p.description}
+                    </Typography>
+                  </View>
+                  <View
+                    style={[
+                      styles.radioOuter,
+                      { borderColor: selected ? colors.primary : colors.border },
+                    ]}
+                    importantForAccessibility="no"
+                    accessibilityElementsHidden
+                  >
+                    {selected && (
+                      <View style={[styles.radioInner, { backgroundColor: colors.primary }]} />
+                    )}
+                  </View>
+                </Pressable>
 
-              {selected && p.requires === 'phone' && (
-                <Animated.View entering={FadeInUp.duration(260)} style={styles.inlineField}>
-                  <Typography variant="body1" style={styles.sectionHeader}>
-                    Your phone number
-                  </Typography>
-                  <PhoneInput
-                    value={draft.phoneNumber}
-                    onChangeText={(phoneNumber) => onUpdate({ phoneNumber })}
-                    country={draft.phoneCountry}
-                    onCountryChange={(phoneCountry) => onUpdate({ phoneCountry, phoneNumber: '' })}
-                    placeholder="555 123 4567"
-                    style={styles.phoneInput}
-                  />
-                </Animated.View>
-              )}
+                {selected && p.requires === 'phone' && (
+                  <Animated.View entering={FadeInUp.duration(260)} style={styles.inlineField}>
+                    <Typography variant="body1" style={styles.sectionHeader}>
+                      Your phone number
+                    </Typography>
+                    <PhoneInput
+                      value={draft.phoneNumber}
+                      onChangeText={(phoneNumber) => onUpdate({ phoneNumber })}
+                      country={draft.phoneCountry}
+                      onCountryChange={(phoneCountry) =>
+                        onUpdate({ phoneCountry, phoneNumber: '' })
+                      }
+                      placeholder="555 123 4567"
+                      style={styles.phoneInput}
+                    />
+                  </Animated.View>
+                )}
 
-              {selected && p.requires === 'messenger' && (
-                <Animated.View entering={FadeInUp.duration(260)} style={styles.inlineField}>
-                  <Typography variant="body1" style={styles.sectionHeader}>
-                    Your Facebook Messenger handle
-                  </Typography>
-                  <TextInput
-                    value={draft.messengerHandle}
-                    onChangeText={(messengerHandle) => onUpdate({ messengerHandle })}
-                    placeholder="jane.doe.42"
-                    autoCapitalize="none"
-                  />
-                </Animated.View>
-              )}
-            </Animated.View>
-          );
-        })}
+                {selected && p.requires === 'messenger' && (
+                  <Animated.View entering={FadeInUp.duration(260)} style={styles.inlineField}>
+                    <Typography variant="body1" style={styles.sectionHeader}>
+                      Your Facebook Messenger handle
+                    </Typography>
+                    <TextInput
+                      value={draft.messengerHandle}
+                      onChangeText={(messengerHandle) => onUpdate({ messengerHandle })}
+                      placeholder="jane.doe.42"
+                      autoCapitalize="none"
+                    />
+                  </Animated.View>
+                )}
+              </Animated.View>
+            );
+          })}
+        </View>
 
         {/* Info banner */}
         <Animated.View
