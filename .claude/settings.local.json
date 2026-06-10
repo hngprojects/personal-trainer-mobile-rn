@@ -27,7 +27,26 @@
       "Bash(curl -fsSL \"https://images.unsplash.com/photo-1620065756586-974c57610fa5?q=80&w=1080&h=2340&fit=crop&crop=bottom&fm=jpg\" -o assets/images/auth-bg.jpg)",
       "Bash(curl -fsSL \"https://images.unsplash.com/photo-1620065756586-974c57610fa5?q=80&w=1080&fm=jpg\" -o assets/images/auth-bg.jpg)",
       "Bash(curl -fsSL \"https://images.unsplash.com/photo-1682530676458-696d9b3aa945?q=80&w=1080&fm=jpg\" -o assets/images/auth-bg.jpg)",
-      "Bash(curl -fsSL \"https://images.unsplash.com/photo-1682530676458-696d9b3aa945?q=80&w=1080&h=2340&fit=crop&fm=jpg\" -o assets/images/auth-bg.jpg)"
+      "Bash(curl -fsSL \"https://images.unsplash.com/photo-1682530676458-696d9b3aa945?q=80&w=1080&h=2340&fit=crop&fm=jpg\" -o assets/images/auth-bg.jpg)",
+      "Bash(node -e *)",
+      "Bash(git ls-files *)",
+      "Bash(git check-ignore *)",
+      "Bash(cd /c/pt-mobile/personal-trainer-mobile-rn; ls fitcall-release.keystore 2>/dev/null && echo \"keystore present\" || echo \"keystore NOT at repo root\"; echo \"=== keytool ===\"; which keyt
+      "Read(//c/Program Files/Android/Android Studio/jbr/bin/**)",
+      "Bash(keytool -list -v -keystore fitcall-release.keystore -alias fitcall -storepass 'Fitcall123@')",
+      "Bash(Select-String_placeholder=1)",
+      "Bash(ANDROID_VERSION_CODE=99 npx expo config --type public --json)",
+      "Bash(pnpm remove *)",
+      "Bash(git commit *)",
+      "Bash(grep -hoE 'export \\(declare \\)?\\(function|const|async function\\) [A-Za-z0-9_]+' node_modules/react-native-iap/__TRACKED_VAR__)",
+      "Bash(grep -rhA3 -E 'requestPurchase|fetchProducts\\\\b|finishTransaction' __TRACKED_VAR__/index.d.ts)",
+      "Read(//c/tmp/**)",
+      "Bash(node -e \"console.log\\(require\\('./node_modules/react-native-iap/package.json'\\).version\\)\")",
+      "Bash(ls node_modules/react-native-iap/lib/typescript)",
+      "Bash(ls node_modules/react-native-iap/*.d.ts)",
+      "Bash(git fetch *)",
+      "Bash(git rev-list *)",
+      "Bash(grep -E \"^\\\\.env$\")"
     ]
   }
 }
