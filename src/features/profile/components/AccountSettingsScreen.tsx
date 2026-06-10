@@ -150,7 +150,12 @@ export function AccountSettingsScreen() {
             onPress={() => setLogoutModalVisible(false)}
             style={styles.modalBtn}
           />
-          <Button label="Log Out" onPress={confirmLogout} style={styles.modalBtn} />
+          <Button
+            label="Log Out"
+            onPress={confirmLogout}
+            accessibilityHint="Signs you out and returns to the login screen"
+            style={styles.modalBtn}
+          />
         </View>
       </CenterModal>
 
@@ -177,6 +182,7 @@ export function AccountSettingsScreen() {
             label="Deactivate"
             onPress={confirmDeactivate}
             isLoading={deactivateMutation.isPending}
+            accessibilityHint="Temporarily disables your account and signs you out"
             style={styles.modalBtn}
           />
         </View>
@@ -194,7 +200,14 @@ export function AccountSettingsScreen() {
           This permanently erases your account and all your data — bookings, subscriptions, sessions
           and notifications. This cannot be undone.
         </Typography>
-        <Pressable onPress={openPolicy} hitSlop={6} style={styles.modalPolicyRow}>
+        <Pressable
+          onPress={openPolicy}
+          hitSlop={6}
+          accessibilityRole="link"
+          accessibilityLabel="Read the account deletion policy"
+          accessibilityHint="Opens the policy in your browser"
+          style={styles.modalPolicyRow}
+        >
           <Typography style={[styles.modalPolicyLink, { color: colors.primary }]}>
             Read the account deletion policy
           </Typography>
@@ -206,7 +219,12 @@ export function AccountSettingsScreen() {
             onPress={() => setDeleteModalVisible(false)}
             style={styles.modalBtn}
           />
-          <Button label="Continue" onPress={askFinalDeleteConfirmation} style={styles.modalBtn} />
+          <Button
+            label="Continue"
+            onPress={askFinalDeleteConfirmation}
+            accessibilityHint="Proceeds to final delete confirmation"
+            style={styles.modalBtn}
+          />
         </View>
       </CenterModal>
 
@@ -233,6 +251,7 @@ export function AccountSettingsScreen() {
             label="Delete Forever"
             onPress={confirmDelete}
             isLoading={deleteMutation.isPending}
+            accessibilityHint="Permanently deletes your account. This cannot be undone."
             style={styles.modalBtn}
           />
         </View>

@@ -152,7 +152,14 @@ export function FitnessPreferencesScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <Typography style={[styles.sectionTitle, { color: colors.text }]}>Preferences</Typography>
+        <Typography
+          accessibilityRole="header"
+          accessibilityLiveRegion="polite"
+          accessibilityLabel={`Preferences, ${selectedIds.length} of ${MAX_GOALS} selected`}
+          style={[styles.sectionTitle, { color: colors.text }]}
+        >
+          Preferences ({selectedIds.length}/{MAX_GOALS})
+        </Typography>
 
         <View style={styles.list}>
           {PREFERENCES.map((item, index) => {
@@ -167,13 +174,19 @@ export function FitnessPreferencesScreen() {
                   onPress={() => togglePreference(item)}
                   disabled={updateProfile.isPending}
                   accessibilityRole="checkbox"
+                  accessibilityLabel={item.label}
                   accessibilityState={{ checked: selected, disabled: updateProfile.isPending }}
                   style={({ pressed }) => [
                     styles.row,
                     pressed && !updateProfile.isPending ? styles.pressed : null,
                   ]}
                 >
-                  <Image source={{ uri: item.image }} style={styles.thumbnail} />
+                  <Image
+                    source={{ uri: item.image }}
+                    style={styles.thumbnail}
+                    importantForAccessibility="no"
+                    accessibilityElementsHidden
+                  />
                   <Typography style={[styles.label, { color: colors.text }]} numberOfLines={1}>
                     {item.label}
                   </Typography>
@@ -182,6 +195,8 @@ export function FitnessPreferencesScreen() {
                       styles.checkCircle,
                       { borderColor: selected ? palette.highlightBlue['5'] : colors.border },
                     ]}
+                    importantForAccessibility="no"
+                    accessibilityElementsHidden
                   >
                     {selected ? (
                       <Ionicons name="checkmark" size={10} color={palette.highlightBlue['5']} />
