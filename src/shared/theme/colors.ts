@@ -108,7 +108,10 @@ export const lightColors = {
   primaryPressed: BRAND.pressed,
   primarySubtle: BRAND.subtle,
   text: palette.neutral['9'],
-  textSecondary: palette.neutral['5'],
+  // textSecondary is used heavily for body-sized labels and helper text. The
+  // previous neutral['5'] (#7E7C78) measured ≈ 4.2:1 on white — below WCAG AA
+  // body (4.5:1). neutral['6'] (#5E5C59) measures ≈ 6.8:1 on white.
+  textSecondary: palette.neutral['6'],
   textMuted: palette.neutral['6'],
   icon: palette.neutral['8'],
   iconMuted: palette.neutral['4'],
@@ -116,7 +119,10 @@ export const lightColors = {
   divider: palette.neutral['1'],
   inputBackground: '#FFFFFF',
   modalBackdrop: 'rgba(0,0,0,0.35)',
-  error: palette.highlightRed['5'],
+  // error is used for body-sized validation messages and destructive labels.
+  // highlightRed['5'] (#EF4444) measured ≈ 3.75:1 on white. highlightRed['6']
+  // (#DC2626) measures ≈ 4.83:1 on white.
+  error: palette.highlightRed['6'],
   success: palette.success['5'],
   warning: palette.gold['5'],
   tabBar: '#FFFFFF',
@@ -130,10 +136,14 @@ export const darkColors: Colors = {
   background: palette.neutral['9'],
   surface: palette.neutral['8'],
   surfaceMuted: palette.neutral['7'],
-  // BRAND.base (#0F2E5C) blends into the dark background — swap to a brighter
-  // brand blue in dark mode so primary buttons and outline-text remain legible.
-  primary: palette.highlightBlue['4'],
-  primaryPressed: palette.highlightBlue['5'],
+  // BRAND.base (#0F2E5C) blends into the dark background, so dark mode uses a
+  // brighter brand blue. Previously highlightBlue['4'] (#60A5FA), which only
+  // reached ≈ 2.6:1 against the white text on the primary button (WCAG AA
+  // fails for both body and large). highlightBlue['5'] (#1861B8) measures
+  // ≈ 5.7:1 against white while still being legible against the dark
+  // background.
+  primary: palette.highlightBlue['5'],
+  primaryPressed: palette.highlightBlue['6'],
   primarySubtle: palette.highlightBlue['8'],
   text: palette.neutral['0.5'],
   textSecondary: palette.neutral['4'],
@@ -148,6 +158,6 @@ export const darkColors: Colors = {
   success: palette.success['4'],
   warning: palette.gold['4'],
   tabBar: palette.neutral['8'],
-  tabBarActive: palette.highlightBlue['4'],
+  tabBarActive: palette.highlightBlue['5'],
   tabBarInactive: palette.neutral['4'],
 };
