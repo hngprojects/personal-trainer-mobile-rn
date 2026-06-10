@@ -445,10 +445,26 @@ Three landed commits cover all nine shared-infra findings (S1–S9).
   `accessibilityRole="button"`, `accessibilityState={{ disabled, busy }}`,
   `accessibilityLabel` falling back to the visible label; pinned
   `minHeight: 48`. Fixes S1.
-- `src/shared/components/Typography.tsx` — heading variants (h1/h2/h3)
-  now cap `maxFontSizeMultiplier` to 1.6 / 1.6 / 1.8. Body and label
-  remain uncapped so users who rely on enlarged body text still get it.
-  Fixes S2.
+- `src/shared/components/Typography.tsx` — per-variant caps on
+  `maxFontSizeMultiplier`: h1 = 1.3, h2 = 1.3, h3 = 1.4. Body/label
+  fall through to the global 1.5x ceiling (see textScaling setup below)
+  rather than scaling unbounded. The original Phase 2.1 caps were
+  looser (1.6 / 1.6 / 1.8) and uncapped body, but real-device testing
+  at max system font size showed widespread overflow into adjacent
+  content across hero cards, trainer cards, footer buttons, and chip
+  rows — so the caps were tightened. Fixes S2.
+
+- `src/shared/setup/textScaling.ts` (added later) + side-effect import
+  in `src/app/_layout.tsx` — sets `Text.defaultProps.maxFontSizeMultiplier
+= 1.5` globally before any screen renders. Covers every `<Text>`
+  call site we haven't migrated to Typography (e.g., `TrainerProfileScreen`
+  uses raw `<Text>` heavily) and prevents widespread layout breakage at
+  max system font size. Trade-off documented inline: WCAG 1.4.4 asks
+  for 200% resize without loss of content; capping at 150% is a
+  pragmatic compromise so existing fixed-height containers don't
+  clip/overlap. Individual layouts can opt back into higher scaling by
+  passing an explicit `maxFontSizeMultiplier` prop where the container
+  is known to reflow.
 - `src/features/profile/components/SettingsRow.tsx` — added
   `accessibilityRole="button"` (only when `onPress` is set), composed
   `accessibilityLabel` from `label` + `subtitle`, marked the icon view

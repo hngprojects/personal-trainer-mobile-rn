@@ -2,6 +2,9 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+// Side-effect import: caps Text scaling globally before any screen renders.
+import '@/shared/setup/textScaling';
+
 import { useAuthSession } from '@/features/auth/hooks/useAuthSession';
 import { useAuthStore } from '@/features/auth/store/auth.store';
 import { EntryScreen } from '@/features/entry';
