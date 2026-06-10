@@ -46,6 +46,8 @@ export function TrainerVideoScreen() {
         style={[styles.backButton, { top: insets.top + 12, left: insets.left + 16 }]}
         onPress={handleBack}
         hitSlop={12}
+        accessibilityRole="button"
+        accessibilityLabel="Go back"
       >
         <Ionicons name="arrow-back" size={24} color="#fff" />
       </Pressable>

@@ -196,13 +196,18 @@ export function TrainerProfileScreen() {
                   key={image.id}
                   style={styles.galleryImage}
                   onPress={() => setExpandedImageIndex(index + 1)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Gallery image ${index + 1} of ${visibleGalleryImages.length}`}
+                  accessibilityHint="Tap to expand"
                 >
                   <Image source={{ uri: image.imageUrl }} style={styles.galleryImageInner} />
                 </Pressable>
               ))}
             </View>
 
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>See Trainer In Action</Text>
+            <Text accessibilityRole="header" style={[styles.sectionTitle, { color: colors.text }]}>
+              See Trainer In Action
+            </Text>
             <Pressable
               onPress={() =>
                 router.push({
@@ -214,9 +219,16 @@ export function TrainerProfileScreen() {
                   },
                 } as never)
               }
+              accessibilityRole="button"
+              accessibilityLabel={`Play ${trainer.name}'s intro video`}
               style={styles.videoWrap}
             >
-              <Image source={{ uri: trainer.image }} style={styles.video} />
+              <Image
+                source={{ uri: trainer.image }}
+                style={styles.video}
+                importantForAccessibility="no"
+                accessibilityElementsHidden
+              />
               <View style={styles.videoOverlay} />
               <View style={styles.playButton}>
                 <Ionicons name="play" size={22} color="#0F2E5C" />
@@ -247,6 +259,10 @@ export function TrainerProfileScreen() {
         <Pressable
           style={[styles.glassBtn, footerButtonStyle]}
           disabled={checking}
+          accessibilityRole="button"
+          accessibilityLabel={`Work with ${trainer.name.split(' ')[0]}`}
+          accessibilityHint="Books a paid training session"
+          accessibilityState={{ disabled: checking, busy: checking }}
           onPress={() =>
             startBooking({
               trainerId: trainer.id,
@@ -276,6 +292,9 @@ export function TrainerProfileScreen() {
         </Pressable>
         <Pressable
           style={[styles.glassBtn, footerButtonStyle]}
+          accessibilityRole="button"
+          accessibilityLabel="Request a call"
+          accessibilityHint="Free discovery call with this trainer"
           onPress={() =>
             router.push({
               pathname: '/book-a-call',

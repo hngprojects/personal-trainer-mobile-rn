@@ -106,6 +106,16 @@ const TrainerListItem = React.memo(function TrainerListItem({ trainer }: Trainer
     } as never);
   };
 
+  // Compose a single readable announcement for screen readers instead of
+  // letting the card fragment into 5+ separate elements (rating, name,
+  // avatar stack, "Work With" button). The inner "Work With" Pressable is
+  // intentionally hidden from accessibility because it's not reachable when
+  // the outer Pressable owns the focus on Android — we expose it via a
+  // separate accessibilityActions hook below.
+  const cardA11yLabel =
+    `${trainer.name}, ${trainer.specialty}, ` +
+    `${trainer.rating} star rating, ${trainer.clients} clients`;
+
   return (
     <View style={styles.trainerCard}>
       <Pressable
@@ -116,33 +126,62 @@ const TrainerListItem = React.memo(function TrainerListItem({ trainer }: Trainer
             params: { trainerId: trainer.id },
           } as never)
         }
+        accessibilityRole="button"
+        accessibilityLabel={cardA11yLabel}
+        accessibilityHint="Opens trainer profile"
+        accessibilityActions={[
+          { name: 'activate', label: 'Open profile' },
+          { name: 'longpress', label: `Book session with ${firstName}` },
+        ]}
+        onAccessibilityAction={(event) => {
+          if (event.nativeEvent.actionName === 'longpress') {
+            router.push({
+              pathname: '/book-a-session',
+              params: { trainerId: trainer.id },
+            } as never);
+          }
+        }}
       >
-        <TrainerImageSlider
-          trainerId={trainer.id}
-          fallbackImage={trainer.image}
-          style={styles.trainerImage}
-        />
-        <LinearGradient
-          colors={['rgba(0,0,0,0.02)', 'rgba(0,0,0,0.14)', 'rgba(0,0,0,0.88)']}
-          locations={[0, 0.58, 1]}
-          style={styles.trainerImageOverlay}
-        />
-        <LinearGradient
-          colors={['rgba(255,255,255,0.12)', 'rgba(255,255,255,0.03)', 'rgba(255,255,255,0)']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0.7 }}
-          style={styles.trainerGlassSheen}
-        />
-        <LinearGradient
-          colors={['rgba(255,255,255,0)', 'rgba(0,0,0,0.06)', 'rgba(0,0,0,0.70)']}
-          locations={[0, 0.55, 1]}
-          style={styles.trainerBottomGlass}
-        />
-        <View style={styles.trainerRatingBadge}>
+        <View
+          importantForAccessibility="no-hide-descendants"
+          accessibilityElementsHidden
+          style={StyleSheet.absoluteFill}
+        >
+          <TrainerImageSlider
+            trainerId={trainer.id}
+            fallbackImage={trainer.image}
+            style={styles.trainerImage}
+          />
+          <LinearGradient
+            colors={['rgba(0,0,0,0.02)', 'rgba(0,0,0,0.14)', 'rgba(0,0,0,0.88)']}
+            locations={[0, 0.58, 1]}
+            style={styles.trainerImageOverlay}
+          />
+          <LinearGradient
+            colors={['rgba(255,255,255,0.12)', 'rgba(255,255,255,0.03)', 'rgba(255,255,255,0)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0.7 }}
+            style={styles.trainerGlassSheen}
+          />
+          <LinearGradient
+            colors={['rgba(255,255,255,0)', 'rgba(0,0,0,0.06)', 'rgba(0,0,0,0.70)']}
+            locations={[0, 0.55, 1]}
+            style={styles.trainerBottomGlass}
+          />
+        </View>
+        <View
+          style={styles.trainerRatingBadge}
+          importantForAccessibility="no"
+          accessibilityElementsHidden
+        >
           <Typography style={styles.trainerRating}>★ {trainer.rating}</Typography>
         </View>
         <View style={styles.trainerBody}>
-          <View style={styles.trainerInfoColumn}>
+          <View
+            style={styles.trainerInfoColumn}
+            importantForAccessibility="no"
+            accessibilityElementsHidden
+          >
             <Typography style={styles.trainerName} numberOfLines={1}>
               {trainer.name}
             </Typography>
@@ -153,7 +192,13 @@ const TrainerListItem = React.memo(function TrainerListItem({ trainer }: Trainer
               borderColor="rgba(255,255,255,0.68)"
             />
           </View>
-          <Pressable style={styles.workWithButton} onPress={handleBook}>
+          <Pressable
+            style={styles.workWithButton}
+            onPress={handleBook}
+            accessibilityRole="button"
+            accessibilityLabel={`Work with ${firstName}`}
+            accessibilityHint="Book a session with this trainer"
+          >
             <LinearGradient
               colors={['rgba(255,255,255,0.32)', 'rgba(255,255,255,0.10)']}
               start={{ x: 0, y: 0 }}
@@ -374,16 +419,22 @@ export function HomeScreen() {
 
       {/* CATEGORIES */}
       <Animated.View entering={FadeIn.delay(200).duration(ENTRY_DURATION)}>
-        <Typography style={[styles.sectionTitle, { marginTop: spacing.lg }]}>Categories</Typography>
+        <Typography
+          accessibilityRole="header"
+          style={[styles.sectionTitle, { marginTop: spacing.lg }]}
+        >
+          Categories
+        </Typography>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
+          accessibilityRole="tablist"
           contentContainerStyle={styles.categories}
         >
           <Pressable
             style={[styles.categoryItem, selectedCategory === null && styles.categoryItemSelected]}
             onPress={() => selectCategory(null)}
-            accessibilityRole="button"
+            accessibilityRole="tab"
             accessibilityLabel="Show all trainers"
             accessibilityState={{ selected: selectedCategory === null }}
           >
@@ -415,7 +466,7 @@ export function HomeScreen() {
                 <Pressable
                   style={[styles.categoryItem, isSelected && styles.categoryItemSelected]}
                   onPress={() => selectCategory(category.label)}
-                  accessibilityRole="button"
+                  accessibilityRole="tab"
                   accessibilityLabel={`Show ${category.label} trainers`}
                   accessibilityState={{ selected: isSelected }}
                 >
@@ -441,7 +492,10 @@ export function HomeScreen() {
 
       {/* TRAINERS TITLE */}
       <Animated.View entering={FadeIn.delay(400).duration(ENTRY_DURATION)}>
-        <Typography style={[styles.sectionTitle, { marginTop: spacing.lg }]}>
+        <Typography
+          accessibilityRole="header"
+          style={[styles.sectionTitle, { marginTop: spacing.lg }]}
+        >
           {selectedCategory ? `${selectedCategory} Trainers` : 'Trainers'}
         </Typography>
       </Animated.View>
@@ -473,7 +527,12 @@ export function HomeScreen() {
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar style={statusBarStyle} />
-      <View pointerEvents="none" style={styles.backgroundLayer}>
+      <View
+        pointerEvents="none"
+        importantForAccessibility="no-hide-descendants"
+        accessibilityElementsHidden
+        style={styles.backgroundLayer}
+      >
         <Image
           source={HOME_BACKGROUND_IMAGE}
           style={styles.backgroundTrainerImage}
