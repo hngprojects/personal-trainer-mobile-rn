@@ -578,19 +578,131 @@ A17 was inherited from Phase 2 (S1) — no additional work needed.
 
 ## Flow B — Profile edit changes (Phase 4)
 
-_Pending. Same entry form as Phase 2._
+Two commits cover all Flow B findings (B1, B3, B4, B5, B6, B7). B2 was
+already OK and B8 doesn't exist.
+
+**Phase 4.1 commit (Profile screens — chips, switch, modal)**
+
+- `src/features/profile/components/ProfileScreen.tsx` — App
+  Appearance Switch now sets explicit `accessibilityRole="switch"`,
+  `accessibilityLabel="Dark mode"`, and `accessibilityState.checked`
+  reflecting `isDark`. Before this change the label was in a sibling
+  Typography (SettingsRow.label) so TalkBack announced an anonymous
+  toggle. Fixes B1.
+- `src/features/profile/components/PersonalInformationScreen.tsx` —
+  `EditableOptions` chip grid now wraps single-select groups in a
+  container with `accessibilityRole="radiogroup"`. Each chip gets
+  `accessibilityLabel` from `option.label` and `hitSlop={8}` to clear
+  the 48dp WCAG target without redesigning the chip grid. Fixes B3.
+- `src/features/profile/components/CenterModal.tsx` — The card
+  container is marked `accessibilityViewIsModal` so iOS traps focus
+  inside it. The backdrop dismiss Pressable gains
+  `accessibilityRole="button"` and a composed `"Close <title>"` label
+  so SR users have a discoverable way to dismiss. Title gains header
+  role. Fixes B4 — and applies to every screen that uses CenterModal
+  (PersonalInformation Newsletter / Location, AccountSettings
+  Logout / Deactivate / Delete / Final-delete).
+
+**Phase 4.2 commit (FitnessPreferences count + Account Settings hints)**
+
+- `src/features/profile/components/FitnessPreferencesScreen.tsx` —
+  Section header now shows visible count "Preferences (n/4)" and gets
+  `accessibilityLiveRegion="polite"` plus a clean
+  `accessibilityLabel="Preferences, n of 4 selected"`. SR users now
+  hear the running tally as they tick goals on or off. Header gains
+  header role. Per-row Pressables already had checkbox role; added
+  `accessibilityLabel` from item label, hid thumbnail image and check
+  circle from a11y so SR doesn't double-read. Fixes B5.
+- `src/features/profile/components/AccountSettingsScreen.tsx` — Every
+  destructive Button in the modal stack now has an
+  `accessibilityHint` clarifying what it does (Log Out, Deactivate,
+  Continue → final delete, Delete Forever). The "Read the account
+  deletion policy" Pressable inside the Delete modal gets
+  `accessibilityRole="link"` with label + "Opens the policy in your
+  browser" hint. SettingsRow upgrades from Phase 2.1 cover the rest
+  of B6 and B7.
 
 ## Verification (Phase 5)
 
-To be filled in once the audit + fixes are in place. Will include:
+Verification covers two things:
 
-- TalkBack walkthrough notes for each flow (device + Android version).
-- Colour-contrast verification table (foreground/background pairs we use,
-  computed ratio, pass/fail against WCAG AA 4.5:1 body / 3:1 large).
-- Font-scale-max observations (screenshots or notes per screen).
-- Reduce-Motion observations (which animations short-circuit).
-- Touch-target audit using Android's "Layout Bounds" developer option.
-- APK build details (versionCode/versionName, Drive link).
+1. **Static checks** completed at the end of implementation
+   (lint, doc consistency, finding-to-commit mapping).
+2. **On-device checks** that the developer runs before submission
+   (TalkBack walkthrough, font-scale max, Reduce Motion, layout-bounds
+   touch-target audit, APK build + install).
+
+### Static verification (completed)
+
+- `pnpm lint --max-warnings 0` — exit 0 across the whole project after
+  the Phase 4 docs commit (line-ending churn auto-fixed via
+  `pnpm lint:fix`).
+- Finding-to-commit traceability:
+  - S1 → Phase 2.1 (Button)
+  - S2 → Phase 2.1 (Typography)
+  - S3 → Phase 2.2 (TextInput)
+  - S4 → Phase 2.2 (PhoneInput)
+  - S5 → Phase 2.2 (ToastHost)
+  - S6 → Phase 2.3 (colors.ts contrast fixes)
+  - S7 → Phase 2.3 (useReducedMotion + maybeAnim) +
+    Phase 3.2 (Book a Call call sites) + Phase 3.2 (SuccessView)
+  - S8 → Phase 2.1 (SettingsRow)
+  - S9 → Phase 2.1 (ScreenHeader)
+  - A1 — was already OK; no change required.
+  - A2, A3, A4 → Phase 3.1 (HomeScreen).
+  - A5, A6, A7 → Phase 3.1 (TrainerProfileScreen).
+  - A8 → Phase 3.1 (TrainerVideoScreen) +
+    Phase 3.2 (top-level back button catch-up on TrainerProfileScreen).
+  - A9, A10 → Phase 3.2 (BookACallScreen).
+  - A11 → Phase 3.2 (PlatformStep).
+  - A12, A13, A14 → Phase 3.2 (DateTimeStep).
+  - A15 → Phase 3.2 (SummaryStep).
+  - A16 → Phase 3.2 (SuccessView).
+  - A17 → covered by S1 (no per-screen work).
+  - B1 → Phase 4.1 (ProfileScreen Switch).
+  - B2 — was already OK; no change required.
+  - B3 → Phase 4.1 (PersonalInformationScreen EditableOptions).
+  - B4 → Phase 4.1 (CenterModal — applies to every consumer).
+  - B5 → Phase 4.2 (FitnessPreferencesScreen).
+  - B6 → Phase 4.2 (AccountSettingsScreen hints) + Phase 2.1
+    (SettingsRow upgrade).
+  - B7 → Phase 4.2 (Delete-policy link role inside Delete modal) +
+    Phase 2.1 (SettingsRow upgrade — the Deactivate row is now a
+    SettingsRow, not the standalone Pressable from the original audit).
+
+### On-device verification (developer to run before submission)
+
+The manual TalkBack walkthrough checklist is at the bottom of the
+"Audit findings (Phase 1)" section above. After running it, append
+findings inline using the template shown there.
+
+Pre-flight reminders:
+
+- Build the APK with the upload key:
+  `cd android; ./gradlew assembleRelease` (or use `pnpm aab` if you
+  want a bundle). Confirm the SHA-1 by running keytool against
+  `fitcall-release.keystore` and cross-checking it against the
+  fingerprint registered in Google Cloud Console for the Android
+  OAuth client.
+- Install over a clean state: `adb uninstall com.fitcall.app` then
+  `adb install -r android/app/build/outputs/apk/release/app-release.apk`.
+- TalkBack-walk Flow A and Flow B.
+- Toggle "Remove animations" on Android and re-walk:
+  - Step transitions in Book a Call should swap instantly (no slide).
+  - The SuccessView glow ring should not pulse.
+  - Entry FadeIn / FadeInDown across both flows should be skipped.
+- Toggle font size to max and re-walk; check chip rows and card
+  headings for layout breakage. Headings are capped via
+  `maxFontSizeMultiplier`, so they should stay bounded; body text
+  should scale up.
+- Toggle Layout Bounds on (Developer Options) and confirm:
+  - All Buttons are ≥ 48dp tall.
+  - All SettingsRows are ≥ 48dp tall.
+  - Calendar day cells have an effective ≥ 48dp target via hitSlop
+    (the visible circle is still 36dp — that's fine, hitSlop expands
+    the touch region without changing layout).
+- Upload the APK to Drive, paste the link into the Slack submission
+  message tagging yourself + mentors.
 
 ## Known limitations
 
