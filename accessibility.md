@@ -501,7 +501,80 @@ reduce)` that returns the animation or `undefined`. Lets call sites
 
 ## Flow A — Discovery call changes (Phase 3)
 
-_Pending. Same entry form as Phase 2._
+Two commits cover all Flow A findings (A2–A17).
+
+**Phase 3.1 commit (Home + Trainer screens)**
+
+- `src/features/home/components/HomeScreen.tsx` — Trainer cards now
+  expose a single composed `accessibilityLabel` (`"<Name>, <Specialty>,
+<Rating> star rating, <N> clients"`) on the outer Pressable, with all
+  decorative children (gradients, image slider, rating badge, info
+  column) marked `accessibilityElementsHidden` /
+  `importantForAccessibility="no-hide-descendants"`. The inner "Work
+  With" Pressable keeps its own button role + composed label so sighted
+  users can still book directly; the outer card adds an
+  `accessibilityActions` `longpress` action that routes to
+  `book-a-session` for SR users, sidestepping the Android nested-
+  Pressable unreachability issue. Category chips changed from `button`
+  to `tab` role with a `tablist` parent ScrollView. Section titles
+  ('Categories', 'Trainers') gain header roles. The blurred background
+  image is hidden from a11y. Fixes A2, A3, A4.
+- `src/features/trainers/screens/TrainerProfileScreen.tsx` — Gallery
+  thumbnails get button role + `"Gallery image N of M"` label +
+  `"Tap to expand"` hint. The "See Trainer In Action" video tile gets
+  a composed `"Play <Name>'s intro video"` label; the underlying
+  trainer image is hidden so SR doesn't double-read. Footer buttons
+  ("Work With", "Request a Call") get button roles + composed labels +
+  hints; the "Work With" button additionally reflects
+  `accessibilityState={{ disabled: checking, busy: checking }}`. The
+  top-level back button gets `"Go back"` (added in Phase 3.2 catch-up
+  commit). Fixes A5, A6, A7.
+- `src/features/trainers/screens/TrainerVideoScreen.tsx` —
+  Full-screen video back button gets button role + `"Go back"` label.
+  Fixes A8.
+
+**Phase 3.2 commit (Book a Call flow + trainer-profile catch-up)**
+
+- `src/features/book-a-call/screens/BookACallScreen.tsx` — Imported
+  `useReducedMotion` and `maybeAnim`. Header back button gets button
+  role + label. Progress bar gets
+  `accessibilityRole="progressbar"`, label, and
+  `accessibilityValue={{ min: 0, max: 3, now: numericStep }}`. Step
+  transitions (`SlideInLeft` / `SlideInRight`, `FadeIn` for success)
+  routed through `maybeAnim()` so Reduce Motion swaps steps instantly.
+  Fixes A9, A10.
+- `src/features/book-a-call/components/PlatformStep.tsx` — Wrapped
+  option list in a container with `accessibilityRole="radiogroup"`.
+  Each option Pressable becomes `accessibilityRole="radio"` with
+  `accessibilityState.selected` and a composed label
+  ("Zoom Meeting. We will send a Zoom link …"). Visual radio dot, logo
+  box, and text column hidden from a11y so SR reads the composed label
+  only. Section header gets header role. Fixes A11.
+- `src/features/book-a-call/components/DateTimeStep.tsx` — Calendar
+  day cells (Phase 1 blocker A12) now each have button role,
+  accessibilityLabel like `"Wednesday May 28, today"`, and
+  `accessibilityState={{ selected, disabled }}`. `hitSlop={6}`
+  expands the 36dp visible circle to a 48dp touch target without a
+  visual redesign. Month chevrons get button role + `"Previous month"`
+  / `"Next month"` labels; the decorative chevron-down on the month
+  title (which suggests a dropdown that doesn't exist) is hidden from
+  a11y. Month title row gets header role. Time slot chips get button
+  role, selected/disabled state, and `hitSlop={6}`. Fixes A12, A13,
+  A14.
+- `src/features/book-a-call/components/SummaryStep.tsx` — Each
+  detail row sets `accessible` + composed `accessibilityLabel` like
+  `"Date: Wednesday May 28"`, so SR reads each row as one item
+  instead of three fragments. Fixes A15.
+- `src/features/book-a-call/components/SuccessView.tsx` — Title gets
+  header role. All entry animations now pass through `maybeAnim()`.
+  Critically, the indefinite pulsing glow ring (`withRepeat`) is
+  suppressed entirely under Reduce Motion — final state snaps in
+  without any motion. On mount, fires
+  `AccessibilityInfo.announceForAccessibility` with the full success
+  message ("Request submitted. An agent will reach out to you at your
+  preferred time.") so SR users hear the booking succeeded. Fixes A16.
+
+A17 was inherited from Phase 2 (S1) — no additional work needed.
 
 ## Flow B — Profile edit changes (Phase 4)
 
