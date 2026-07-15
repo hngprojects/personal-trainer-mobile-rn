@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Href, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Image, Pressable, RefreshControl, ScrollView, View } from 'react-native';
+import { Image, Pressable, RefreshControl, ScrollView, TextInput, View } from 'react-native';
 import type { GestureResponderEvent } from 'react-native';
 import Animated, {
   type AnimatedProps,
@@ -41,14 +41,13 @@ const AnimatedFlashList = Animated.createAnimatedComponent(
   AnimatedProps<FlashListProps<Trainer>> & React.RefAttributes<FlashListRef<Trainer>>
 >;
 
+// Ordered by user priority for the home view: strength and cardio (the
+// dominant goals for weight-training and weight-loss users) come first.
+// Yoga is intentionally not surfaced here.
 const CATEGORIES = [
   {
-    label: 'Yoga',
-    image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=300',
-  },
-  {
-    label: 'Mobility',
-    image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=300',
+    label: 'Strength',
+    image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=300',
   },
   {
     label: 'Cardio',
@@ -59,8 +58,8 @@ const CATEGORIES = [
     image: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?q=80&w=300',
   },
   {
-    label: 'Strength',
-    image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=300',
+    label: 'Mobility',
+    image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=300',
   },
 ] as const;
 
@@ -138,13 +137,19 @@ const TrainerListItem = React.memo(function TrainerListItem({ trainer }: Trainer
           locations={[0, 0.55, 1]}
           style={styles.trainerBottomGlass}
         />
-        <View style={styles.trainerRatingBadge}>
+        {/*
+          Rating badge hidden until the client-reviews feature ships. The API
+          currently returns 0 for every trainer (no review records yet), and a
+          "★ 0" badge reads as a one-star review instead of "no reviews". Drop
+          back in when reviews are implemented.
+        */}
+        {/* <View style={styles.trainerRatingBadge}>
           <Typography style={styles.trainerRating}>★ {trainer.rating}</Typography>
-        </View>
+        </View> */}
         <View style={styles.trainerBody}>
           <View style={styles.trainerInfoColumn}>
             <Typography style={styles.trainerName} numberOfLines={1}>
-              {trainer.name}
+              {firstName}
             </Typography>
             <ClientAvatarStack
               avatars={trainer.clientAvatars}
@@ -166,7 +171,7 @@ const TrainerListItem = React.memo(function TrainerListItem({ trainer }: Trainer
               adjustsFontSizeToFit
               minimumFontScale={0.82}
             >
-              Work With {firstName}
+              Book Session
             </Typography>
             <View style={styles.workWithIcon}>
               <Ionicons name="arrow-forward" size={15} color="#FFFFFF" />
@@ -187,6 +192,19 @@ export function HomeScreen() {
   const greeting = getTimeOfDayGreeting();
   const trainerListRef = useRef<FlashListRef<Trainer>>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  const toggleSearch = useCallback(() => {
+    // Clear on every toggle so opening always starts fresh and closing resets
+    // the filtered list back to the full/selected-category view.
+    setSearchQuery('');
+    setSearchOpen((open) => !open);
+  }, []);
+  // Always pass `null` so the query key is stable across category switches —
+  // we fetch the trainer list once and filter on the client. Previously each
+  // category produced its own react-query cache entry, which meant tapping a
+  // chip triggered a fresh request + loading state every time.
   const {
     data: trainerPages,
     isLoading,
@@ -195,14 +213,40 @@ export function HomeScreen() {
     hasNextPage,
     fetchNextPage,
     refetch,
-  } = useInfiniteTrainers(selectedCategory);
-  // The API already filters by `selectedCategory` via the queryKey, so we no
-  // longer re-filter on the client — that was running on every render and
-  // duplicating server work.
-  const trainers = useMemo(
+  } = useInfiniteTrainers(null);
+  const allTrainers = useMemo(
     () => trainerPages?.pages.flatMap((page) => page.trainers) ?? [],
     [trainerPages],
   );
+  const trainers = useMemo(() => {
+    let list = allTrainers;
+
+    if (selectedCategory) {
+      const needle = selectedCategory.toLowerCase();
+      list = list.filter((t) => {
+        const specialty = t.specialty?.toLowerCase() ?? '';
+        return (
+          specialty.includes(needle) ||
+          (t.tags ?? []).some((tag) => tag.toLowerCase().includes(needle))
+        );
+      });
+    }
+
+    const query = searchQuery.trim().toLowerCase();
+    if (query) {
+      list = list.filter((t) => {
+        const name = t.name?.toLowerCase() ?? '';
+        const specialty = t.specialty?.toLowerCase() ?? '';
+        return (
+          name.includes(query) ||
+          specialty.includes(query) ||
+          (t.tags ?? []).some((tag) => tag.toLowerCase().includes(query))
+        );
+      });
+    }
+
+    return list;
+  }, [allTrainers, selectedCategory, searchQuery]);
   const showTrainerLoading = isLoading && trainers.length === 0;
   const showLoadMore = isFetchingNextPage && trainers.length > 0;
 
@@ -374,7 +418,52 @@ export function HomeScreen() {
 
       {/* CATEGORIES */}
       <Animated.View entering={FadeIn.delay(200).duration(ENTRY_DURATION)}>
-        <Typography style={[styles.sectionTitle, { marginTop: spacing.lg }]}>Categories</Typography>
+        <View style={[styles.sectionTitleRow, { marginTop: spacing.lg }]}>
+          <Typography style={[styles.sectionTitle, styles.sectionTitleInline]}>
+            Categories
+          </Typography>
+          <Pressable
+            onPress={toggleSearch}
+            hitSlop={10}
+            style={styles.searchToggle}
+            accessibilityRole="button"
+            accessibilityLabel={searchOpen ? 'Close trainer search' : 'Search trainers'}
+            accessibilityState={{ expanded: searchOpen }}
+          >
+            <Ionicons name={searchOpen ? 'close' : 'search'} size={18} color={colors.text} />
+          </Pressable>
+        </View>
+
+        {searchOpen ? (
+          <Animated.View entering={FadeInDown.duration(220)} style={styles.searchReveal}>
+            <View style={styles.searchBar}>
+              <Ionicons name="search" size={18} color={colors.textSecondary} />
+              <TextInput
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholder="Search trainers by name or specialty"
+                placeholderTextColor={colors.textSecondary}
+                autoCorrect={false}
+                autoCapitalize="none"
+                autoFocus
+                returnKeyType="search"
+                style={styles.searchInput}
+                accessibilityLabel="Search trainers"
+              />
+              {searchQuery.length > 0 ? (
+                <Pressable
+                  onPress={() => setSearchQuery('')}
+                  hitSlop={10}
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear search"
+                >
+                  <Ionicons name="close-circle" size={18} color={colors.textSecondary} />
+                </Pressable>
+              ) : null}
+            </View>
+          </Animated.View>
+        ) : null}
+
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -442,7 +531,11 @@ export function HomeScreen() {
       {/* TRAINERS TITLE */}
       <Animated.View entering={FadeIn.delay(400).duration(ENTRY_DURATION)}>
         <Typography style={[styles.sectionTitle, { marginTop: spacing.lg }]}>
-          {selectedCategory ? `${selectedCategory} Trainers` : 'Trainers'}
+          {searchQuery.trim()
+            ? 'Search Results'
+            : selectedCategory
+              ? `${selectedCategory} Trainers`
+              : 'Trainers'}
         </Typography>
       </Animated.View>
     </View>
@@ -457,7 +550,11 @@ export function HomeScreen() {
         </>
       ) : (
         <Typography style={styles.emptyTrainersText}>
-          {selectedCategory ? 'No trainers found for this category.' : 'No trainers available yet.'}
+          {searchQuery.trim()
+            ? `No trainers match “${searchQuery.trim()}”.`
+            : selectedCategory
+              ? 'No trainers found for this category.'
+              : 'No trainers available yet.'}
         </Typography>
       )}
     </View>
