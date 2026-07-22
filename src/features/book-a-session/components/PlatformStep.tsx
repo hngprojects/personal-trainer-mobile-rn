@@ -178,7 +178,8 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
           styles.footer,
           {
             paddingHorizontal: spacing.md,
-            paddingBottom: spacing.lg,
+            paddingBottom: spacing.md,
+            justifyContent: 'flex-end',
           },
         ]}
       >
@@ -186,7 +187,12 @@ export function PlatformStep({ trainer, draft, onUpdate, onContinue }: PlatformS
           label="Continue"
           disabled={!canContinue}
           onPress={onContinue}
-          style={styles.glassButton}
+          style={[
+            styles.glassButton,
+            // Grey glass while no valid medium is picked; solid brand blue once
+            // the selection is complete, so the button reads as actionable.
+            { backgroundColor: canContinue ? colors.primary : 'rgba(255,255,255,0.16)' },
+          ]}
         />
       </View>
     </View>
@@ -262,7 +268,6 @@ const styles = StyleSheet.create({
   footer: { paddingTop: 12 },
   glassButton: {
     borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.16)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.30)',
   },

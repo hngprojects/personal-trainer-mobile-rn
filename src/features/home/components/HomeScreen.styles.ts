@@ -145,6 +145,46 @@ export function useHomeStyles() {
           color: colors.text,
           marginBottom: 12,
         },
+        sectionTitleRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: 12,
+        },
+        sectionTitleInline: {
+          marginBottom: 0,
+        },
+        searchToggle: {
+          width: 34,
+          height: 34,
+          borderRadius: 999,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: colors.surfaceMuted,
+          borderWidth: 1,
+          borderColor: colors.border,
+        },
+        searchReveal: {
+          marginBottom: 12,
+        },
+        searchBar: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 10,
+          paddingHorizontal: 14,
+          height: 48,
+          borderRadius: 14,
+          backgroundColor: colors.surfaceMuted,
+          borderWidth: 1,
+          borderColor: colors.border,
+        },
+        searchInput: {
+          flex: 1,
+          fontSize: 14,
+          fontFamily: fonts.regular,
+          color: colors.text,
+          paddingVertical: 0,
+        },
         categories: {
           flexDirection: 'row',
           gap: 10,
@@ -209,10 +249,14 @@ export function useHomeStyles() {
           color: colors.textSecondary,
           textAlign: 'center',
         },
+        // Outer card owns the shadow only. On iOS a view can't both cast a
+        // shadow AND clip children to its borderRadius — combining them stops
+        // the rounded corners from masking, so the image's square corners poke
+        // past the frame ("floating"). Keep `overflow: visible` here and do the
+        // rounded clipping on `trainerPressable` instead.
         trainerCard: {
           backgroundColor: 'rgba(255,255,255,0.10)',
           borderRadius: 18,
-          overflow: 'hidden',
           borderWidth: 1,
           borderColor: 'rgba(255,255,255,0.22)',
           minHeight: 244,
@@ -222,9 +266,12 @@ export function useHomeStyles() {
           shadowOffset: { width: 0, height: 12 },
           elevation: 5,
         },
+        // Inner layer clips the image/gradients to the rounded frame.
         trainerPressable: {
           flex: 1,
           minHeight: 244,
+          borderRadius: 18,
+          overflow: 'hidden',
         },
         trainerCell: {
           flex: 1,
@@ -308,7 +355,7 @@ export function useHomeStyles() {
         workWithText: {
           flex: 1,
           minWidth: 0,
-          fontSize: 12,
+          fontSize: 13,
           fontFamily: fonts.semibold,
           color: '#FFFFFF',
           textAlign: 'center',

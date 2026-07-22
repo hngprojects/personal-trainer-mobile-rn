@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   FadeIn,
@@ -20,6 +20,7 @@ import { DateTimeStep } from '@/features/book-a-call/components/DateTimeStep';
 import {
   getTimezone,
   getTrainerAvailabilityDates,
+  outreachRequires,
   sessionPlatformFor,
   useCreateSessionBooking,
   useUpcomingBookings,
@@ -28,7 +29,7 @@ import { trainers } from '@/features/trainers/data/trainers.data';
 import { useTrainer } from '@/features/trainers/hooks/useTrainer';
 import { useTrainerAvailability } from '@/features/trainers/hooks/useTrainerAvailability';
 import { ApiError } from '@/shared/api/types';
-import { Typography } from '@/shared/components';
+import { toPhoneE164, Typography } from '@/shared/components';
 import { useTheme } from '@/shared/theme';
 import { buildLocalDateTimeIso } from '@/shared/utils/dateTime';
 
@@ -72,7 +73,12 @@ export function BookASessionScreen() {
     !isLoadingAvailability &&
     !isErrorAvailability &&
     !isErrorUpcoming;
-  const availableSlotDates = getTrainerAvailabilityDates(trainerAvailability, upcomingBookings);
+  // Memoized so tapping a date (which re-renders this screen) doesn't hand
+  // DateTimeStep a fresh array every render and churn its derived slot memos.
+  const availableSlotDates = useMemo(
+    () => getTrainerAvailabilityDates(trainerAvailability, upcomingBookings),
+    [trainerAvailability, upcomingBookings],
+  );
   const createSessionBooking = useCreateSessionBooking();
   const isRefreshingSlots = isRefetchingAvailability || isRefetchingUpcoming;
   const refreshSlots = useCallback(async () => {
@@ -127,8 +133,8 @@ export function BookASessionScreen() {
 
     const scheduledStart = buildSelectedDateTime(draft.date, draft.time);
     const scheduledEnd = new Date(new Date(scheduledStart).getTime() + 60 * 60_000).toISOString();
-    // POST /bookings accepts only zoom / google_meet / messenger; the platform
-    // step only offers those, so this is always defined here.
+    // Only options carrying a `sessionPlatform` (zoom / google_meet / messenger
+    // / whatsapp / imessage) reach the platform step, so this is always defined.
     const sessionPlatform = sessionPlatformFor(draft.platform);
     if (!sessionPlatform) {
       setSubmitError('This contact method is not available for session bookings.');
@@ -144,6 +150,12 @@ export function BookASessionScreen() {
         timezone,
         ...(sessionPlatform === 'messenger'
           ? { messenger_handle: draft.messengerHandle.trim() }
+          : {}),
+        ...(outreachRequires(draft.platform) === 'phone' && draft.phoneNumber.trim()
+          ? {
+              phone_number:
+                toPhoneE164(draft.phoneNumber, draft.phoneCountry) ?? draft.phoneNumber.trim(),
+            }
           : {}),
       });
       advance();
@@ -216,15 +228,12 @@ export function BookASessionScreen() {
         entering={isSuccess ? FadeIn.duration(360) : entering.duration(STEP_DURATION)}
         style={styles.content}
       >
+        {/*
+          Date & Time is step 1 so an unavailable trainer surfaces immediately —
+          the user shouldn't have to pick a call method before discovering there
+          are no open slots. Call method (PlatformStep) follows on step 2.
+        */}
         {step === 1 && (
-          <PlatformStep
-            trainer={trainer}
-            draft={draft}
-            onUpdate={updateDraft}
-            onContinue={advance}
-          />
-        )}
-        {step === 2 && (
           <DateTimeStep
             draft={draft}
             onUpdate={updateDraft}
@@ -235,6 +244,14 @@ export function BookASessionScreen() {
             onRefresh={refreshSlots}
             isRefreshing={isRefreshingSlots}
             glass
+          />
+        )}
+        {step === 2 && (
+          <PlatformStep
+            trainer={trainer}
+            draft={draft}
+            onUpdate={updateDraft}
+            onContinue={advance}
           />
         )}
         {step === 3 && (
@@ -253,7 +270,7 @@ export function BookASessionScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, gap: 36 },
   centered: { alignItems: 'center', justifyContent: 'center' },
   backgroundImage: {
     ...StyleSheet.absoluteFillObject,
